@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h2>Dashboard</h2>
+    <p class="muted">Visão geral do sistema web</p>
+</div>
+
+<div class="dashboard-grid">
+    <div class="card stat-card">
+        <span class="stat-label">Clientes</span>
+        <strong>{{ total_clients }}</strong>
+        <small class="muted">Total de clientes cadastrados</small>
+    </div>
+
+    <div class="card stat-card">
+        <span class="stat-label">Pets</span>
+        <strong>{{ total_pets }}</strong>
+        <small class="muted">Total de pets cadastrados</small>
+    </div>
+
+    <div class="card stat-card">
+        <span class="stat-label">Hoje</span>
+        <strong>{{ agendados_hoje }}</strong>
+        <small class="muted">Agendamentos em {{ today }}</small>
+    </div>
+
+    <div class="card stat-card">
+        <span class="stat-label">Em operação hoje</span>
+        <strong>{{ em_andamento_hoje }}</strong>
+        <small class="muted">Coleta, atendimento, finalizado e entregue</small>
+    </div>
+
+    <div class="card stat-card">
+        <span class="stat-label">Concluídos no mês</span>
+        <strong>{{ concluidos_mes }}</strong>
+        <small class="muted">Atendimentos fechados no mês atual</small>
+    </div>
+
+    <div class="card stat-card highlight-card">
+        <span class="stat-label">Faturamento do mês</span>
+        <strong>R$ {{ '%.2f'|format(faturamento_mes) }}</strong>
+        <small class="muted">Somente agendamentos concluídos</small>
+    </div>
+</div>
+
+<div class="quick-actions">
+    <a class="quick-btn" href="/clients">+ Novo cliente</a>
+    <a class="quick-btn" href="/pets">+ Novo pet</a>
+    <a class="quick-btn" href="/appointments">+ Novo agendamento</a>
+    <a class="quick-btn" href="/agenda">Abrir agenda</a>
+    <a class="quick-btn" href="/financeiro">Abrir financeiro</a>
+    <a class="quick-btn" href="/motorista">Painel do motorista</a>
+</div>
+
+<div class="grid-two" style="margin-top:16px;">
+    <div class="card">
+        <h3>Últimos agendamentos</h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Hora</th>
+                        <th>Cliente</th>
+                        <th>Pet</th>
+                        <th>Serviço</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in proximos %}
+                    <tr>
+                        <td>{{ item["data_agendamento"] }}</td>
+                        <td>{{ item["horario"] }}</td>
+                        <td>{{ item["cliente_nome"] }}</td>
+                        <td>{{ item["pet_nome"] }}</td>
+                        <td>{{ item["servico"] or "" }}</td>
+                        <td>
+                            <span class="status-pill status-{{ (item['status'] or 'agendado')|lower|replace('ú','u')|replace('ã','a')|replace('ç','c')|replace(' ','-') }}">
+                                {{ item["status"] or "" }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6">Nenhum agendamento cadastrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Atalhos rápidos</h3>
+        <div class="shortcut-list">
+            <a class="shortcut-item" href="/appointments">
+                <div>
+                    <strong>Agendamentos</strong>
+                    <span class="muted">Cadastrar e acompanhar atendimentos</span>
+                </div>
+                <span>→</span>
+            </a>
+
+            <a class="shortcut-item" href="/agenda">
+                <div>
+                    <strong>Agenda visual</strong>
+                    <span class="muted">Ver calendário mensal</span>
+                </div>
+                <span>→</span>
+            </a>
+
+            <a class="shortcut-item" href="/financeiro">
+                <div>
+                    <strong>Financeiro</strong>
+                    <span class="muted">Faturamento, ticket médio e pagamentos</span>
+                </div>
+                <span>→</span>
+            </a>
+
+            <a class="shortcut-item" href="/motorista">
+                <div>
+                    <strong>Painel do motorista</strong>
+                    <span class="muted">Rota do dia e contatos</span>
+                </div>
+                <span>→</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h2>Clientes</h2>
+    <p class="muted">Cadastro com edição, exclusão e busca</p>
+</div>
+
+<div class="card" style="margin-bottom:16px;">
+    <form method="get" action="/clients" class="filter-grid">
+        <input type="text" name="q" placeholder="Buscar por nome, telefone ou e-mail" value="{{ q or '' }}">
+        <button type="submit">Buscar</button>
+        <a class="quick-btn secondary-btn" href="/clients">Limpar</a>
+    </form>
+</div>
+
+<div class="grid-two">
+    <div class="card">
+        <h3>{% if edit_client %}Editar cliente{% else %}Novo cliente{% endif %}</h3>
+        <form method="post" action="{% if edit_client %}/clients/{{ edit_client['id'] }}/edit{% else %}/clients{% endif %}" class="form-grid">
+            <input type="text" name="nome" placeholder="Nome do cliente" required value="{{ edit_client['nome'] if edit_client else '' }}">
+            <input type="text" name="telefone" placeholder="Telefone" value="{{ edit_client['telefone'] if edit_client else '' }}">
+            <input type="email" name="email" placeholder="E-mail" value="{{ edit_client['email'] if edit_client else '' }}">
+            <input type="text" name="endereco" placeholder="Endereço" value="{{ edit_client['endereco'] if edit_client else '' }}">
+            <textarea name="observacoes" placeholder="Observações">{{ edit_client['observacoes'] if edit_client else '' }}</textarea>
+            <button type="submit">{% if edit_client %}Salvar alterações{% else %}Salvar cliente{% endif %}</button>
+            {% if edit_client %}
+            <a class="quick-btn secondary-btn" href="/clients">Cancelar edição</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>Lista de clientes</h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>E-mail</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in clients %}
+                    <tr>
+                        <td>{{ client["id"] }}</td>
+                        <td>{{ client["nome"] }}</td>
+                        <td>{{ client["telefone"] or "" }}</td>
+                        <td>{{ client["email"] or "" }}</td>
+                        <td>
+                            <div class="action-row">
+                                <a class="mini-btn" href="/clients?edit_id={{ client['id'] }}">Editar</a>
+                                <form method="post" action="/clients/{{ client['id'] }}/delete" onsubmit="return confirm('Deseja excluir este cliente?');">
+                                    <button class="mini-btn red" type="submit">Excluir</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5">Nenhum cliente encontrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

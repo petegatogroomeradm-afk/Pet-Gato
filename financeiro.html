@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h2>Financeiro</h2>
+    <p class="muted">Resumo dos agendamentos concluídos</p>
+</div>
+
+<div class="card">
+    <form method="get" action="/financeiro" class="filter-grid">
+        <input type="date" name="start" value="{{ start }}">
+        <input type="date" name="end" value="{{ end }}">
+        <button type="submit">Filtrar</button>
+    </form>
+</div>
+
+<div class="cards" style="margin-top:16px;">
+    <div class="card stat">
+        <h3>Faturamento</h3>
+        <strong>R$ {{ '%.2f'|format(total) }}</strong>
+    </div>
+    <div class="card stat">
+        <h3>Concluídos</h3>
+        <strong>{{ qtd }}</strong>
+    </div>
+    <div class="card stat">
+        <h3>Ticket médio</h3>
+        <strong>R$ {{ '%.2f'|format(ticket) }}</strong>
+    </div>
+</div>
+
+<div class="grid-two" style="margin-top:16px;">
+    <div class="card">
+        <h3>Por forma de pagamento</h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Forma</th>
+                        <th>Qtd</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in por_pagamento %}
+                    <tr>
+                        <td>{{ item["forma"] }}</td>
+                        <td>{{ item["qtd"] }}</td>
+                        <td>R$ {{ '%.2f'|format(item["total"] or 0) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3">Sem dados no período.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Lançamentos concluídos</h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Hora</th>
+                        <th>Cliente</th>
+                        <th>Pet</th>
+                        <th>Serviço</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in detalhes %}
+                    <tr>
+                        <td>{{ item["data_agendamento"] }}</td>
+                        <td>{{ item["horario"] }}</td>
+                        <td>{{ item["cliente_nome"] }}</td>
+                        <td>{{ item["pet_nome"] }}</td>
+                        <td>{{ item["servico"] or "" }}</td>
+                        <td>R$ {{ '%.2f'|format(item["valor"] or 0) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6">Nenhum lançamento concluído.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

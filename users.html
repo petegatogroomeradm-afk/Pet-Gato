@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h2>Usuários</h2>
+    <p class="muted">Gerenciamento de acessos e perfis</p>
+</div>
+
+<div class="grid-two">
+    <div class="card">
+        <h3>{% if edit_user %}Editar usuário{% else %}Novo usuário{% endif %}</h3>
+        <form method="post" action="{% if edit_user %}/users/{{ edit_user['id'] }}/edit{% else %}/users{% endif %}" class="form-grid">
+            <input type="text" name="full_name" placeholder="Nome completo" required value="{{ edit_user['full_name'] if edit_user else '' }}">
+            <input type="text" name="username" placeholder="Usuário" required value="{{ edit_user['username'] if edit_user else '' }}">
+            <input type="password" name="password" placeholder="{% if edit_user %}Nova senha (deixe em branco para manter){% else %}Senha{% endif %}" {% if not edit_user %}required{% endif %}>
+            <select name="profile_name" required>
+                {% for p in profiles %}
+                <option value="{{ p['name'] }}" {% if edit_user and edit_user['profile_name'] == p['name'] %}selected{% endif %}>{{ p["name"] }}</option>
+                {% endfor %}
+            </select>
+            <select name="active">
+                <option value="1" {% if not edit_user or edit_user['active'] == 1 %}selected{% endif %}>Ativo</option>
+                <option value="0" {% if edit_user and edit_user['active'] == 0 %}selected{% endif %}>Inativo</option>
+            </select>
+            <button type="submit">{% if edit_user %}Salvar alterações{% else %}Criar usuário{% endif %}</button>
+            {% if edit_user %}
+            <a class="quick-btn secondary-btn" href="/users">Cancelar edição</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>Lista de usuários</h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Usuário</th>
+                        <th>Perfil</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in users %}
+                    <tr>
+                        <td>{{ item["id"] }}</td>
+                        <td>{{ item["full_name"] }}</td>
+                        <td>{{ item["username"] }}</td>
+                        <td>{{ item["profile_name"] }}</td>
+                        <td>{{ "Ativo" if item["active"] == 1 else "Inativo" }}</td>
+                        <td>
+                            <div class="action-row">
+                                <a class="mini-btn" href="/users?edit_id={{ item['id'] }}">Editar</a>
+                                {% if user['id'] != item['id'] %}
+                                <form method="post" action="/users/{{ item['id'] }}/delete" onsubmit="return confirm('Deseja excluir este usuário?');">
+                                    <button class="mini-btn red" type="submit">Excluir</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6">Nenhum usuário cadastrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

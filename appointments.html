@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h2>Agendamentos</h2>
+    <p class="muted">Agendamentos com filtros, edição, exclusão, WhatsApp e status do serviço</p>
+</div>
+
+<div class="card" style="margin-bottom:16px;">
+    <form method="get" action="/appointments" class="appointments-filter-grid">
+        <input type="text" name="q" placeholder="Buscar por cliente, pet ou serviço" value="{{ q or '' }}">
+        <select name="status_filter">
+            <option value="">Todos os status</option>
+            {% for st in ['Agendado','Em coleta','Em atendimento','Finalizado','Entregue','Concluído','Cancelado'] %}
+            <option value="{{ st }}" {% if status_filter == st %}selected{% endif %}>{{ st }}</option>
+            {% endfor %}
+        </select>
+        <input type="date" name="data_inicio" value="{{ data_inicio or '' }}">
+        <input type="date" name="data_fim" value="{{ data_fim or '' }}">
+        <button type="submit">Filtrar</button>
+        <a class="quick-btn secondary-btn" href="/appointments">Limpar</a>
+    </form>
+</div>
+
+<div class="grid-two">
+    <div class="card">
+        <h3>{% if edit_appointment %}Editar agendamento{% else %}Novo agendamento{% endif %}</h3>
+        <form method="post" action="{% if edit_appointment %}/appointments/{{ edit_appointment['id'] }}/edit{% else %}/appointments{% endif %}" class="form-grid">
+            <select name="client_id" required>
+                <option value="">Selecione o cliente</option>
+                {% for client in clients %}
+                <option value="{{ client['id'] }}" {% if edit_appointment and edit_appointment['client_id'] == client['id'] %}selected{% endif %}>{{ client["nome"] }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="pet_id" required>
+                <option value="">Selecione o pet</option>
+                {% for pet in pets %}
+                <option value="{{ pet['id'] }}" {% if edit_appointment and edit_appointment['pet_id'] == pet['id'] %}selected{% endif %}>{{ pet["cliente_nome"] }} - {{ pet["nome"] }}</option>
+                {% endfor %}
+            </select>
+
+            <input type="date" name="data_agendamento" required value="{{ edit_appointment['data_agendamento'] if edit_appointment else '' }}">
+            <input type="time" name="horario" required value="{{ edit_appointment['horario'] if edit_appointment else '' }}">
+            <input type="text" name="servico" placeholder="Serviço" value="{{ edit_appointment['servico'] if edit_appointment else '' }}">
+            <input type="text" name="valor" placeholder="Valor" value="{{ edit_appointment['valor'] if edit_appointment and edit_appointment['valor'] is not none else '' }}">
+            <select name="forma_pagamento">
+                <option value="">Forma de pagamento</option>
+                {% for fp in ['Pix','Dinheiro','Débito','Crédito'] %}
+                <option value="{{ fp }}" {% if edit_appointment and edit_appointment['forma_pagamento'] == fp %}selected{% endif %}>{{ fp }}</option>
+                {% endfor %}
+            </select>
+            <select name="status">
+                {% for st in ['Agendado','Em coleta','Em atendimento','Finalizado','Entregue','Concluído','Cancelado'] %}
+                <option value="{{ st }}" {% if edit_appointment and edit_appointment['status'] == st %}selected{% endif %}>{{ st }}</option>
+                {% endfor %}
+            </select>
+            <textarea name="observacoes" placeholder="Observações">{{ edit_appointment['observacoes'] if edit_appointment else '' }}</textarea>
+            <button type="submit">{% if edit_appointment %}Salvar alterações{% else %}Salvar agendamento{% endif %}</button>
+            {% if edit_appointment %}
+            <a class="quick-btn secondary-btn" href="/appointments">Cancelar edição</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>Lista de agendamentos</h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Data</th>
+                        <th>Hora</th>
+                        <th>Cliente</th>
+                        <th>Pet</th>
+                        <th>Status</th>
+                        <th>Serviço</th>
+                        <th>Ações</th>
+                        <th>Recibo PDF</th>
+                        <th>WhatsApp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in appointments %}
+                    <tr>
+                        <td>{{ item["id"] }}</td>
+                        <td>{{ item["data_agendamento"] }}</td>
+                        <td>{{ item["horario"] }}</td>
+                        <td>{{ item["cliente_nome"] }}</td>
+                        <td>{{ item["pet_nome"] }}</td>
+                        <td>
+                            <span class="status-pill status-{{ (item['status'] or 'agendado')|lower|replace('ú','u')|replace('ã','a')|replace('ç','c')|replace(' ','-') }}">
+                                {{ item["status"] or "" }}
+                            </span>
+                        </td>
+                        <td>{{ item["servico"] or "" }}</td>
+                        <td>
+                            <div class="action-column">
+                                <div class="action-row">
+                                    <a class="mini-btn" href="/appointments?edit_id={{ item['id'] }}">Editar</a>
+                                    <form method="post" action="/appointments/{{ item['id'] }}/delete" onsubmit="return confirm('Deseja excluir este agendamento?');">
+                                        <button class="mini-btn red" type="submit">Excluir</button>
+                                    </form>
+                                </div>
+                                <form method="post" action="/appointments/{{ item['id'] }}/status" class="status-form">
+                                    <select name="new_status">
+                                        {% for st in ['Agendado','Em coleta','Em atendimento','Finalizado','Entregue','Concluído','Cancelado'] %}
+                                        <option value="{{ st }}" {% if item['status'] == st %}selected{% endif %}>{{ st }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button class="mini-btn green" type="submit">Atualizar</button>
+                                </form>
+                            </div>
+                        </td>
+                        <td>
+                            <a class="mini-btn green" target="_blank" href="/appointments/{{ item['id'] }}/receipt">Gerar PDF</a>
+                        </td>
+                        <td>
+                            <div class="wa-actions">
+                                {% if item["wa_confirm"] %}<a class="mini-btn" target="_blank" href="{{ item['wa_confirm'] }}">Confirmar</a>{% endif %}
+                                {% if item["wa_reminder"] %}<a class="mini-btn purple" target="_blank" href="{{ item['wa_reminder'] }}">Lembrar</a>{% endif %}
+                                {% if item["wa_cancel"] %}<a class="mini-btn red" target="_blank" href="{{ item['wa_cancel'] }}">Cancelar</a>{% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10">Nenhum agendamento encontrado. O botão "Gerar PDF" aparece em cada linha quando existir agendamento listado. O botão "Gerar PDF" aparece em cada linha quando existir agendamento listado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
