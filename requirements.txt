@@ -6,3 +6,4 @@ reportlab==4.4.3
 sqlalchemy==2.0.43
 psycopg[binary]==3.2.13
 python-dotenv==1.1.1
+boto3==1.35.92
