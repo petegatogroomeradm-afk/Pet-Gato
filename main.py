@@ -32,6 +32,7 @@ load_dotenv(ROOT_DIR / ".env")
 APP_DB_MODE = os.getenv("APP_DB_MODE", "postgres").lower()
 DB_PATH = ROOT_DIR / os.getenv("SQLITE_PATH", "petgato_web.db")
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg://postgres:postgres@127.0.0.1:5432/petgato_web")
+
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
 AWS_BUCKET_NAME = os.getenv("AWS_BUCKET_NAME", "")
