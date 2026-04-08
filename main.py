@@ -1477,24 +1477,50 @@ def create_profile(request: Request, name: str = Form(...), permissions: list[st
 
 @app.post("/profiles/{profile_id}/edit")
 def edit_profile(profile_id: int, request: Request, name: str = Form(...), permissions: list[str] = Form(default=[])):
-    user = current_user(request)
-    if not user:
+   @app.post("/users/{user_id}/edit")
+def edit_user(
+    user_id: int,
+    request: Request,
+    username: str = Form(...),
+    full_name: str = Form(...),
+    password: str = Form(""),
+    password_confirm: str = Form(""),
+    profile_name: str = Form(...),
+    active: str = Form("1"),
+):
+    current = current_user(request)
+    if not current:
         return RedirectResponse(url="/login", status_code=303)
-    blocked = guard_section(user, "profiles")
+
+    blocked = guard_section(current, "users")
     if blocked:
         return blocked
-    perms = ",".join(sorted(set([p.strip() for p in permissions if p.strip()])))
+
+    if password.strip() and password.strip() != password_confirm.strip():
+        return RedirectResponse(url=f"/users?edit_id={user_id}&msg=senhas_nao_conferem", status_code=303)
+
     conn = get_conn()
-    current = conn.execute("SELECT * FROM profiles WHERE id=?", (profile_id,)).fetchone()
-    if not current:
+    existing = conn.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+    if not existing:
         conn.close()
-        return RedirectResponse(url="/profiles", status_code=303)
-    old_name = current["name"]
-    conn.execute("UPDATE profiles SET name=?, permissions=? WHERE id=?", (name.strip(), perms, profile_id))
-    conn.execute("UPDATE users SET profile_name=? WHERE profile_name=?", (name.strip(), old_name))
+        return RedirectResponse(url="/users", status_code=303)
+
+    password_hash = existing["password_hash"] if not password.strip() else hash_password(password.strip())
+
+    conn.execute(
+        "UPDATE users SET username=?, full_name=?, password_hash=?, profile_name=?, active=? WHERE id=?",
+        (
+            username.strip(),
+            full_name.strip(),
+            password_hash,
+            profile_name.strip(),
+            1 if active == "1" else 0,
+            user_id,
+        ),
+    )
     conn.commit()
     conn.close()
-    return RedirectResponse(url="/profiles", status_code=303)
+    return RedirectResponse(url="/users?msg=usuario_atualizado", status_code=303)
 
 
 @app.post("/profiles/{profile_id}/delete")
