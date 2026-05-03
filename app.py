@@ -4,6 +4,7 @@ import os
 import shutil
 import sqlite3
 import psycopg2
+from psycopg2.extras import RealDictCursor
 from urllib.parse import urlparse
 from datetime import datetime, date, timedelta
 from functools import wraps
@@ -53,6 +54,63 @@ app.config["DATABASE"] = str(DATABASE)
 app.config["EXPORTS_DIR"] = str(EXPORTS_DIR)
 app.config["BACKUPS_DIR"] = str(BACKUPS_DIR)
 
+STORE_ALLOWED_IP = os.environ.get("STORE_ALLOWED_IP", "").strip()
+ADMIN_SECRET_KEY = os.environ.get("ADMIN_SECRET_KEY", "").strip()
+
+
+def get_client_ip() -> str:
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.remote_addr or ""
+
+
+def is_store_network() -> bool:
+    client_ip = get_client_ip()
+    return bool(STORE_ALLOWED_IP and client_ip == STORE_ALLOWED_IP)
+
+
+def has_admin_key() -> bool:
+    key = request.args.get("chave", "").strip()
+    if key and ADMIN_SECRET_KEY and key == ADMIN_SECRET_KEY:
+        session["admin_key_ok"] = True
+        return True
+    return bool(session.get("admin_key_ok"))
+
+
+@app.before_request
+def security_gate():
+    allowed_public = ["static", "service_worker", "health"]
+
+    if request.endpoint in allowed_public:
+        return None
+
+    if request.path.startswith("/ponto") or request.path == "/":
+        if not is_store_network() and not has_admin_key():
+            return render_template(
+                "blocked.html",
+                ip=get_client_ip()
+            ), 403
+
+    admin_paths = [
+        "/login",
+        "/dashboard",
+        "/funcionarios",
+        "/registros",
+        "/relatorios",
+        "/jornadas",
+        "/configuracoes",
+        "/logout",
+    ]
+
+    if any(request.path.startswith(path) for path in admin_paths):
+        if not has_admin_key():
+            return render_template(
+                "blocked.html",
+                ip=get_client_ip()
+            ), 403
+
+    return None
 
 # ---------------------------
 # Database helpers
@@ -62,19 +120,10 @@ def get_db():
         database_url = os.getenv("DATABASE_URL")
 
         if database_url:
-            url = urlparse(database_url)
-
-            g.db = psycopg2.connect(
-                dbname=url.path[1:],
-                user=url.username,
-                password=url.password,
-                host=url.hostname,
-                port=url.port
-            )
+            g.db = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
         else:
             g.db = sqlite3.connect(app.config["DATABASE"])
-
-        g.db.row_factory = sqlite3.Row if hasattr(sqlite3, "Row") else None
+            g.db.row_factory = sqlite3.Row
 
     return g.db
 
@@ -152,10 +201,15 @@ def weekday_name(idx: int) -> str:
     return WEEKDAY_LABELS.get(idx, str(idx))
 
 
+def adapt_query(query: str) -> str:
+    if os.getenv("DATABASE_URL"):
+        return query.replace("?", "%s")
+    return query
+
+
 def query_db(query: str, params: tuple = (), one: bool = False) -> Any:
-    db = get_db()
-    cur = db.cursor()
-    cur.execute(query, params)
+    cur = get_db().cursor()
+    cur.execute(adapt_query(query), params)
     rows = cur.fetchall()
     cur.close()
     return (rows[0] if rows else None) if one else rows
@@ -164,10 +218,15 @@ def query_db(query: str, params: tuple = (), one: bool = False) -> Any:
 def execute_db(query: str, params: tuple = ()) -> int:
     db = get_db()
     cur = db.cursor()
-    cur.execute(query, params)
+    cur.execute(adapt_query(query), params)
     db.commit()
-    db.commit()
-    lastrowid = cur.lastrowid
+
+    lastrowid = 0
+    try:
+        lastrowid = cur.lastrowid
+    except Exception:
+        pass
+
     cur.close()
     return lastrowid
 
