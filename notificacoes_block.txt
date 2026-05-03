@@ -1,0 +1,327 @@
+
+# ===========================
+# Notificações profissionais
+# ===========================
+_NOTIFICATIONS_DB_READY = False
+
+
+def _table_exists(table_name: str) -> bool:
+    if os.getenv("DATABASE_URL"):
+        row = query_db(
+            "SELECT to_regclass(?) AS table_name",
+            (table_name,),
+            one=True,
+        )
+        return bool(row and row["table_name"])
+    row = query_db(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name = ?",
+        (table_name,),
+        one=True,
+    )
+    return bool(row)
+
+
+def ensure_notifications_tables() -> None:
+    """Cria tabelas de notificações/feriados sem alterar dados existentes."""
+    if os.getenv("DATABASE_URL"):
+        execute_db("""
+            CREATE TABLE IF NOT EXISTS holidays (
+                id SERIAL PRIMARY KEY,
+                holiday_date TEXT NOT NULL UNIQUE,
+                name TEXT NOT NULL,
+                kind TEXT NOT NULL DEFAULT 'Nacional',
+                created_at TEXT NOT NULL
+            )
+        """)
+        execute_db("""
+            CREATE TABLE IF NOT EXISTS notification_logs (
+                id SERIAL PRIMARY KEY,
+                unique_key TEXT NOT NULL UNIQUE,
+                alert_type TEXT NOT NULL,
+                employee_id INTEGER,
+                employee_name TEXT,
+                message TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                sent_status TEXT NOT NULL DEFAULT 'PENDENTE'
+            )
+        """)
+    else:
+        execute_db("""
+            CREATE TABLE IF NOT EXISTS holidays (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                holiday_date TEXT NOT NULL UNIQUE,
+                name TEXT NOT NULL,
+                kind TEXT NOT NULL DEFAULT 'Nacional',
+                created_at TEXT NOT NULL
+            )
+        """)
+        execute_db("""
+            CREATE TABLE IF NOT EXISTS notification_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                unique_key TEXT NOT NULL UNIQUE,
+                alert_type TEXT NOT NULL,
+                employee_id INTEGER,
+                employee_name TEXT,
+                message TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                sent_status TEXT NOT NULL DEFAULT 'PENDENTE'
+            )
+        """)
+
+    # Configurações padrão
+    for key in ("notify_phone_1", "notify_phone_2"):
+        row = query_db("SELECT value FROM settings WHERE key = ?", (key,), one=True)
+        if not row:
+            set_setting(key, "")
+
+    seed_holidays_2026()
+
+
+def ensure_notifications_ready() -> None:
+    global _NOTIFICATIONS_DB_READY
+    if not _NOTIFICATIONS_DB_READY:
+        ensure_notifications_tables()
+        _NOTIFICATIONS_DB_READY = True
+
+
+@app.before_request
+def notifications_bootstrap():
+    # Garante as tabelas sem bloquear static/health.
+    if request.endpoint not in ("static", "health", "service_worker"):
+        try:
+            ensure_notifications_ready()
+        except Exception as exc:
+            print("Erro ao inicializar notificações:", exc)
+
+
+def seed_holidays_2026() -> None:
+    """Feriados/pontos facultativos iniciais de 2026. Pode editar pelo painel."""
+    holidays = [
+        ("2026-01-01", "Confraternização Universal", "Nacional"),
+        ("2026-02-16", "Carnaval", "Ponto facultativo"),
+        ("2026-02-17", "Carnaval", "Ponto facultativo"),
+        ("2026-02-18", "Quarta-feira de Cinzas", "Ponto facultativo"),
+        ("2026-04-03", "Paixão de Cristo / Sexta-feira Santa", "Nacional/Municipal"),
+        ("2026-04-21", "Tiradentes", "Nacional"),
+        ("2026-05-01", "Dia do Trabalhador", "Nacional"),
+        ("2026-06-04", "Corpus Christi", "Ponto facultativo/Municipal"),
+        ("2026-09-07", "Independência do Brasil", "Nacional"),
+        ("2026-10-12", "Nossa Senhora Aparecida", "Nacional"),
+        ("2026-11-02", "Finados", "Nacional"),
+        ("2026-11-15", "Proclamação da República", "Nacional"),
+        ("2026-11-20", "Consciência Negra", "Nacional"),
+        ("2026-12-25", "Natal", "Nacional"),
+    ]
+    for holiday_date, name, kind in holidays:
+        try:
+            execute_db(
+                """
+                INSERT INTO holidays (holiday_date, name, kind, created_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(holiday_date) DO NOTHING
+                """,
+                (holiday_date, name, kind, now_iso()),
+            )
+        except Exception:
+            pass
+
+
+def get_holiday(ref_date: str):
+    ensure_notifications_ready()
+    return query_db(
+        "SELECT * FROM holidays WHERE holiday_date = ?",
+        (ref_date,),
+        one=True,
+    )
+
+
+def is_holiday_date(ref_date: str) -> bool:
+    return bool(get_holiday(ref_date))
+
+
+def create_notification(unique_key: str, alert_type: str, message: str, employee_id=None, employee_name=None) -> None:
+    ensure_notifications_ready()
+    try:
+        execute_db(
+            """
+            INSERT INTO notification_logs (unique_key, alert_type, employee_id, employee_name, message, created_at, sent_status)
+            VALUES (?, ?, ?, ?, ?, ?, 'PENDENTE')
+            ON CONFLICT(unique_key) DO NOTHING
+            """,
+            (unique_key, alert_type, employee_id, employee_name, message, now_iso()),
+        )
+    except Exception as exc:
+        print("Erro ao criar notificação:", exc)
+
+
+def wa_link(phone: str, message: str) -> Optional[str]:
+    phone = normalize_phone(phone or "")
+    if not phone:
+        return None
+    return build_whatsapp_link(phone, message)
+
+
+def check_attendance_notifications(ref_date: Optional[str] = None) -> int:
+    """Gera alertas de atraso e batidas esquecidas."""
+    ensure_notifications_ready()
+    ref_date = ref_date or today_str()
+    holiday = get_holiday(ref_date)
+    if holiday:
+        create_notification(
+            f"{ref_date}:FERIADO",
+            "FERIADO",
+            f"Hoje é feriado: {holiday['name']} ({holiday['kind']}). O sistema não gerou cobrança automática de atraso.",
+        )
+        return 1
+
+    generated = 0
+    now_value = now_dt()
+    employees_rows = query_db("SELECT * FROM employees WHERE active = 1 ORDER BY name")
+
+    for employee in employees_rows:
+        schedule = get_schedule_for_day(employee["id"], ref_date)
+        if not schedule:
+            continue
+
+        summary = calculate_day_summary(employee["id"], ref_date)
+        seq = summary["sequence"]
+        tolerance = int(schedule["tolerance_minutes"] or 0)
+        ref_day = parse_date(ref_date)
+
+        checks = [
+            ("ATRASO_ENTRADA", "ENTRADA", combine_day_time(ref_day, schedule["entry_time"]) + timedelta(minutes=tolerance),
+             f"{employee['name']} ainda não registrou ENTRADA. Jornada prevista: {schedule['entry_time']}."),
+            ("ESQUECEU_SAIDA_INTERVALO", "SAIDA_INTERVALO", combine_day_time(ref_day, schedule["lunch_out_time"]) + timedelta(minutes=tolerance),
+             f"{employee['name']} registrou entrada, mas ainda não registrou SAÍDA PARA INTERVALO. Horário previsto: {schedule['lunch_out_time']}."),
+            ("ESQUECEU_RETORNO_INTERVALO", "RETORNO_INTERVALO", combine_day_time(ref_day, schedule["lunch_in_time"]) + timedelta(minutes=tolerance),
+             f"{employee['name']} saiu para intervalo, mas ainda não registrou RETORNO DO INTERVALO. Horário previsto: {schedule['lunch_in_time']}."),
+            ("ESQUECEU_SAIDA", "SAIDA", combine_day_time(ref_day, schedule["exit_time"]) + timedelta(minutes=tolerance),
+             f"{employee['name']} ainda não registrou SAÍDA. Horário previsto: {schedule['exit_time']}."),
+        ]
+
+        for alert_type, required_record, limit_time, message in checks:
+            if now_value < limit_time:
+                continue
+
+            if required_record == "SAIDA_INTERVALO" and not seq.get("ENTRADA"):
+                continue
+            if required_record == "RETORNO_INTERVALO" and not seq.get("SAIDA_INTERVALO"):
+                continue
+            if required_record == "SAIDA" and not seq.get("ENTRADA"):
+                continue
+
+            if not seq.get(required_record):
+                unique = f"{ref_date}:{employee['id']}:{alert_type}"
+                full_message = f"Alerta Pet & Gatô%0AData: {parse_date(ref_date).strftime('%d/%m/%Y')}%0A{message}"
+                create_notification(unique, alert_type, full_message, employee["id"], employee["name"])
+                generated += 1
+
+    return generated
+
+
+def create_month_closing_notification(year: Optional[int] = None, month: Optional[int] = None) -> None:
+    ensure_notifications_ready()
+    today = date.today()
+    year = year or today.year
+    month = month or today.month
+    start, end = month_bounds(year, month)
+
+    employees_rows = query_db("SELECT id, name FROM employees WHERE active = 1 ORDER BY name")
+    total_extra = 0
+    total_delay = 0
+    total_inconsistencies = 0
+
+    for employee in employees_rows:
+        current = parse_date(start)
+        end_date = parse_date(end)
+        while current < end_date:
+            summary = calculate_day_summary(employee["id"], current.strftime("%Y-%m-%d"))
+            if summary["extra_minutes"] > 0:
+                total_extra += summary["extra_minutes"]
+            total_delay += summary["delay_minutes"]
+            if summary["inconsistency"]:
+                total_inconsistencies += 1
+            current += timedelta(days=1)
+
+    msg = (
+        f"Fechamento mensal Pet & Gatô%0A"
+        f"Referência: {month:02d}/{year}%0A"
+        f"Horas extras totais: {format_minutes(total_extra)}%0A"
+        f"Atrasos totais: {format_minutes(total_delay)}%0A"
+        f"Inconsistências: {total_inconsistencies}"
+    )
+    create_notification(f"{year}-{month:02d}:FECHAMENTO", "FECHAMENTO_MENSAL", msg)
+
+
+@app.route("/notificacoes")
+@admin_required
+def notifications_page():
+    ensure_notifications_ready()
+    phone1 = get_setting("notify_phone_1", "")
+    phone2 = get_setting("notify_phone_2", "")
+    logs = query_db("SELECT * FROM notification_logs ORDER BY created_at DESC, id DESC LIMIT 100")
+    prepared_logs = []
+    for log in logs:
+        row = dict(log)
+        row["link1"] = wa_link(phone1, row["message"])
+        row["link2"] = wa_link(phone2, row["message"])
+        prepared_logs.append(row)
+
+    holidays = query_db("SELECT * FROM holidays ORDER BY holiday_date ASC")
+    return render_template(
+        "notificacoes.html",
+        notify_phone_1=phone1,
+        notify_phone_2=phone2,
+        logs=prepared_logs,
+        holidays=holidays,
+        holiday_today=get_holiday(today_str()),
+    )
+
+
+@app.route("/notificacoes/config", methods=["POST"])
+@admin_required
+def notifications_settings():
+    ensure_notifications_ready()
+    set_setting("notify_phone_1", request.form.get("notify_phone_1", "").strip())
+    set_setting("notify_phone_2", request.form.get("notify_phone_2", "").strip())
+    flash("Números de WhatsApp salvos com sucesso.", "success")
+    return redirect(url_for("notifications_page"))
+
+
+@app.route("/notificacoes/verificar", methods=["POST"])
+@admin_required
+def notifications_run_check():
+    generated = check_attendance_notifications()
+    flash(f"Verificação concluída. Alertas novos gerados: {generated}.", "success")
+    return redirect(url_for("notifications_page"))
+
+
+@app.route("/notificacoes/fechamento", methods=["POST"])
+@admin_required
+def notifications_month_close():
+    create_month_closing_notification()
+    flash("Fechamento mensal gerado em notificações.", "success")
+    return redirect(url_for("notifications_page"))
+
+
+@app.route("/notificacoes/feriados", methods=["POST"])
+@admin_required
+def notifications_add_holiday():
+    ensure_notifications_ready()
+    holiday_date = request.form.get("holiday_date", "").strip()
+    holiday_name = request.form.get("holiday_name", "").strip()
+    holiday_type = request.form.get("holiday_type", "Nacional").strip() or "Nacional"
+    if not holiday_date or not holiday_name:
+        flash("Informe data e nome do feriado.", "danger")
+        return redirect(url_for("notifications_page"))
+
+    execute_db(
+        """
+        INSERT INTO holidays (holiday_date, name, kind, created_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(holiday_date) DO UPDATE SET name = excluded.name, kind = excluded.kind
+        """,
+        (holiday_date, holiday_name, holiday_type, now_iso()),
+    )
+    flash("Feriado salvo com sucesso.", "success")
+    return redirect(url_for("notifications_page"))
