@@ -102,6 +102,7 @@ def security_gate():
         "/relatorios",
         "/jornadas",
         "/configuracoes",
+        "/notificacoes",
         "/logout",
     ]
 
@@ -161,7 +162,9 @@ def parse_date(value: str) -> date:
 
 
 def parse_hhmm(value: str) -> Tuple[int, int]:
-    hh, mm = value.split(":")
+    if not value or ":" not in str(value):
+        raise ValueError(f"Horário inválido ou vazio: {value!r}")
+    hh, mm = str(value).split(":")[:2]
     return int(hh), int(mm)
 
 
@@ -1588,16 +1591,42 @@ def check_attendance_notifications(ref_date: Optional[str] = None) -> int:
         tolerance = int(schedule["tolerance_minutes"] or 0)
         ref_day = parse_date(ref_date)
 
-        checks = [
-            ("ATRASO_ENTRADA", "ENTRADA", combine_day_time(ref_day, schedule["entry_time"]) + timedelta(minutes=tolerance),
-             f"{employee['name']} ainda não registrou ENTRADA. Jornada prevista: {schedule['entry_time']}."),
-            ("ESQUECEU_SAIDA_INTERVALO", "SAIDA_INTERVALO", combine_day_time(ref_day, schedule["lunch_out_time"]) + timedelta(minutes=tolerance),
-             f"{employee['name']} registrou entrada, mas ainda não registrou SAÍDA PARA INTERVALO. Horário previsto: {schedule['lunch_out_time']}."),
-            ("ESQUECEU_RETORNO_INTERVALO", "RETORNO_INTERVALO", combine_day_time(ref_day, schedule["lunch_in_time"]) + timedelta(minutes=tolerance),
-             f"{employee['name']} saiu para intervalo, mas ainda não registrou RETORNO DO INTERVALO. Horário previsto: {schedule['lunch_in_time']}."),
-            ("ESQUECEU_SAIDA", "SAIDA", combine_day_time(ref_day, schedule["exit_time"]) + timedelta(minutes=tolerance),
-             f"{employee['name']} ainda não registrou SAÍDA. Horário previsto: {schedule['exit_time']}."),
-        ]
+        checks = []
+
+        # Alguns funcionários antigos podem estar sem jornada completa no banco.
+        # Nesses casos, ignoramos o horário faltante para evitar erro 500.
+        if schedule.get("entry_time"):
+            checks.append((
+                "ATRASO_ENTRADA",
+                "ENTRADA",
+                combine_day_time(ref_day, schedule["entry_time"]) + timedelta(minutes=tolerance),
+                f"{employee['name']} ainda não registrou ENTRADA. Jornada prevista: {schedule['entry_time']}.",
+            ))
+
+        if schedule.get("lunch_out_time"):
+            checks.append((
+                "ESQUECEU_SAIDA_INTERVALO",
+                "SAIDA_INTERVALO",
+                combine_day_time(ref_day, schedule["lunch_out_time"]) + timedelta(minutes=tolerance),
+                f"{employee['name']} registrou entrada, mas ainda não registrou SAÍDA PARA INTERVALO. Horário previsto: {schedule['lunch_out_time']}.",
+            ))
+
+        if schedule.get("lunch_in_time"):
+            checks.append((
+                "ESQUECEU_RETORNO_INTERVALO",
+                "RETORNO_INTERVALO",
+                combine_day_time(ref_day, schedule["lunch_in_time"]) + timedelta(minutes=tolerance),
+                f"{employee['name']} saiu para intervalo, mas ainda não registrou RETORNO DO INTERVALO. Horário previsto: {schedule['lunch_in_time']}.",
+            ))
+
+        if schedule.get("exit_time"):
+            checks.append((
+                "ESQUECEU_SAIDA",
+                "SAIDA",
+                combine_day_time(ref_day, schedule["exit_time"]) + timedelta(minutes=tolerance),
+                f"{employee['name']} ainda não registrou SAÍDA. Horário previsto: {schedule['exit_time']}.",
+            ))
+
 
         for alert_type, required_record, limit_time, message in checks:
             if now_value < limit_time:
@@ -1655,7 +1684,7 @@ def create_month_closing_notification(year: Optional[int] = None, month: Optiona
 
 @app.route("/notificacoes")
 @admin_required
-def notifications_page():
+def notificacoes():
     ensure_notifications_ready()
     phone1 = get_setting("notify_phone_1", "")
     phone2 = get_setting("notify_phone_2", "")
@@ -1678,6 +1707,7 @@ def notifications_page():
     )
 
 
+
 @app.route("/notificacoes/config", methods=["POST"])
 @admin_required
 def notifications_settings():
@@ -1685,7 +1715,7 @@ def notifications_settings():
     set_setting("notify_phone_1", request.form.get("notify_phone_1", "").strip())
     set_setting("notify_phone_2", request.form.get("notify_phone_2", "").strip())
     flash("Números de WhatsApp salvos com sucesso.", "success")
-    return redirect(url_for("notifications_page"))
+    return redirect(url_for("notificacoes"))
 
 
 @app.route("/notificacoes/verificar", methods=["POST"])
@@ -1693,7 +1723,7 @@ def notifications_settings():
 def notifications_run_check():
     generated = check_attendance_notifications()
     flash(f"Verificação concluída. Alertas novos gerados: {generated}.", "success")
-    return redirect(url_for("notifications_page"))
+    return redirect(url_for("notificacoes"))
 
 
 @app.route("/notificacoes/fechamento", methods=["POST"])
@@ -1701,7 +1731,7 @@ def notifications_run_check():
 def notifications_month_close():
     create_month_closing_notification()
     flash("Fechamento mensal gerado em notificações.", "success")
-    return redirect(url_for("notifications_page"))
+    return redirect(url_for("notificacoes"))
 
 
 @app.route("/notificacoes/feriados", methods=["POST"])
@@ -1713,7 +1743,7 @@ def notifications_add_holiday():
     holiday_type = request.form.get("holiday_type", "Nacional").strip() or "Nacional"
     if not holiday_date or not holiday_name:
         flash("Informe data e nome do feriado.", "danger")
-        return redirect(url_for("notifications_page"))
+        return redirect(url_for("notificacoes"))
 
     execute_db(
         """
@@ -1724,7 +1754,7 @@ def notifications_add_holiday():
         (holiday_date, holiday_name, holiday_type, now_iso()),
     )
     flash("Feriado salvo com sucesso.", "success")
-    return redirect(url_for("notifications_page"))
+    return redirect(url_for("notificacoes"))
 
 # Inicializa as tabelas tanto no Render/PostgreSQL quanto no Windows/SQLite.
 with app.app_context():
