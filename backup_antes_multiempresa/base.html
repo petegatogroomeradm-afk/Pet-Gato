@@ -43,8 +43,6 @@
             <a href="{{ url_for('punch') }}">Ponto</a>
             {% if session.get('user_id') %}
                 <a href="{{ url_for('dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('companies_page') }}">Empresas</a>
-                <a href="{{ url_for('plans_page') }}">Planos</a>
                 <a href="{{ url_for('employees') }}">Funcionários</a>
                 <a href="{{ url_for('schedules') }}">Jornadas</a>
                 <a href="{{ url_for('records') }}">Registros</a>

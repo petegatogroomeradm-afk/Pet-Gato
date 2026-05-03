@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Empresas</h1>
+    <p>Cadastro de clientes para vender o sistema como SaaS multiempresa.</p>
+  </div>
+</div>
+
+<section class="card">
+  <h2>Nova empresa / cliente</h2>
+  <form method="post" class="form-grid">
+    <label>Nome da empresa<input name="name" required placeholder="Ex: Clínica Modelo"></label>
+    <label>Identificador / slug<input name="slug" required placeholder="clinica-modelo"></label>
+    <label>Responsável<input name="responsible_name" placeholder="Nome do responsável"></label>
+    <label>E-mail<input name="email" type="email" placeholder="cliente@email.com"></label>
+    <label>WhatsApp<input name="phone" placeholder="5531999999999"></label>
+    <label>Plano
+      <select name="plan">
+        <option value="BASICO">Básico - até 5 funcionários</option>
+        <option value="PRO">Profissional - até 20 funcionários</option>
+        <option value="PREMIUM">Premium - ilimitado</option>
+      </select>
+    </label>
+    <label>Status
+      <select name="status">
+        <option value="ATIVO">Ativo</option>
+        <option value="TESTE">Teste</option>
+        <option value="BLOQUEADO">Bloqueado</option>
+      </select>
+    </label>
+    <label>Teste grátis até<input name="trial_until" type="date"></label>
+    <button class="btn primary" type="submit">Salvar empresa</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Clientes cadastrados</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Empresa</th><th>Plano</th><th>Status</th><th>Funcionários</th><th>Responsável</th><th>Ação</th></tr></thead>
+      <tbody>
+      {% for c in companies %}
+        <tr>
+          <td><strong>{{ c.name }}</strong><br><small>{{ c.slug }}</small></td>
+          <td>{{ c.plan }}</td>
+          <td>{{ c.status }}</td>
+          <td>{{ c.employees_count }} / {{ c.limit }}</td>
+          <td>{{ c.responsible_name or '-' }}<br><small>{{ c.phone or '' }}</small></td>
+          <td><a class="btn small" href="{{ url_for('switch_company', company_id=c.id) }}">Entrar</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">Nenhuma empresa cadastrada.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

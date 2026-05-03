@@ -1,0 +1,31 @@
+MULTIEMPRESA PET & GATÔ PONTO
+
+O pacote adiciona:
+- cadastro de empresas/clientes
+- planos Básico, Profissional e Premium
+- campo company_id nas tabelas principais
+- empresa padrão Pet & Gatô para preservar dados atuais
+- tela /empresas
+- tela /planos
+- tela /assinatura
+- menu com Empresas e Planos
+
+Como aplicar:
+1. Extraia a pasta multiempresa_completo_petegato dentro de D:\Relogio de ponto WEB
+2. No PowerShell:
+
+cd "D:\Relogio de ponto WEB"
+python "D:\Relogio de ponto WEB\multiempresa_completo_petegato\aplicar_multiempresa_completo.py"
+git add .
+git commit -m "Adiciona multiempresa SaaS"
+git push
+
+3. Aguarde o Render atualizar.
+
+Links:
+https://ponto.petegato.com.br/empresas
+https://ponto.petegato.com.br/planos
+https://ponto.petegato.com.br/assinatura
+
+Observação importante:
+Esse pacote prepara a base comercial multiempresa. O próximo passo recomendado é ativar isolamento total por empresa em todos os relatórios e telas operacionais antes de vender para clientes reais.
