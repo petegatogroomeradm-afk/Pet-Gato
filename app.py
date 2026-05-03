@@ -58,16 +58,18 @@ STORE_ALLOWED_IP = os.environ.get("STORE_ALLOWED_IP", "").strip()
 ADMIN_SECRET_KEY = os.environ.get("ADMIN_SECRET_KEY", "").strip()
 
 
-def get_client_ip() -> str:
-    forwarded = request.headers.get("X-Forwarded-For", "")
+def get_client_ip():
+    forwarded = request.headers.get("X-Forwarded-For")
+
     if forwarded:
         return forwarded.split(",")[0].strip()
-    return request.remote_addr or ""
+
+    return request.remote_addr
 
 
-def is_store_network() -> bool:
+def is_store_network():
     client_ip = get_client_ip()
-    return bool(STORE_ALLOWED_IP and client_ip == STORE_ALLOWED_IP)
+    return client_ip == STORE_ALLOWED_IP
 
 
 def has_admin_key() -> bool:
