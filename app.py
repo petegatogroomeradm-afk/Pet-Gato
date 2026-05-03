@@ -1403,5 +1403,16 @@ def inject_globals():
 with app.app_context():
     init_db()
 
+from flask import request, render_template
+
+@app.route("/notificacoes")
+def notificacoes():
+    chave = request.args.get("chave")
+
+    if chave != "PetGatoAdmin@2026Seguro":
+        return "Acesso negado"
+
+    return render_template("notificacoes.html")
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
