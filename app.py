@@ -58,18 +58,18 @@ STORE_ALLOWED_IP = os.environ.get("STORE_ALLOWED_IP", "").strip()
 ADMIN_SECRET_KEY = os.environ.get("ADMIN_SECRET_KEY", "").strip()
 
 
-def get_client_ip():
-    forwarded = request.headers.get("X-Forwarded-For")
+def get_client_ip() -> str:
+    """Retorna o IP real do usuário atrás do proxy do Render."""
+    for header in ("X-Forwarded-For", "X-Real-IP", "CF-Connecting-IP", "True-Client-IP"):
+        value = request.headers.get(header, "")
+        if value:
+            return value.split(",")[0].strip()
+    return request.remote_addr or ""
 
-    if forwarded:
-        return forwarded.split(",")[0].strip()
 
-    return request.remote_addr
-
-
-def is_store_network():
+def is_store_network() -> bool:
     client_ip = get_client_ip()
-    return client_ip == STORE_ALLOWED_IP
+    return bool(STORE_ALLOWED_IP and client_ip == STORE_ALLOWED_IP)
 
 
 def has_admin_key() -> bool:
@@ -220,17 +220,37 @@ def query_db(query: str, params: tuple = (), one: bool = False) -> Any:
 def execute_db(query: str, params: tuple = ()) -> int:
     db = get_db()
     cur = db.cursor()
-    cur.execute(adapt_query(query), params)
-    db.commit()
-
+    is_postgres = bool(os.getenv("DATABASE_URL"))
+    sql = adapt_query(query)
     lastrowid = 0
-    try:
-        lastrowid = cur.lastrowid
-    except Exception:
-        pass
 
-    cur.close()
-    return lastrowid
+    try:
+        if is_postgres:
+            normalized = sql.strip().lower()
+            needs_returning = (
+                normalized.startswith("insert into")
+                and " returning " not in normalized
+                and not normalized.startswith("insert into settings")
+            )
+            if needs_returning:
+                sql_to_run = sql.rstrip().rstrip(";") + " RETURNING id"
+                cur.execute(sql_to_run, params)
+                row = cur.fetchone()
+                if row:
+                    lastrowid = row["id"] if isinstance(row, dict) else row[0]
+            else:
+                cur.execute(sql, params)
+        else:
+            cur.execute(sql, params)
+            lastrowid = cur.lastrowid
+
+        db.commit()
+        return lastrowid
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        cur.close()
 
 
 def get_setting(key: str, default: str = "") -> str:
@@ -253,6 +273,129 @@ def init_db() -> None:
     INSTANCE_DIR.mkdir(parents=True, exist_ok=True)
     EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
     BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
+
+    database_url = os.getenv("DATABASE_URL")
+
+    if database_url:
+        with psycopg2.connect(database_url, cursor_factory=RealDictCursor) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    username TEXT NOT NULL UNIQUE,
+                    password_hash TEXT NOT NULL,
+                    role TEXT NOT NULL DEFAULT 'admin',
+                    active INTEGER NOT NULL DEFAULT 1,
+                    created_at TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS schedules (
+                    id SERIAL PRIMARY KEY,
+                    description TEXT NOT NULL,
+                    entry_time TEXT NOT NULL,
+                    lunch_out_time TEXT NOT NULL,
+                    lunch_in_time TEXT NOT NULL,
+                    exit_time TEXT NOT NULL,
+                    tolerance_minutes INTEGER NOT NULL DEFAULT 10,
+                    active INTEGER NOT NULL DEFAULT 1
+                );
+
+                CREATE TABLE IF NOT EXISTS employees (
+                    id SERIAL PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    cpf TEXT,
+                    registration TEXT NOT NULL UNIQUE,
+                    role_name TEXT,
+                    phone TEXT,
+                    admission_date TEXT,
+                    pin_hash TEXT NOT NULL,
+                    schedule_id INTEGER REFERENCES schedules(id),
+                    active INTEGER NOT NULL DEFAULT 1,
+                    created_at TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS employee_schedule_days (
+                    id SERIAL PRIMARY KEY,
+                    employee_id INTEGER NOT NULL REFERENCES employees(id),
+                    weekday INTEGER NOT NULL,
+                    schedule_id INTEGER NOT NULL REFERENCES schedules(id),
+                    UNIQUE(employee_id, weekday)
+                );
+
+                CREATE TABLE IF NOT EXISTS time_records (
+                    id SERIAL PRIMARY KEY,
+                    employee_id INTEGER NOT NULL REFERENCES employees(id),
+                    record_type TEXT NOT NULL,
+                    record_time TEXT NOT NULL,
+                    notes TEXT,
+                    ip_origin TEXT,
+                    created_at TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS time_adjustments (
+                    id SERIAL PRIMARY KEY,
+                    record_id INTEGER REFERENCES time_records(id),
+                    employee_id INTEGER NOT NULL REFERENCES employees(id),
+                    admin_user_id INTEGER NOT NULL REFERENCES users(id),
+                    old_value TEXT,
+                    new_value TEXT NOT NULL,
+                    reason TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS system_logs (
+                    id SERIAL PRIMARY KEY,
+                    user_name TEXT,
+                    action TEXT NOT NULL,
+                    details TEXT,
+                    created_at TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+                """)
+
+                cur.execute("SELECT id FROM schedules LIMIT 1")
+                if not cur.fetchone():
+                    cur.execute("""
+                        INSERT INTO schedules (
+                            description, entry_time, lunch_out_time, lunch_in_time, exit_time, tolerance_minutes, active
+                        ) VALUES
+                        (%s, %s, %s, %s, %s, %s, %s),
+                        (%s, %s, %s, %s, %s, %s, %s),
+                        (%s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        "Jornada padrão 08h às 17h", "08:00", "12:00", "13:00", "17:00", 10, 1,
+                        "Terça a Sexta 09h às 18h", "09:00", "12:00", "13:00", "18:00", 10, 1,
+                        "Sábado 08h às 17h", "08:00", "12:00", "13:00", "17:00", 10, 1,
+                    ))
+
+                cur.execute("SELECT id FROM users WHERE username = %s", ("admin",))
+                if not cur.fetchone():
+                    cur.execute("""
+                        INSERT INTO users (name, username, password_hash, role, active, created_at)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (
+                        "Administrador",
+                        "admin",
+                        generate_password_hash("Pet&gato3264"),
+                        "admin",
+                        1,
+                        now_iso(),
+                    ))
+
+                cur.execute("SELECT key FROM settings WHERE key = %s", ("company_whatsapp",))
+                if not cur.fetchone():
+                    cur.execute(
+                        "INSERT INTO settings (key, value, updated_at) VALUES (%s, %s, %s)",
+                        ("company_whatsapp", "", now_iso()),
+                    )
+            conn.commit()
+        return
 
     schema = """
     CREATE TABLE IF NOT EXISTS users (
@@ -1067,36 +1210,10 @@ def inject_globals():
         "format_dt": format_dt,
     }
 
-def init_db_postgres():
-    db = get_db()
-    cur = db.cursor()
 
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS funcionarios (
-        id SERIAL PRIMARY KEY,
-        nome TEXT,
-        cargo TEXT
-    );
-    """)
-
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS registros (
-        id SERIAL PRIMARY KEY,
-        funcionario_id INTEGER,
-        tipo TEXT,
-        data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    """)
-
-    db.commit()
-
-
-# roda automaticamente quando iniciar
-try:
-    init_db_postgres()
-except Exception as e:
-    print("Erro ao criar tabelas:", e)
+# Inicializa as tabelas tanto no Render/PostgreSQL quanto no Windows/SQLite.
+with app.app_context():
+    init_db()
 
 if __name__ == "__main__":
-    init_db()
     app.run(host="0.0.0.0", port=8080, debug=True)
