@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Registros{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Consulta de Registros</h2>
+    <form method="get" class="filters-inline">
+        <label>Data
+            <input type="date" name="ref_date" value="{{ ref_date }}">
+        </label>
+        <label>Funcionário
+            <select name="employee_id">
+                <option value="">Todos</option>
+                {% for emp in employees %}
+                    <option value="{{ emp.id }}" {% if employee_id == emp.id %}selected{% endif %}>{{ emp.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit">Filtrar</button>
+    </form>
+</div>
+
+<div class="card">
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Funcionário</th>
+                    <th>Matrícula</th>
+                    <th>Tipo</th>
+                    <th>Data/Hora</th>
+                    <th>IP</th>
+                    <th>Ajuste</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in records %}
+                <tr>
+                    <td>{{ row.employee_name }}</td>
+                    <td>{{ row.registration }}</td>
+                    <td>{{ row.record_type }}</td>
+                    <td>{{ format_dt(row.record_time) }}</td>
+                    <td>{{ row.ip_origin }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('adjust_record', record_id=row.id) }}" class="adjust-form">
+                            <input type="text" name="new_value" value="{{ row.record_time }}" placeholder="YYYY-MM-DD HH:MM:SS">
+                            <input type="text" name="reason" placeholder="Motivo do ajuste">
+                            <button type="submit">Salvar ajuste</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6">Nenhum registro encontrado.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
