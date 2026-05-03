@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 import shutil
 import sqlite3
+import psycopg2
+from urllib.parse import urlparse
 from datetime import datetime, date, timedelta
 from functools import wraps
 from pathlib import Path
@@ -55,10 +57,25 @@ app.config["BACKUPS_DIR"] = str(BACKUPS_DIR)
 # ---------------------------
 # Database helpers
 # ---------------------------
-def get_db() -> sqlite3.Connection:
+def get_db():
     if "db" not in g:
-        g.db = sqlite3.connect(app.config["DATABASE"])
-        g.db.row_factory = sqlite3.Row
+        database_url = os.getenv("DATABASE_URL")
+
+        if database_url:
+            url = urlparse(database_url)
+
+            g.db = psycopg2.connect(
+                dbname=url.path[1:],
+                user=url.username,
+                password=url.password,
+                host=url.hostname,
+                port=url.port
+            )
+        else:
+            g.db = sqlite3.connect(app.config["DATABASE"])
+
+        g.db.row_factory = sqlite3.Row if hasattr(sqlite3, "Row") else None
+
     return g.db
 
 
@@ -136,7 +153,9 @@ def weekday_name(idx: int) -> str:
 
 
 def query_db(query: str, params: tuple = (), one: bool = False) -> Any:
-    cur = get_db().execute(query, params)
+    db = get_db()
+    cur = db.cursor()
+    cur.execute(query, params)
     rows = cur.fetchall()
     cur.close()
     return (rows[0] if rows else None) if one else rows
@@ -144,7 +163,9 @@ def query_db(query: str, params: tuple = (), one: bool = False) -> Any:
 
 def execute_db(query: str, params: tuple = ()) -> int:
     db = get_db()
-    cur = db.execute(query, params)
+    cur = db.cursor()
+    cur.execute(query, params)
+    db.commit()
     db.commit()
     lastrowid = cur.lastrowid
     cur.close()
