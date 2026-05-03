@@ -1,0 +1,57 @@
+# Notificações profissionais — Pet & Gatô
+
+Este pacote adiciona ao relógio de ponto:
+
+- aviso de funcionário atrasado
+- aviso de batida esquecida
+- fechamento mensal automático/manual
+- envio para dois números de WhatsApp via links prontos
+- cadastro e exibição de feriados
+- alerta visual quando o dia atual for feriado
+
+## Como aplicar
+
+1. Extraia este ZIP.
+2. Copie a pasta extraída para dentro do projeto ou rode o script direto da pasta extraída.
+3. No PowerShell, na raiz do projeto:
+
+```powershell
+cd "D:\Relogio de ponto WEB"
+python "CAMINHO_DA_PASTA_EXTRAIDA\aplicar_notificacoes_profissionais.py"
+git add .
+git commit -m "Adiciona notificacoes profissionais"
+git push
+```
+
+## Depois de subir
+
+Acesse:
+
+```text
+https://ponto.petegato.com.br/login?chave=SUA_CHAVE
+```
+
+Entre no menu/rota:
+
+```text
+/notificacoes
+```
+
+Ou acesse direto:
+
+```text
+https://ponto.petegato.com.br/notificacoes?chave=SUA_CHAVE
+```
+
+## WhatsApp
+
+Configure dois números no formato:
+
+```text
+5531999999999
+5531988888888
+```
+
+O sistema gera links prontos para enviar as mensagens pelo WhatsApp.
+
+Para envio 100% automático sem clique, é necessário integrar uma API oficial/externa de WhatsApp Business.
