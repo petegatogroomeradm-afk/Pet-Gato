@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Acesso bloqueado</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f3fb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .box {
+            background: white;
+            max-width: 460px;
+            padding: 30px;
+            border-radius: 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.12);
+            text-align: center;
+        }
+
+        h1 {
+            color: #8b2bbf;
+        }
+
+        p {
+            color: #333;
+        }
+
+        .ip {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Acesso bloqueado</h1>
+        <p>Este sistema só pode ser acessado pela rede autorizada da loja.</p>
+        <p>Se você é administrador, acesse usando o link seguro.</p>
+        <div class="ip">IP detectado: {{ ip }}</div>
+    </div>
+</body>
+</html>
