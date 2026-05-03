@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: pet-gato-web
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    autoDeploy: true
+    envVars:
+      - key: APP_DB_MODE
+        value: postgres
+      - key: DATABASE_URL
+        sync: false
+      - key: SQLITE_PATH
+        value: petgato_web.db

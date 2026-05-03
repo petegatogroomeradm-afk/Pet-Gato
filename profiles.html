@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h2>Perfis</h2>
+    <p class="muted">Criação e edição de perfis personalizados</p>
+</div>
+
+<div class="profiles-page">
+    <div class="card profiles-form-card">
+        <h3>{% if edit_profile %}Editar perfil{% else %}Novo perfil{% endif %}</h3>
+        <form method="post" action="{% if edit_profile %}/profiles/{{ edit_profile['id'] }}/edit{% else %}/profiles{% endif %}" class="form-grid">
+            <input type="text" name="name" placeholder="Nome do perfil" required value="{{ edit_profile['name'] if edit_profile else '' }}">
+
+            <div class="permissions-box">
+                <strong>Permissões do perfil</strong>
+                <div class="permissions-grid">
+                    {% for key, label in permission_options %}
+                    <label class="perm-item">
+                        <input type="checkbox" name="permissions" value="{{ key }}" {% if key in selected_permissions %}checked{% endif %}>
+                        <span>{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <button type="submit">{% if edit_profile %}Salvar alterações{% else %}Criar perfil{% endif %}</button>
+            {% if edit_profile %}
+            <a class="quick-btn secondary-btn" href="/profiles">Cancelar edição</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="card profiles-list-card">
+        <h3>Lista de perfis</h3>
+        <div class="table-wrap profiles-table-wrap">
+            <table class="profiles-table">
+                <thead>
+                    <tr>
+                        <th class="col-id">ID</th>
+                        <th class="col-name">Perfil</th>
+                        <th class="col-perms">Permissões</th>
+                        <th class="col-actions">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in profiles %}
+                    <tr>
+                        <td class="col-id">{{ item["id"] }}</td>
+                        <td class="col-name">{{ item["name"] }}</td>
+                        <td class="col-perms">
+                            <div class="perm-tags">
+                                {% for perm in (item["permissions"] or "").split(",") if perm %}
+                                <span class="perm-tag">{{ perm }}</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td class="col-actions">
+                            <div class="action-row profiles-actions">
+                                <a class="mini-btn" href="/profiles?edit_id={{ item['id'] }}">Editar</a>
+                                {% if item["name"] != "Administrador" %}
+                                <form method="post" action="/profiles/{{ item['id'] }}/delete" onsubmit="return confirm('Deseja excluir este perfil?');">
+                                    <button class="mini-btn red" type="submit">Excluir</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4">Nenhum perfil cadastrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h2>Empresa</h2>
+    <p class="muted">Configurações gerais da empresa</p>
+</div>
+
+<div class="grid-two company-grid">
+    <div class="card">
+        <h3>Dados da empresa</h3>
+        <form method="post" action="/company" class="form-grid">
+            <input type="text" name="nome_empresa" placeholder="Razão social" value="{{ company['nome_empresa'] if company else '' }}">
+            <input type="text" name="nome_fantasia" placeholder="Nome fantasia" value="{{ company['nome_fantasia'] if company else '' }}">
+            <input type="text" name="cnpj" placeholder="CNPJ" value="{{ company['cnpj'] if company else '' }}">
+            <input type="text" name="telefone" placeholder="Telefone" value="{{ company['telefone'] if company else '' }}">
+            <input type="text" name="whatsapp" placeholder="WhatsApp" value="{{ company['whatsapp'] if company else '' }}">
+            <input type="email" name="email" placeholder="E-mail" value="{{ company['email'] if company else '' }}">
+            <input type="text" name="endereco" placeholder="Endereço" value="{{ company['endereco'] if company else '' }}">
+            <div class="split-2">
+                <input type="text" name="cidade" placeholder="Cidade" value="{{ company['cidade'] if company else '' }}">
+                <input type="text" name="estado" placeholder="Estado" value="{{ company['estado'] if company else '' }}">
+            </div>
+            <input type="text" name="cep" placeholder="CEP" value="{{ company['cep'] if company else '' }}">
+            <div class="split-2">
+                <input type="text" name="pix_chave" placeholder="Chave PIX" value="{{ company['pix_chave'] if company else '' }}">
+                <select name="pix_tipo">
+                    <option value="">Tipo da chave PIX</option>
+                    {% for item in ['CPF','CNPJ','E-mail','Telefone','Aleatória'] %}
+                    <option value="{{ item }}" {% if company and company['pix_tipo'] == item %}selected{% endif %}>{{ item }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <input type="text" name="logo_url" placeholder="URL da logo" value="{{ company['logo_url'] if company else '' }}">
+            <textarea name="observacoes" placeholder="Observações">{{ company['observacoes'] if company else '' }}</textarea>
+            <button type="submit">Salvar configurações</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>Resumo atual</h3>
+        <div class="company-summary">
+            {% if company and company['logo_url'] %}
+            <img class="company-logo-preview" src="{{ company['logo_url'] }}" alt="Logo da empresa">
+            {% endif %}
+
+            <div class="summary-item">
+                <strong>Razão social</strong>
+                <span>{{ company['nome_empresa'] if company and company['nome_empresa'] else '-' }}</span>
+            </div>
+            <div class="summary-item">
+                <strong>Nome fantasia</strong>
+                <span>{{ company['nome_fantasia'] if company and company['nome_fantasia'] else '-' }}</span>
+            </div>
+            <div class="summary-item">
+                <strong>CNPJ</strong>
+                <span>{{ company['cnpj'] if company and company['cnpj'] else '-' }}</span>
+            </div>
+            <div class="summary-item">
+                <strong>Contato</strong>
+                <span>{{ company['telefone'] if company and company['telefone'] else '-' }}</span>
+            </div>
+            <div class="summary-item">
+                <strong>WhatsApp</strong>
+                <span>{{ company['whatsapp'] if company and company['whatsapp'] else '-' }}</span>
+            </div>
+            <div class="summary-item">
+                <strong>E-mail</strong>
+                <span>{{ company['email'] if company and company['email'] else '-' }}</span>
+            </div>
+            <div class="summary-item">
+                <strong>Endereço</strong>
+                <span>{{ company['endereco'] if company and company['endereco'] else '-' }}</span>
+            </div>
+            <div class="summary-item">
+                <strong>Cidade / Estado</strong>
+                <span>
+                    {% if company and (company['cidade'] or company['estado']) %}
+                        {{ company['cidade'] or '' }}{% if company['cidade'] and company['estado'] %} / {% endif %}{{ company['estado'] or '' }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </span>
+            </div>
+            <div class="summary-item">
+                <strong>CEP</strong>
+                <span>{{ company['cep'] if company and company['cep'] else '-' }}</span>
+            </div>
+            <div class="summary-item">
+                <strong>PIX</strong>
+                <span>
+                    {% if company and company['pix_chave'] %}
+                        {{ company['pix_tipo'] or 'Chave' }}: {{ company['pix_chave'] }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

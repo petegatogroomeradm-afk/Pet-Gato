@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet & Gato Web</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <h1>Pet & Gato</h1>
+            {% if user %}
+            <p class="muted">{{ user["full_name"] }}<br>{{ user["profile_name"] }}</p>
+            <nav>
+                {% if can_access(user, 'dashboard') %}
+                <a class="{% if current_section == 'dashboard' %}active-link{% endif %}" href="/dashboard">Dashboard</a>
+                {% endif %}
+
+                {% if can_access(user, 'clients') %}
+                <a class="{% if current_section == 'clients' %}active-link{% endif %}" href="/clients">Clientes</a>
+                {% endif %}
+                {% if can_access(user, 'pets') %}
+                <a class="{% if current_section == 'pets' %}active-link{% endif %}" href="/pets">Pets</a>
+                {% endif %}
+                {% if can_access(user, 'appointments') %}
+                <a class="{% if current_section == 'appointments' %}active-link{% endif %}" href="/appointments">Agendamentos</a>
+                {% endif %}
+                {% if can_access(user, 'agenda') %}
+                <a class="{% if current_section == 'agenda' %}active-link{% endif %}" href="/agenda">Agenda visual</a>
+                {% endif %}
+                {% if can_access(user, 'financeiro') %}
+                <a class="{% if current_section == 'financeiro' %}active-link{% endif %}" href="/financeiro">Financeiro</a>
+                {% endif %}
+                {% if can_access(user, 'relatorios') %}
+                <a class="{% if current_section == 'relatorios' %}active-link{% endif %}" href="/relatorios">Relatórios</a>
+                {% endif %}
+                {% if can_access(user, 'motorista') %}
+                <a class="{% if current_section == 'motorista' %}active-link{% endif %}" href="/motorista">Painel motorista</a>
+                {% endif %}
+                {% if can_access(user, 'users') %}
+                <a class="{% if current_section == 'users' %}active-link{% endif %}" href="/users">Usuários</a>
+                {% endif %}
+                {% if can_access(user, 'profiles') %}
+                <a class="{% if current_section == 'profiles' %}active-link{% endif %}" href="/profiles">Perfis</a>
+                {% endif %}
+                {% if can_access(user, 'company') %}
+                <a class="{% if current_section == 'company' %}active-link{% endif %}" href="/company">Empresa</a>
+                {% endif %}
+                {% if can_access(user, 'backup') %}
+                <a class="{% if current_section == 'backup' %}active-link{% endif %}" href="/backup">Backup</a>
+                {% endif %}
+
+                <a href="/logout">Sair</a>
+            </nav>
+            {% endif %}
+        </aside>
+        <main class="content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

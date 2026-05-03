@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h2>Pets</h2>
+    <p class="muted">Cadastro com edição, exclusão e filtros</p>
+</div>
+
+<div class="card" style="margin-bottom:16px;">
+    <form method="get" action="/pets" class="filter-grid pets-filter-grid">
+        <input type="text" name="q" placeholder="Buscar por pet, espécie, raça ou tutor" value="{{ q or '' }}">
+        <select name="tutor_id">
+            <option value="">Todos os tutores</option>
+            {% for client in clients %}
+            <option value="{{ client['id'] }}" {% if tutor_id and tutor_id == client['id'] %}selected{% endif %}>{{ client["nome"] }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filtrar</button>
+        <a class="quick-btn secondary-btn" href="/pets">Limpar</a>
+    </form>
+</div>
+
+<div class="grid-two">
+    <div class="card">
+        <h3>{% if edit_pet %}Editar pet{% else %}Novo pet{% endif %}</h3>
+        <form method="post" action="{% if edit_pet %}/pets/{{ edit_pet['id'] }}/edit{% else %}/pets{% endif %}" class="form-grid">
+            <select name="client_id" required>
+                <option value="">Selecione o tutor</option>
+                {% for client in clients %}
+                <option value="{{ client['id'] }}" {% if edit_pet and edit_pet['client_id'] == client['id'] %}selected{% endif %}>{{ client["nome"] }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="nome" placeholder="Nome do pet" required value="{{ edit_pet['nome'] if edit_pet else '' }}">
+            <input type="text" name="especie" placeholder="Espécie" value="{{ edit_pet['especie'] if edit_pet else '' }}">
+            <input type="text" name="raca" placeholder="Raça" value="{{ edit_pet['raca'] if edit_pet else '' }}">
+            <input type="text" name="porte" placeholder="Porte" value="{{ edit_pet['porte'] if edit_pet else '' }}">
+            <input type="text" name="idade" placeholder="Idade" value="{{ edit_pet['idade'] if edit_pet else '' }}">
+            <textarea name="observacoes" placeholder="Observações">{{ edit_pet['observacoes'] if edit_pet else '' }}</textarea>
+            <button type="submit">{% if edit_pet %}Salvar alterações{% else %}Salvar pet{% endif %}</button>
+            {% if edit_pet %}
+            <a class="quick-btn secondary-btn" href="/pets">Cancelar edição</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>Lista de pets</h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Pet</th>
+                        <th>Tutor</th>
+                        <th>Espécie</th>
+                        <th>Raça</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pet in pets %}
+                    <tr>
+                        <td>{{ pet["id"] }}</td>
+                        <td>{{ pet["nome"] }}</td>
+                        <td>{{ pet["cliente_nome"] }}</td>
+                        <td>{{ pet["especie"] or "" }}</td>
+                        <td>{{ pet["raca"] or "" }}</td>
+                        <td>
+                            <div class="action-row">
+                                <a class="mini-btn" href="/pets?edit_id={{ pet['id'] }}">Editar</a>
+                                <form method="post" action="/pets/{{ pet['id'] }}/delete" onsubmit="return confirm('Deseja excluir este pet?');">
+                                    <button class="mini-btn red" type="submit">Excluir</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6">Nenhum pet encontrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

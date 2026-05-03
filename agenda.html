@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header agenda-header">
+    <div>
+        <h2>Agenda visual</h2>
+        <p class="muted">Visão mensal dos agendamentos</p>
+    </div>
+    <div class="agenda-nav">
+        <a class="nav-btn" href="/agenda?year={{ prev_year }}&month={{ prev_month }}">← Mês anterior</a>
+        <div class="agenda-title">{{ month_name }} / {{ year }}</div>
+        <a class="nav-btn" href="/agenda?year={{ next_year }}&month={{ next_month }}">Próximo mês →</a>
+    </div>
+</div>
+
+<div class="calendar-grid">
+    <div class="weekday">Dom</div>
+    <div class="weekday">Seg</div>
+    <div class="weekday">Ter</div>
+    <div class="weekday">Qua</div>
+    <div class="weekday">Qui</div>
+    <div class="weekday">Sex</div>
+    <div class="weekday">Sáb</div>
+
+    {% for week in weeks %}
+        {% for day in week %}
+            {% set iso = day.strftime("%Y-%m-%d") %}
+            {% set items = grouped_preview.get(iso, []) %}
+            {% set total = grouped_count.get(iso, 0) %}
+            <div class="day-card {% if day.month != month %}day-muted{% endif %}">
+                <div class="day-top">
+                    <strong>{{ day.day }}</strong>
+                    <span class="muted small">{{ iso }}</span>
+                </div>
+
+                {% if total > 0 %}
+                    <div class="day-list">
+                        {% for item in items %}
+                            <div class="appt-chip">
+                                <span>{{ item["horario"] }}</span>
+                                <span>{{ item["cliente_nome"] }} / {{ item["pet_nome"] }}</span>
+                                <span class="muted small">{{ item["status"] or "Agendado" }}</span>
+                            </div>
+                        {% endfor %}
+                        {% if total > 4 %}
+                            <div class="more-chip">+ {{ total - 4 }} agendamento(s)</div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="empty-day">Sem agendamento</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% endfor %}
+</div>
+{% endblock %}

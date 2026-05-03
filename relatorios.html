@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h2>Relatórios</h2>
+    <p class="muted">Filtros e exportação CSV do sistema</p>
+</div>
+
+<div class="card" style="margin-bottom:16px;">
+    <form method="get" action="/relatorios" class="appointments-filter-grid">
+        <input type="date" name="start" value="{{ start or '' }}">
+        <input type="date" name="end" value="{{ end or '' }}">
+        <select name="status_filter">
+            <option value="">Todos os status</option>
+            {% for st in ['Agendado','Em coleta','Em atendimento','Finalizado','Entregue','Concluído','Cancelado'] %}
+            <option value="{{ st }}" {% if status_filter == st %}selected{% endif %}>{{ st }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filtrar relatório</button>
+        <a class="quick-btn secondary-btn" href="/relatorios">Limpar</a>
+    </form>
+</div>
+
+<div class="cards" style="margin-top:16px;">
+    <div class="card stat-card">
+        <span class="stat-label">Registros</span>
+        <strong>{{ qtd }}</strong>
+        <small class="muted">Total no filtro atual</small>
+    </div>
+    <div class="card stat-card highlight-card">
+        <span class="stat-label">Total concluído</span>
+        <strong>R$ {{ '%.2f'|format(total_concluido) }}</strong>
+        <small class="muted">Somente status concluído</small>
+    </div>
+</div>
+
+<div class="quick-actions" style="margin-top:16px;">
+    <a class="quick-btn" href="/relatorios/export/clientes">Exportar clientes CSV</a>
+    <a class="quick-btn" href="/relatorios/export/pets">Exportar pets CSV</a>
+    <a class="quick-btn" href="/relatorios/export/agendamentos?start={{ start }}&end={{ end }}&status_filter={{ status_filter }}">Exportar agendamentos CSV</a>
+</div>
+
+<div class="card" style="margin-top:16px;">
+    <h3>Prévia do relatório</h3>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Data</th>
+                    <th>Hora</th>
+                    <th>Cliente</th>
+                    <th>Pet</th>
+                    <th>Serviço</th>
+                    <th>Valor</th>
+                    <th>Pagamento</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in detalhes %}
+                <tr>
+                    <td>{{ item["id"] }}</td>
+                    <td>{{ item["data_agendamento"] }}</td>
+                    <td>{{ item["horario"] }}</td>
+                    <td>{{ item["cliente_nome"] }}</td>
+                    <td>{{ item["pet_nome"] }}</td>
+                    <td>{{ item["servico"] or "" }}</td>
+                    <td>R$ {{ '%.2f'|format(item["valor"] or 0) }}</td>
+                    <td>{{ item["forma_pagamento"] or "" }}</td>
+                    <td>
+                        <span class="status-pill status-{{ (item['status'] or 'agendado')|lower|replace('ú','u')|replace('ã','a')|replace('ç','c')|replace(' ','-') }}">
+                            {{ item["status"] or "" }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9">Nenhum registro encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
