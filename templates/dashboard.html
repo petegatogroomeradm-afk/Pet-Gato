@@ -1,54 +1,453 @@
-{% extends 'base.html' %}
-{% block title %}Dashboard{% endblock %}
-{% block content %}
-<div class="hero-card gradient-card dashboard-hero">
-    <div>
-        <span class="pill pill-soft">Painel premium</span>
-        <h2>Dashboard do dia</h2>
-        <p class="hero-subtitle">Visual rápido para acompanhar presença, atrasos e registros recentes da equipe.</p>
-    </div>
-</div>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Profissional - Pet & Gatô</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#8b2bbf">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --roxo: #7b2cbf;
+            --lilas: #c77dff;
+            --rosa: #ff4fa3;
+            --azul: #1f4fa3;
+            --fundo: #f8f2ff;
+            --card: #ffffff;
+            --texto: #2f243a;
+            --muted: #786987;
+            --ok: #18a058;
+            --warn: #ff9800;
+            --danger: #d93025;
+            --shadow: 0 14px 35px rgba(72, 31, 115, .14);
+        }
 
-<div class="stats-grid premium-stats">
-    <div class="stat-card accent-blue"><span>Total funcionários</span><strong>{{ total_employees }}</strong></div>
-    <div class="stat-card accent-green"><span>Presentes hoje</span><strong>{{ present_today }}</strong></div>
-    <div class="stat-card accent-pink"><span>Ausentes hoje</span><strong>{{ absent_today }}</strong></div>
-    <div class="stat-card accent-orange"><span>Atrasos</span><strong>{{ delayed_count }}</strong></div>
-    <div class="stat-card accent-violet"><span>Inconsistências</span><strong>{{ inconsistent_count }}</strong></div>
-</div>
+        * { box-sizing: border-box; }
 
-<div class="card premium-card">
-    <div class="section-title-row">
-        <div>
-            <span class="eyebrow">Movimentação</span>
-            <h3>Últimas marcações</h3>
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(255,79,163,.18), transparent 32%),
+                radial-gradient(circle at top right, rgba(123,44,191,.20), transparent 30%),
+                var(--fundo);
+            color: var(--texto);
+        }
+
+        .app {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 22px;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 28px;
+            letter-spacing: -.5px;
+        }
+
+        .brand p {
+            margin: 6px 0 0;
+            color: var(--muted);
+        }
+
+        .nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .nav a, .filter button {
+            text-decoration: none;
+            border: 0;
+            border-radius: 999px;
+            padding: 10px 14px;
+            background: white;
+            color: var(--roxo);
+            box-shadow: 0 6px 18px rgba(72,31,115,.10);
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .nav a.primary, .filter button {
+            background: linear-gradient(135deg, var(--roxo), var(--rosa));
+            color: white;
+        }
+
+        .filter {
+            background: rgba(255,255,255,.72);
+            backdrop-filter: blur(12px);
+            padding: 14px;
+            border: 1px solid rgba(123,44,191,.10);
+            border-radius: 22px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .filter input {
+            border: 1px solid #e6d8f7;
+            border-radius: 14px;
+            padding: 10px 12px;
+            font-size: 15px;
+            background: white;
+            min-width: 120px;
+        }
+
+        .grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .cards {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .card {
+            background: rgba(255,255,255,.86);
+            border: 1px solid rgba(123,44,191,.10);
+            border-radius: 24px;
+            padding: 18px;
+            box-shadow: var(--shadow);
+        }
+
+        .metric small {
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        .metric strong {
+            display: block;
+            font-size: 28px;
+            margin-top: 10px;
+        }
+
+        .metric .sub {
+            color: var(--muted);
+            margin-top: 8px;
+            font-size: 13px;
+        }
+
+        .ok { color: var(--ok); }
+        .warn { color: var(--warn); }
+        .danger { color: var(--danger); }
+        .roxo { color: var(--roxo); }
+
+        .two {
+            grid-template-columns: 2fr 1fr;
+            margin-top: 16px;
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .section-title h2 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px 10px;
+            border-bottom: 1px solid #eee3fb;
+            font-size: 14px;
+        }
+
+        th {
+            color: var(--roxo);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        tr:hover td {
+            background: #fbf7ff;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-weight: 800;
+            font-size: 12px;
+            background: #f0e3ff;
+            color: var(--roxo);
+        }
+
+        .ranking {
+            display: grid;
+            gap: 10px;
+        }
+
+        .rank-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            background: #fbf7ff;
+            border: 1px solid #eee3fb;
+            border-radius: 16px;
+            padding: 12px;
+        }
+
+        .rank-item b { display: block; }
+        .rank-item span { color: var(--muted); font-size: 12px; }
+
+        canvas {
+            max-height: 340px;
+        }
+
+        @media (max-width: 960px) {
+            .cards, .two { grid-template-columns: 1fr; }
+            .topbar { flex-direction: column; align-items: flex-start; }
+            .app { padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="topbar">
+        <div class="brand">
+            <h1>Dashboard Profissional</h1>
+            <p>Banco de horas, horas extras, atrasos e ranking mensal — Pet & Gatô</p>
+        </div>
+        <div class="nav">
+            <a class="primary" href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('punch') }}">Ponto</a>
+            <a href="{{ url_for('employees') }}">Funcionários</a>
+            <a href="{{ url_for('records') }}">Registros</a>
+            <a href="{{ url_for('reports') }}">Relatórios</a>
+            <a href="{{ url_for('logout') }}">Sair</a>
         </div>
     </div>
-    <div class="table-wrapper premium-table">
-        <table>
-            <thead>
-                <tr>
-                    <th>Funcionário</th>
-                    <th>Matrícula</th>
-                    <th>Tipo</th>
-                    <th>Data/Hora</th>
-                    <th>IP</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in recent_records %}
-                <tr>
-                    <td>{{ row.employee_name }}</td>
-                    <td>{{ row.registration }}</td>
-                    <td><span class="chip">{{ row.record_type }}</span></td>
-                    <td>{{ format_dt(row.record_time) }}</td>
-                    <td>{{ row.ip_origin }}</td>
-                </tr>
+
+    <form class="filter" method="get" action="{{ url_for('dashboard') }}">
+        <strong>Período:</strong>
+        <input type="number" name="month" min="1" max="12" value="{{ selected_month }}">
+        <input type="number" name="year" min="2024" max="2100" value="{{ selected_year }}">
+        <button type="submit">Atualizar dashboard</button>
+    </form>
+
+    <div class="grid cards">
+        <div class="card metric">
+            <small>Horas trabalhadas no mês</small>
+            <strong class="roxo">{{ professional.total_worked_h }}</strong>
+            <div class="sub">Total computado dos registros batidos</div>
+        </div>
+        <div class="card metric">
+            <small>Horas extras computadas</small>
+            <strong class="ok">{{ professional.total_extra_h }}</strong>
+            <div class="sub">Soma apenas saldos positivos</div>
+        </div>
+        <div class="card metric">
+            <small>Banco de horas líquido</small>
+            <strong class="{% if professional.total_bank_balance_minutes >= 0 %}ok{% else %}danger{% endif %}">
+                {{ professional.total_bank_balance_h }}
+            </strong>
+            <div class="sub">Extras menos saldo negativo</div>
+        </div>
+        <div class="card metric">
+            <small>Atrasos no mês</small>
+            <strong class="warn">{{ professional.total_delay_h }}</strong>
+            <div class="sub">{{ professional.total_inconsistencies }} inconsistência(s)</div>
+        </div>
+    </div>
+
+    <div class="grid cards" style="margin-top:16px;">
+        <div class="card metric">
+            <small>Presentes hoje</small>
+            <strong>{{ present_today }}</strong>
+            <div class="sub">Ausentes: {{ absent_today }}</div>
+        </div>
+        <div class="card metric">
+            <small>Funcionários ativos</small>
+            <strong>{{ total_employees }}</strong>
+            <div class="sub">Base ativa do sistema</div>
+        </div>
+        <div class="card metric">
+            <small>Registros no mês</small>
+            <strong>{{ professional.total_records }}</strong>
+            <div class="sub">Marcações importadas + atuais</div>
+        </div>
+        <div class="card metric">
+            <small>Saídas antecipadas</small>
+            <strong class="danger">{{ professional.total_early_exit_h }}</strong>
+            <div class="sub">Comparado à jornada cadastrada</div>
+        </div>
+    </div>
+
+    <div class="grid two">
+        <div class="card">
+            <div class="section-title">
+                <h2>Gráfico mensal — extras, atrasos e saldo negativo</h2>
+                <span class="pill">{{ "%02d"|format(selected_month) }}/{{ selected_year }}</span>
+            </div>
+            <canvas id="monthlyChart"></canvas>
+        </div>
+
+        <div class="card">
+            <div class="section-title">
+                <h2>Ranking de horas extras</h2>
+                <span class="pill">Top 10</span>
+            </div>
+            <div class="ranking">
+                {% for item in professional.ranking_extra %}
+                <div class="rank-item">
+                    <div>
+                        <b>{{ loop.index }}. {{ item.name }}</b>
+                        <span>Matrícula {{ item.registration }}</span>
+                    </div>
+                    <strong class="ok">{{ item.extra_h }}</strong>
+                </div>
                 {% else %}
-                <tr><td colspan="5">Nenhuma marcação encontrada.</td></tr>
+                <p>Nenhum dado no período.</p>
                 {% endfor %}
-            </tbody>
-        </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid two">
+        <div class="card">
+            <div class="section-title">
+                <h2>Banco de horas por funcionário</h2>
+                <span class="pill">Extras computadas automaticamente</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Funcionário</th>
+                            <th>Matrícula</th>
+                            <th>Trabalhadas</th>
+                            <th>Jornada</th>
+                            <th>Horas Extras</th>
+                            <th>Negativo</th>
+                            <th>Banco Líquido</th>
+                            <th>Atrasos</th>
+                            <th>Dias com Ponto</th>
+                            <th>Incons.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in professional.employee_rows %}
+                        <tr>
+                            <td><strong>{{ row.name }}</strong></td>
+                            <td>{{ row.registration }}</td>
+                            <td>{{ row.worked_h }}</td>
+                            <td>{{ row.scheduled_h }}</td>
+                            <td class="ok"><strong>{{ row.extra_h }}</strong></td>
+                            <td class="danger">{{ row.negative_h }}</td>
+                            <td class="{% if row.bank_balance_minutes >= 0 %}ok{% else %}danger{% endif %}">
+                                <strong>{{ row.bank_balance_h }}</strong>
+                            </td>
+                            <td class="warn">{{ row.delay_h }}</td>
+                            <td>{{ row.days_with_records }}</td>
+                            <td>{{ row.inconsistencies }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="10">Nenhum funcionário encontrado.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">
+                <h2>Ranking de atrasos</h2>
+                <span class="pill">Top 10</span>
+            </div>
+            <div class="ranking">
+                {% for item in professional.ranking_delay %}
+                <div class="rank-item">
+                    <div>
+                        <b>{{ loop.index }}. {{ item.name }}</b>
+                        <span>Matrícula {{ item.registration }}</span>
+                    </div>
+                    <strong class="warn">{{ item.delay_h }}</strong>
+                </div>
+                {% else %}
+                <p>Nenhum atraso no período.</p>
+                {% endfor %}
+            </div>
+
+            <div class="section-title" style="margin-top:24px;">
+                <h2>Últimas marcações</h2>
+            </div>
+            <div class="ranking">
+                {% for record in recent_records %}
+                <div class="rank-item">
+                    <div>
+                        <b>{{ record.employee_name }}</b>
+                        <span>{{ record.record_type }} — {{ format_dt(record.record_time) }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <p>Nenhuma marcação recente.</p>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </div>
-{% endblock %}
+
+<script>
+const labels = {{ professional.chart_labels|tojson }};
+const extra = {{ professional.chart_extra|tojson }};
+const delay = {{ professional.chart_delay|tojson }};
+const negative = {{ professional.chart_negative|tojson }};
+
+new Chart(document.getElementById('monthlyChart'), {
+    type: 'bar',
+    data: {
+        labels,
+        datasets: [
+            { label: 'Horas extras', data: extra },
+            { label: 'Atrasos', data: delay },
+            { label: 'Saldo negativo', data: negative }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom' }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: { display: true, text: 'Horas' }
+            }
+        }
+    }
+});
+</script>
+</body>
+</html>
