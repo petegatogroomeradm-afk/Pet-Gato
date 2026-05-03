@@ -1006,6 +1006,35 @@ def inject_globals():
         "format_dt": format_dt,
     }
 
+def init_db_postgres():
+    db = get_db()
+    cur = db.cursor()
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS funcionarios (
+        id SERIAL PRIMARY KEY,
+        nome TEXT,
+        cargo TEXT
+    );
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS registros (
+        id SERIAL PRIMARY KEY,
+        funcionario_id INTEGER,
+        tipo TEXT,
+        data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    db.commit()
+
+
+# roda automaticamente quando iniciar
+try:
+    init_db_postgres()
+except Exception as e:
+    print("Erro ao criar tabelas:", e)
 
 if __name__ == "__main__":
     init_db()
