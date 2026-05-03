@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Configurações{% endblock %}
+{% block content %}
+<div class="card small-card">
+    <h2>Configurações</h2>
+    <form method="post" class="form-grid">
+        <label>WhatsApp da empresa
+            <input type="text" name="company_whatsapp" value="{{ company_whatsapp }}" placeholder="5531999999999">
+        </label>
+        <p class="hint">Use o número com código do país. Exemplo: 5531999999999.</p>
+        <button type="submit">Salvar configurações</button>
+    </form>
+</div>
+{% endblock %}

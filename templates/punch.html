@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}Marcação de Ponto{% endblock %}
+{% block content %}
+<div class="hero-card gradient-card punch-hero">
+    <div>
+        <span class="pill pill-soft">App Premium</span>
+        <h2>Registro de ponto rápido e seguro</h2>
+        <p class="hero-subtitle">Interface otimizada para celular, com visual de app e fluxo simples para a equipe do Pet & Gatô.</p>
+    </div>
+    <div class="hero-clock-block">
+        <span>Horário atual</span>
+        <div class="clock live-clock">{{ current_time.strftime('%d/%m/%Y %H:%M:%S') }}</div>
+    </div>
+</div>
+
+<div class="grid two-columns premium-gap">
+    <section class="card premium-card big-punch punch-panel">
+        <div class="section-title-row">
+            <div>
+                <span class="eyebrow">Ponto digital</span>
+                <h2>Registrar ponto</h2>
+            </div>
+            <div class="chip chip-primary">Entrada → Intervalo → Retorno → Saída</div>
+        </div>
+
+        <form method="post" class="form-grid premium-form" id="punch-form">
+            <label>Matrícula
+                <input type="text" name="registration" placeholder="Ex.: 001" inputmode="numeric" autocomplete="username" required>
+            </label>
+            <label>PIN
+                <input type="password" name="pin" placeholder="Digite o PIN" inputmode="numeric" autocomplete="current-password" required>
+            </label>
+            <button type="submit" class="primary-button">Registrar próximo ponto</button>
+        </form>
+        <p class="hint">Dica: no iPhone, abra no Safari e use <strong>Adicionar à Tela de Início</strong> para instalar como app.</p>
+    </section>
+
+    <section class="card premium-card status-panel">
+        <div class="section-title-row">
+            <div>
+                <span class="eyebrow">Resumo do dia</span>
+                <h2>Status da jornada</h2>
+            </div>
+        </div>
+        {% if preview %}
+            <div class="status-summary-grid">
+                <div class="mini-stat"><span>Funcionário</span><strong>{{ preview.employee.name }}</strong></div>
+                <div class="mini-stat"><span>Hoje</span><strong>{{ preview.weekday_name }}</strong></div>
+                <div class="mini-stat"><span>Próxima marcação</span><strong>{{ preview.next_type }}</strong></div>
+                <div class="mini-stat"><span>Jornada</span><strong>{{ preview.schedule.description if preview.schedule else 'Não configurada' }}</strong></div>
+            </div>
+
+            <div class="status-summary-grid compact">
+                <div class="mini-stat"><span>Horas trabalhadas</span><strong>{{ "%02d:%02d"|format(preview.worked_minutes // 60, preview.worked_minutes % 60) }}</strong></div>
+                <div class="mini-stat"><span>Atraso</span><strong>{{ "%02d:%02d"|format(preview.delay_minutes // 60, preview.delay_minutes % 60) }}</strong></div>
+                <div class="mini-stat"><span>Saldo</span><strong>{{ "%02d:%02d"|format((preview.extra_minutes|abs) // 60, (preview.extra_minutes|abs) % 60) }} {% if preview.extra_minutes < 0 %}(-){% else %}(+){% endif %}</strong></div>
+            </div>
+
+            {% if whatsapp_links.employee or whatsapp_links.manager %}
+            <div class="whatsapp-box premium-success">
+                <div>
+                    <h3>WhatsApp integrado</h3>
+                    <p>Depois da marcação, você pode abrir o comprovante pronto no WhatsApp.</p>
+                </div>
+                <div class="actions-row">
+                    {% if whatsapp_links.employee %}
+                        <a class="button-link success-link" href="{{ whatsapp_links.employee }}" target="_blank">Comprovante do funcionário</a>
+                    {% endif %}
+                    {% if whatsapp_links.manager %}
+                        <a class="button-link success-link" href="{{ whatsapp_links.manager }}" target="_blank">Aviso para empresa</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="table-wrapper premium-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Horário</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in preview.records %}
+                        <tr>
+                            <td><span class="chip">{{ row.record_type }}</span></td>
+                            <td>{{ format_dt(row.record_time) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="brand-mark"><span>🐶</span></div>
+                <h3>Nenhuma marcação nesta tela ainda</h3>
+                <p>Faça um registro para visualizar a prévia da jornada, o saldo do dia e os atalhos do WhatsApp.</p>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="hero-card gradient-card dashboard-hero">
+    <div>
+        <span class="pill pill-soft">Painel premium</span>
+        <h2>Dashboard do dia</h2>
+        <p class="hero-subtitle">Visual rápido para acompanhar presença, atrasos e registros recentes da equipe.</p>
+    </div>
+</div>
+
+<div class="stats-grid premium-stats">
+    <div class="stat-card accent-blue"><span>Total funcionários</span><strong>{{ total_employees }}</strong></div>
+    <div class="stat-card accent-green"><span>Presentes hoje</span><strong>{{ present_today }}</strong></div>
+    <div class="stat-card accent-pink"><span>Ausentes hoje</span><strong>{{ absent_today }}</strong></div>
+    <div class="stat-card accent-orange"><span>Atrasos</span><strong>{{ delayed_count }}</strong></div>
+    <div class="stat-card accent-violet"><span>Inconsistências</span><strong>{{ inconsistent_count }}</strong></div>
+</div>
+
+<div class="card premium-card">
+    <div class="section-title-row">
+        <div>
+            <span class="eyebrow">Movimentação</span>
+            <h3>Últimas marcações</h3>
+        </div>
+    </div>
+    <div class="table-wrapper premium-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Funcionário</th>
+                    <th>Matrícula</th>
+                    <th>Tipo</th>
+                    <th>Data/Hora</th>
+                    <th>IP</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in recent_records %}
+                <tr>
+                    <td>{{ row.employee_name }}</td>
+                    <td>{{ row.registration }}</td>
+                    <td><span class="chip">{{ row.record_type }}</span></td>
+                    <td>{{ format_dt(row.record_time) }}</td>
+                    <td>{{ row.ip_origin }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5">Nenhuma marcação encontrada.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

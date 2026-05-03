@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="login-shell">
+    <div class="hero-card gradient-card login-brand">
+        <span class="pill">Painel administrativo</span>
+        <h2>Controle completo do relógio de ponto</h2>
+        <p class="hero-subtitle">Acompanhe registros, funcionários, jornadas e relatórios com um visual premium nas cores do Pet & Gatô.</p>
+        <div class="brand-showcase">
+            <div class="mini-stat dark"><span>Estilo</span><strong>Premium</strong></div>
+            <div class="mini-stat dark"><span>Modo</span><strong>PWA</strong></div>
+            <div class="mini-stat dark"><span>Uso</span><strong>Loja + celular</strong></div>
+        </div>
+    </div>
+    <div class="card premium-card small-card centered no-margin">
+        <div class="section-title-row">
+            <div>
+                <span class="eyebrow">Acesso restrito</span>
+                <h2>Login do Administrador</h2>
+            </div>
+        </div>
+        <form method="post" class="form-grid premium-form">
+            <label>Usuário
+                <input type="text" name="username" autocomplete="username" required>
+            </label>
+            <label>Senha
+                <input type="password" name="password" autocomplete="current-password" required>
+            </label>
+            <button type="submit" class="primary-button">Entrar no painel</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Relatórios{% endblock %}
+{% block content %}
+<div class="grid two-columns">
+    <section class="card">
+        <h2>Exportar Excel Mensal</h2>
+        <form method="post" class="form-grid">
+            <input type="hidden" name="action" value="excel">
+            <label>Ano
+                <input type="number" name="year" value="{{ today.year }}" required>
+            </label>
+            <label>Mês
+                <input type="number" name="month" value="{{ today.month }}" min="1" max="12" required>
+            </label>
+            <button type="submit">Gerar Excel</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>Espelho de Ponto em PDF</h2>
+        <form method="post" class="form-grid">
+            <input type="hidden" name="action" value="pdf">
+            <label>Funcionário
+                <select name="employee_id" required>
+                    <option value="">Selecione</option>
+                    {% for emp in employees %}
+                    <option value="{{ emp.id }}">{{ emp.name }} ({{ emp.registration }})</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Ano
+                <input type="number" name="year" value="{{ today.year }}" required>
+            </label>
+            <label>Mês
+                <input type="number" name="month" value="{{ today.month }}" min="1" max="12" required>
+            </label>
+            <button type="submit">Gerar PDF</button>
+        </form>
+    </section>
+</div>
+
+<div class="card">
+    <h2>Backup do Banco</h2>
+    <form method="post">
+        <input type="hidden" name="action" value="backup">
+        <button type="submit">Gerar backup agora</button>
+    </form>
+</div>
+{% endblock %}

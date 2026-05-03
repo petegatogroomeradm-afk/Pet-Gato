@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Jornadas{% endblock %}
+{% block content %}
+<div class="grid two-columns">
+    <section class="card">
+        <h2>Cadastrar Jornada</h2>
+        <form method="post" class="form-grid">
+            <label>Descrição
+                <input type="text" name="description" required>
+            </label>
+            <label>Entrada
+                <input type="time" name="entry_time" required>
+            </label>
+            <label>Saída intervalo
+                <input type="time" name="lunch_out_time" required>
+            </label>
+            <label>Retorno intervalo
+                <input type="time" name="lunch_in_time" required>
+            </label>
+            <label>Saída final
+                <input type="time" name="exit_time" required>
+            </label>
+            <label>Tolerância (min)
+                <input type="number" name="tolerance_minutes" value="10" min="0">
+            </label>
+            <button type="submit">Salvar jornada</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>Jornadas Cadastradas</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Entrada</th>
+                        <th>Saída Int.</th>
+                        <th>Retorno Int.</th>
+                        <th>Saída</th>
+                        <th>Tolerância</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in schedules %}
+                    <tr>
+                        <td>{{ item.description }}</td>
+                        <td>{{ item.entry_time }}</td>
+                        <td>{{ item.lunch_out_time }}</td>
+                        <td>{{ item.lunch_in_time }}</td>
+                        <td>{{ item.exit_time }}</td>
+                        <td>{{ item.tolerance_minutes }} min</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6">Nenhuma jornada cadastrada.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}
