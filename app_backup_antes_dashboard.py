@@ -929,198 +929,16 @@ def punch():
     return render_template("punch.html", preview=preview, current_time=now_dt(), whatsapp_links=whatsapp_links)
 
 
-
-# =========================================================
-# Dashboard profissional: banco de horas, atrasos e ranking
-# =========================================================
-
-def safe_parse_dt(value):
-    """Aceita datetime do PostgreSQL ou texto do SQLite."""
-    if isinstance(value, datetime):
-        return value
-    return parse_dt(str(value))
-
-
-def minutes_to_decimal_hours(minutes: int) -> float:
-    return round((minutes or 0) / 60, 2)
-
-
-def build_professional_dashboard(year: int, month: int) -> Dict[str, Any]:
-    start, end = month_bounds(year, month)
-    start_date = parse_date(start)
-    end_date = parse_date(end)
-
-    employees = query_db("SELECT * FROM employees WHERE active = 1 ORDER BY name")
-
-    employee_rows = []
-    ranking_extra = []
-    ranking_delay = []
-    daily_map: Dict[str, Dict[str, int]] = {}
-
-    total_worked = 0
-    total_scheduled = 0
-    total_extra = 0
-    total_negative = 0
-    total_delay = 0
-    total_early_exit = 0
-    total_inconsistencies = 0
-    total_records = 0
-
-    current = start_date
-    while current < end_date:
-        key = current.strftime("%d/%m")
-        daily_map[key] = {
-            "extra": 0,
-            "delay": 0,
-            "negative": 0,
-            "worked": 0,
-        }
-        current += timedelta(days=1)
-
-    for emp in employees:
-        emp_worked = 0
-        emp_scheduled = 0
-        emp_extra = 0
-        emp_negative = 0
-        emp_delay = 0
-        emp_early_exit = 0
-        emp_inconsistencies = 0
-        emp_days_with_records = 0
-        emp_complete_days = 0
-
-        current = start_date
-        while current < end_date:
-            day_str = current.strftime("%Y-%m-%d")
-            day_key = current.strftime("%d/%m")
-            summary = calculate_day_summary(emp["id"], day_str)
-
-            worked = int(summary.get("worked_minutes") or 0)
-            scheduled = int(summary.get("scheduled_minutes") or 0)
-            delay = int(summary.get("delay_minutes") or 0)
-            early = int(summary.get("early_exit_minutes") or 0)
-            extra_balance = int(summary.get("extra_minutes") or 0)
-            records_count = len(summary.get("records") or [])
-
-            if records_count > 0:
-                emp_days_with_records += 1
-                total_records += records_count
-
-            if records_count == 4:
-                emp_complete_days += 1
-
-            if summary.get("inconsistency"):
-                emp_inconsistencies += 1
-
-            positive_extra = max(extra_balance, 0)
-            negative_balance = abs(min(extra_balance, 0))
-
-            emp_worked += worked
-            emp_scheduled += scheduled
-            emp_extra += positive_extra
-            emp_negative += negative_balance
-            emp_delay += delay
-            emp_early_exit += early
-
-            daily_map[day_key]["extra"] += positive_extra
-            daily_map[day_key]["delay"] += delay
-            daily_map[day_key]["negative"] += negative_balance
-            daily_map[day_key]["worked"] += worked
-
-            current += timedelta(days=1)
-
-        total_worked += emp_worked
-        total_scheduled += emp_scheduled
-        total_extra += emp_extra
-        total_negative += emp_negative
-        total_delay += emp_delay
-        total_early_exit += emp_early_exit
-        total_inconsistencies += emp_inconsistencies
-
-        bank_balance = emp_extra - emp_negative
-
-        row = {
-            "id": emp["id"],
-            "name": emp["name"],
-            "registration": emp["registration"],
-            "worked_minutes": emp_worked,
-            "scheduled_minutes": emp_scheduled,
-            "extra_minutes": emp_extra,
-            "negative_minutes": emp_negative,
-            "bank_balance_minutes": bank_balance,
-            "delay_minutes": emp_delay,
-            "early_exit_minutes": emp_early_exit,
-            "inconsistencies": emp_inconsistencies,
-            "days_with_records": emp_days_with_records,
-            "complete_days": emp_complete_days,
-            "worked_h": format_minutes(emp_worked),
-            "scheduled_h": format_minutes(emp_scheduled),
-            "extra_h": format_minutes(emp_extra),
-            "negative_h": format_minutes(emp_negative),
-            "bank_balance_h": format_minutes(bank_balance),
-            "delay_h": format_minutes(emp_delay),
-            "early_exit_h": format_minutes(emp_early_exit),
-        }
-        employee_rows.append(row)
-        ranking_extra.append(row)
-        ranking_delay.append(row)
-
-    ranking_extra = sorted(ranking_extra, key=lambda r: r["extra_minutes"], reverse=True)[:10]
-    ranking_delay = sorted(ranking_delay, key=lambda r: r["delay_minutes"], reverse=True)[:10]
-    employee_rows = sorted(employee_rows, key=lambda r: r["bank_balance_minutes"], reverse=True)
-
-    chart_labels = list(daily_map.keys())
-    chart_extra = [minutes_to_decimal_hours(daily_map[k]["extra"]) for k in chart_labels]
-    chart_delay = [minutes_to_decimal_hours(daily_map[k]["delay"]) for k in chart_labels]
-    chart_negative = [minutes_to_decimal_hours(daily_map[k]["negative"]) for k in chart_labels]
-    chart_worked = [minutes_to_decimal_hours(daily_map[k]["worked"]) for k in chart_labels]
-
-    return {
-        "year": year,
-        "month": month,
-        "total_employees": len(employees),
-        "total_records": total_records,
-        "total_worked_minutes": total_worked,
-        "total_scheduled_minutes": total_scheduled,
-        "total_extra_minutes": total_extra,
-        "total_negative_minutes": total_negative,
-        "total_bank_balance_minutes": total_extra - total_negative,
-        "total_delay_minutes": total_delay,
-        "total_early_exit_minutes": total_early_exit,
-        "total_inconsistencies": total_inconsistencies,
-        "total_worked_h": format_minutes(total_worked),
-        "total_scheduled_h": format_minutes(total_scheduled),
-        "total_extra_h": format_minutes(total_extra),
-        "total_negative_h": format_minutes(total_negative),
-        "total_bank_balance_h": format_minutes(total_extra - total_negative),
-        "total_delay_h": format_minutes(total_delay),
-        "total_early_exit_h": format_minutes(total_early_exit),
-        "employee_rows": employee_rows,
-        "ranking_extra": ranking_extra,
-        "ranking_delay": ranking_delay,
-        "chart_labels": chart_labels,
-        "chart_extra": chart_extra,
-        "chart_delay": chart_delay,
-        "chart_negative": chart_negative,
-        "chart_worked": chart_worked,
-    }
-
-
 # ---------------------------
 # Routes - dashboard/admin
 # ---------------------------
-
 @app.route("/dashboard")
 @admin_required
 def dashboard():
     today = today_str()
-    today_date = date.today()
-    year = request.args.get("year", type=int) or today_date.year
-    month = request.args.get("month", type=int) or today_date.month
-
     total_employees = query_db("SELECT COUNT(*) AS total FROM employees WHERE active = 1", one=True)["total"]
     present_rows = query_db("SELECT COUNT(DISTINCT employee_id) AS total FROM time_records WHERE date(record_time) = ?", (today,), one=True)
     present_today = present_rows["total"]
-
     recent_records = query_db(
         """
         SELECT tr.*, e.name AS employee_name, e.registration
@@ -1130,7 +948,6 @@ def dashboard():
         LIMIT 10
         """
     )
-
     employees = query_db("SELECT id, name FROM employees WHERE active = 1 ORDER BY name")
 
     delayed_count = 0
@@ -1142,8 +959,6 @@ def dashboard():
         if summary["inconsistency"]:
             inconsistent_count += 1
 
-    professional = build_professional_dashboard(year, month)
-
     return render_template(
         "dashboard.html",
         total_employees=total_employees,
@@ -1153,9 +968,6 @@ def dashboard():
         inconsistent_count=inconsistent_count,
         recent_records=recent_records,
         format_dt=format_dt,
-        professional=professional,
-        selected_year=year,
-        selected_month=month,
     )
 
 
