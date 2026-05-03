@@ -1,0 +1,32 @@
+DASHBOARD PROFISSIONAL - PET & GATÔ
+
+O que este pacote adiciona:
+- Banco de horas automático
+- Cálculo de todas as horas extras
+- Atraso por funcionário
+- Ranking de horas extras
+- Ranking de atrasos
+- Gráfico mensal
+- Tabela mensal por funcionário
+
+Como aplicar:
+1. Extraia este ZIP.
+2. Copie o arquivo dashboard.html para a pasta templates do seu projeto:
+   D:\Relogio de ponto WEB\templates\dashboard.html
+
+3. Copie aplicar_dashboard_profissional.py para a raiz do projeto:
+   D:\Relogio de ponto WEB\aplicar_dashboard_profissional.py
+
+4. No PowerShell, rode:
+   cd "D:\Relogio de ponto WEB"
+   python aplicar_dashboard_profissional.py
+
+5. Suba para o GitHub:
+   git add .
+   git commit -m "Adiciona dashboard profissional banco de horas"
+   git push
+
+6. O Render fará o deploy automático.
+
+Observação:
+O script cria um backup do seu app.py chamado app_backup_antes_dashboard.py.

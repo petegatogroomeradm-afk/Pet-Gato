@@ -1,0 +1,3862 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Administrador",
+      "username": "admin",
+      "password_hash": "scrypt:32768:8:1$6xWEU6oC44i7OuFH$320fe646cf0ce49d30c92218349018495054a8e51883903e66ee6d799ba11ff9eac9818c28723cb65731fc9c289f1782f8c73d12141d5bbf03c49c73f12699fb",
+      "role": "admin",
+      "active": 1,
+      "created_at": "2026-03-18 16:09:32"
+    }
+  ],
+  "schedules": [
+    {
+      "id": 1,
+      "description": "Jornada padrão 08h às 17h",
+      "entry_time": "08:00",
+      "lunch_out_time": "12:00",
+      "lunch_in_time": "13:00",
+      "exit_time": "17:00",
+      "tolerance_minutes": 10,
+      "active": 1
+    },
+    {
+      "id": 2,
+      "description": "Terça a Sexta 09h às 18h",
+      "entry_time": "09:00",
+      "lunch_out_time": "12:00",
+      "lunch_in_time": "13:00",
+      "exit_time": "18:00",
+      "tolerance_minutes": 10,
+      "active": 1
+    },
+    {
+      "id": 3,
+      "description": "Sábado 08h às 17h",
+      "entry_time": "08:00",
+      "lunch_out_time": "12:00",
+      "lunch_in_time": "13:00",
+      "exit_time": "17:00",
+      "tolerance_minutes": 10,
+      "active": 1
+    }
+  ],
+  "employees": [
+    {
+      "id": 1,
+      "name": "Tuane Celina Nascimento Alves",
+      "cpf": "138819686879",
+      "registration": "0001",
+      "role_name": "Proprietária / Motorista",
+      "phone": "5531988150975",
+      "admission_date": "2023-01-01",
+      "pin_hash": "scrypt:32768:8:1$yvGhY3D01Mq7RtkP$3f9a24c45780034fee23c1315bae837652f86e9edfdc9b75166213860ed43e2b2ee9569fcea3d48f8b6403898d1f4bed056ae6ad7343a1dd6287f84926b39f40",
+      "schedule_id": null,
+      "active": 1,
+      "created_at": "2026-03-18 16:12:34"
+    },
+    {
+      "id": 2,
+      "name": "Amanda Luiza Fiuza Batista",
+      "cpf": "70015423697",
+      "registration": "0003",
+      "role_name": "Banhista",
+      "phone": "5531983032408",
+      "admission_date": "2025-12-02",
+      "pin_hash": "scrypt:32768:8:1$LgCJOVTj9mBcUz88$c94d9f54f6dc15faa7e0810063d63f2f661594a3fb4f98cf581265f955739f108e235c56c945b0819e99095d2b2060a08c800068c9917c9d0b1bbd58f573671f",
+      "schedule_id": null,
+      "active": 1,
+      "created_at": "2026-03-18 16:44:04"
+    },
+    {
+      "id": 3,
+      "name": "Kauã Johnson Do Nascimento Alves",
+      "cpf": "70676567614",
+      "registration": "0002",
+      "role_name": "Tosador",
+      "phone": "5531982077518",
+      "admission_date": "2025-03-01",
+      "pin_hash": "scrypt:32768:8:1$T92D0q9Ep0OlHgf5$8f40eaa7ccfc1bb33f59e99ebe4f4cacbf97c5e3ddab50d0c169db2335b034a0622c1b7c04c5fb58194cc831efbf4d3866d6463a11e0c9fc8d360f8f645493c8",
+      "schedule_id": null,
+      "active": 1,
+      "created_at": "2026-03-18 16:50:31"
+    }
+  ],
+  "employee_schedule_days": [
+    {
+      "id": 1,
+      "employee_id": 1,
+      "weekday": 1,
+      "schedule_id": 2
+    },
+    {
+      "id": 2,
+      "employee_id": 1,
+      "weekday": 2,
+      "schedule_id": 2
+    },
+    {
+      "id": 3,
+      "employee_id": 1,
+      "weekday": 3,
+      "schedule_id": 2
+    },
+    {
+      "id": 4,
+      "employee_id": 1,
+      "weekday": 4,
+      "schedule_id": 2
+    },
+    {
+      "id": 5,
+      "employee_id": 1,
+      "weekday": 5,
+      "schedule_id": 3
+    },
+    {
+      "id": 11,
+      "employee_id": 3,
+      "weekday": 1,
+      "schedule_id": 2
+    },
+    {
+      "id": 12,
+      "employee_id": 3,
+      "weekday": 2,
+      "schedule_id": 2
+    },
+    {
+      "id": 13,
+      "employee_id": 3,
+      "weekday": 3,
+      "schedule_id": 2
+    },
+    {
+      "id": 14,
+      "employee_id": 3,
+      "weekday": 4,
+      "schedule_id": 2
+    },
+    {
+      "id": 15,
+      "employee_id": 3,
+      "weekday": 5,
+      "schedule_id": 3
+    },
+    {
+      "id": 16,
+      "employee_id": 2,
+      "weekday": 1,
+      "schedule_id": 2
+    },
+    {
+      "id": 17,
+      "employee_id": 2,
+      "weekday": 2,
+      "schedule_id": 2
+    },
+    {
+      "id": 18,
+      "employee_id": 2,
+      "weekday": 3,
+      "schedule_id": 2
+    },
+    {
+      "id": 19,
+      "employee_id": 2,
+      "weekday": 4,
+      "schedule_id": 2
+    },
+    {
+      "id": 20,
+      "employee_id": 2,
+      "weekday": 5,
+      "schedule_id": 3
+    }
+  ],
+  "time_records": [
+    {
+      "id": 1,
+      "employee_id": 1,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-18 16:14:01",
+      "notes": "Registro automático",
+      "ip_origin": "127.0.0.1",
+      "created_at": "2026-03-18 16:14:01"
+    },
+    {
+      "id": 2,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-18 18:09:54",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-18 18:09:54"
+    },
+    {
+      "id": 3,
+      "employee_id": 1,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-03-18 18:11:40",
+      "notes": "Registro automático",
+      "ip_origin": "127.0.0.1",
+      "created_at": "2026-03-18 18:11:40"
+    },
+    {
+      "id": 4,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-20 09:09:40",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-20 09:09:40"
+    },
+    {
+      "id": 5,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-20 09:13:25",
+      "notes": "Registro automático",
+      "ip_origin": "127.0.0.1",
+      "created_at": "2026-03-20 09:13:25"
+    },
+    {
+      "id": 6,
+      "employee_id": 1,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-20 10:01:51",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-20 10:01:51"
+    },
+    {
+      "id": 7,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-03-20 17:09:32",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-20 17:09:32"
+    },
+    {
+      "id": 8,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-03-20 17:09:50",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-20 17:09:50"
+    },
+    {
+      "id": 9,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-03-20 17:10:01",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-20 17:10:01"
+    },
+    {
+      "id": 10,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-03-20 17:43:17",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-20 17:43:17"
+    },
+    {
+      "id": 11,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-03-20 17:44:05",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-20 17:44:05"
+    },
+    {
+      "id": 12,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-03-20 17:44:19",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-20 17:44:19"
+    },
+    {
+      "id": 13,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-21 08:47:19",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-21 08:47:19"
+    },
+    {
+      "id": 14,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-21 08:47:28",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-21 08:47:28"
+    },
+    {
+      "id": 15,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-03-21 18:27:11",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-21 18:27:11"
+    },
+    {
+      "id": 16,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-03-21 18:27:22",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-21 18:27:22"
+    },
+    {
+      "id": 17,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-03-21 18:27:37",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-21 18:27:37"
+    },
+    {
+      "id": 18,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-03-21 18:32:20",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-21 18:32:20"
+    },
+    {
+      "id": 19,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-03-21 18:32:33",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-21 18:32:33"
+    },
+    {
+      "id": 20,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-03-21 18:32:51",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-21 18:32:51"
+    },
+    {
+      "id": 21,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-24 09:09:13",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-24 09:09:13"
+    },
+    {
+      "id": 22,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-24 09:09:50",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-24 09:09:50"
+    },
+    {
+      "id": 23,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-03-24 15:26:22",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-24 15:26:22"
+    },
+    {
+      "id": 24,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-03-24 15:26:32",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-24 15:26:32"
+    },
+    {
+      "id": 25,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-03-24 15:26:37",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-24 15:26:37"
+    },
+    {
+      "id": 26,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-03-24 15:26:51",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-24 15:26:51"
+    },
+    {
+      "id": 27,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-03-24 15:26:59",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-24 15:26:59"
+    },
+    {
+      "id": 28,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-03-24 15:27:08",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-24 15:27:08"
+    },
+    {
+      "id": 29,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-25 09:09:04",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-25 09:09:04"
+    },
+    {
+      "id": 30,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-25 09:09:17",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-25 09:09:17"
+    },
+    {
+      "id": 31,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-03-25 15:45:06",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-25 15:45:06"
+    },
+    {
+      "id": 32,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-03-25 15:51:15",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-25 15:51:15"
+    },
+    {
+      "id": 33,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-03-25 16:41:18",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-25 16:41:18"
+    },
+    {
+      "id": 34,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-03-25 16:46:49",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-25 16:46:49"
+    },
+    {
+      "id": 35,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-03-25 17:51:42",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-25 17:51:42"
+    },
+    {
+      "id": 36,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-03-25 18:20:00",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-25 18:20:00"
+    },
+    {
+      "id": 37,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-26 09:06:05",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-03-26 09:06:05"
+    },
+    {
+      "id": 38,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-26 09:06:07",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-26 09:06:07"
+    },
+    {
+      "id": 39,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-03-26 15:29:59",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-03-26 15:29:59"
+    },
+    {
+      "id": 40,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-03-26 15:42:07",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-26 15:42:07"
+    },
+    {
+      "id": 41,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-03-26 16:00:22",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-26 16:00:22"
+    },
+    {
+      "id": 42,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-03-26 16:29:29",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-03-26 16:29:29"
+    },
+    {
+      "id": 43,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-03-26 17:15:16",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-26 17:15:16"
+    },
+    {
+      "id": 44,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-27 09:07:42",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-27 09:07:42"
+    },
+    {
+      "id": 45,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-27 09:08:52",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-03-27 09:08:52"
+    },
+    {
+      "id": 46,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-03-27 15:14:52",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-03-27 15:14:52"
+    },
+    {
+      "id": 47,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-03-27 15:18:21",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-27 15:18:21"
+    },
+    {
+      "id": 48,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-03-27 15:35:19",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-03-27 15:35:19"
+    },
+    {
+      "id": 49,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-03-27 15:48:34",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-27 15:48:34"
+    },
+    {
+      "id": 50,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-03-27 17:36:20",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-03-27 17:36:20"
+    },
+    {
+      "id": 51,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-03-27 17:37:58",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-27 17:37:58"
+    },
+    {
+      "id": 52,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-28 09:30:17",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-28 17:19:17"
+    },
+    {
+      "id": 53,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-28 09:30:57",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-03-28 17:20:57"
+    },
+    {
+      "id": 54,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-31 09:12:35",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-31 09:12:35"
+    },
+    {
+      "id": 55,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-03-31 09:12:50",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-03-31 09:12:50"
+    },
+    {
+      "id": 56,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-03-31 16:54:46",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-31 16:54:46"
+    },
+    {
+      "id": 57,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-03-31 16:54:47",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-03-31 16:54:47"
+    },
+    {
+      "id": 58,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-03-31 16:54:53",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-31 16:54:53"
+    },
+    {
+      "id": 59,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-03-31 16:54:58",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-03-31 16:54:58"
+    },
+    {
+      "id": 60,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-03-31 16:55:00",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-03-31 16:55:00"
+    },
+    {
+      "id": 61,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-03-31 16:55:07",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-03-31 16:55:07"
+    },
+    {
+      "id": 62,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-01 09:17:10",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-01 09:17:10"
+    },
+    {
+      "id": 63,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-01 09:17:12",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-04-01 09:17:12"
+    },
+    {
+      "id": 64,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-01 14:33:23",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-04-01 14:33:23"
+    },
+    {
+      "id": 65,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-01 14:41:42",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-01 14:41:42"
+    },
+    {
+      "id": 66,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-01 15:24:33",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-04-01 15:24:33"
+    },
+    {
+      "id": 67,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-01 15:44:41",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-01 15:44:41"
+    },
+    {
+      "id": 68,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-01 18:17:56",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.111",
+      "created_at": "2026-04-01 18:17:56"
+    },
+    {
+      "id": 69,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-01 18:19:00",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-04-01 18:19:00"
+    },
+    {
+      "id": 70,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-02 09:16:30",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.111",
+      "created_at": "2026-04-02 09:16:30"
+    },
+    {
+      "id": 71,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-02 09:18:28",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-04-02 09:18:28"
+    },
+    {
+      "id": 72,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-02 14:53:09",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-04-02 14:53:09"
+    },
+    {
+      "id": 73,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-02 15:08:08",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.111",
+      "created_at": "2026-04-02 15:08:08"
+    },
+    {
+      "id": 74,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-02 15:53:28",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-04-02 15:53:28"
+    },
+    {
+      "id": 75,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-02 16:14:32",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.111",
+      "created_at": "2026-04-02 16:14:32"
+    },
+    {
+      "id": 76,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-02 18:50:32",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-02 18:50:32"
+    },
+    {
+      "id": 77,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-02 19:40:24",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-02 19:40:24"
+    },
+    {
+      "id": 78,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-04 08:26:14",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-04 08:26:14"
+    },
+    {
+      "id": 79,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-04 08:34:22",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-04 08:34:22"
+    },
+    {
+      "id": 80,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-04 16:29:45",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-04 16:29:45"
+    },
+    {
+      "id": 81,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-04 16:30:04",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-04 16:30:04"
+    },
+    {
+      "id": 82,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-04 16:34:19",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-04 16:34:19"
+    },
+    {
+      "id": 83,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-04 16:34:34",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-04 16:34:34"
+    },
+    {
+      "id": 84,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-04 17:29:36",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-04 17:29:36"
+    },
+    {
+      "id": 85,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-04 20:07:35",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-04 20:07:35"
+    },
+    {
+      "id": 86,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-07 09:16:31",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-07 09:16:31"
+    },
+    {
+      "id": 87,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-07 09:17:18",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-07 09:17:18"
+    },
+    {
+      "id": 88,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-07 15:10:24",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-07 15:10:24"
+    },
+    {
+      "id": 89,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-07 15:17:05",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-07 15:17:05"
+    },
+    {
+      "id": 90,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-07 16:10:53",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-07 16:10:53"
+    },
+    {
+      "id": 91,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-07 16:17:46",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-07 16:17:46"
+    },
+    {
+      "id": 92,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-07 18:05:45",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-07 18:05:45"
+    },
+    {
+      "id": 93,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-08 09:20:50",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-08 09:20:50"
+    },
+    {
+      "id": 94,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-08 09:21:01",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-08 09:21:01"
+    },
+    {
+      "id": 95,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-08 15:45:35",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-08 15:45:35"
+    },
+    {
+      "id": 96,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-08 15:47:10",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-08 15:47:10"
+    },
+    {
+      "id": 97,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-08 16:47:19",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-08 16:47:19"
+    },
+    {
+      "id": 98,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-08 16:45:42",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-08 18:40:42"
+    },
+    {
+      "id": 99,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-08 18:41:17",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-08 18:41:17"
+    },
+    {
+      "id": 100,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-08 18:48:11",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-08 18:48:11"
+    },
+    {
+      "id": 101,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-09 09:13:30",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-09 09:13:30"
+    },
+    {
+      "id": 102,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-09 09:13:34",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-09 09:13:34"
+    },
+    {
+      "id": 103,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-09 15:00:14",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-09 15:00:14"
+    },
+    {
+      "id": 104,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-09 15:16:16",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-09 15:16:16"
+    },
+    {
+      "id": 105,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-09 16:01:16",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-09 16:01:16"
+    },
+    {
+      "id": 106,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-09 16:09:02",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-09 16:09:02"
+    },
+    {
+      "id": 107,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-09 18:27:41",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-09 18:27:41"
+    },
+    {
+      "id": 108,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-09 18:44:18",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-09 18:44:18"
+    },
+    {
+      "id": 109,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-10 09:09:57",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-10 09:09:57"
+    },
+    {
+      "id": 110,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-10 09:10:12",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-10 09:10:12"
+    },
+    {
+      "id": 111,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-10 15:19:41",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-10 15:19:41"
+    },
+    {
+      "id": 112,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-10 15:42:36",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-10 15:42:36"
+    },
+    {
+      "id": 113,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-10 16:20:45",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-10 16:20:45"
+    },
+    {
+      "id": 114,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-10 16:42:00",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-10 16:42:00"
+    },
+    {
+      "id": 115,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-10 18:21:44",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-10 18:21:44"
+    },
+    {
+      "id": 116,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-10 18:21:53",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-10 18:21:53"
+    },
+    {
+      "id": 117,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-11 09:04:58",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-11 09:04:58"
+    },
+    {
+      "id": 118,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-11 09:07:38",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-11 09:07:38"
+    },
+    {
+      "id": 119,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-11 15:09:37",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-11 15:09:37"
+    },
+    {
+      "id": 120,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-11 15:09:54",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-11 15:09:54"
+    },
+    {
+      "id": 121,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-11 15:38:03",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-11 15:38:03"
+    },
+    {
+      "id": 122,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-11 15:41:22",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-11 15:41:22"
+    },
+    {
+      "id": 123,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-11 17:33:06",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-11 17:33:06"
+    },
+    {
+      "id": 124,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-11 18:18:29",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-11 18:18:29"
+    },
+    {
+      "id": 125,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-14 09:17:56",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-14 09:17:56"
+    },
+    {
+      "id": 126,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-14 09:18:05",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-14 09:18:05"
+    },
+    {
+      "id": 127,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-14 15:31:18",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-14 15:31:18"
+    },
+    {
+      "id": 128,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-14 15:34:18",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-14 15:34:18"
+    },
+    {
+      "id": 129,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-14 16:31:39",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-14 16:31:39"
+    },
+    {
+      "id": 130,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-14 16:34:14",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-14 16:34:14"
+    },
+    {
+      "id": 131,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-14 17:59:35",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-14 17:59:35"
+    },
+    {
+      "id": 132,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-14 18:00:03",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-14 18:00:03"
+    },
+    {
+      "id": 133,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-15 09:35:15",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-15 09:35:15"
+    },
+    {
+      "id": 134,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-15 16:37:40",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-15 16:37:40"
+    },
+    {
+      "id": 135,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-15 17:34:54",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-15 17:34:54"
+    },
+    {
+      "id": 136,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-15 18:39:00",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-15 18:39:00"
+    },
+    {
+      "id": 137,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-16 09:35:03",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-16 09:35:03"
+    },
+    {
+      "id": 138,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-16 15:41:31",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-16 15:41:31"
+    },
+    {
+      "id": 139,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-16 16:35:30",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-16 16:35:30"
+    },
+    {
+      "id": 140,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-16 18:34:28",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-16 18:34:28"
+    },
+    {
+      "id": 141,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-17 09:14:41",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-17 09:14:41"
+    },
+    {
+      "id": 142,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-17 11:39:10",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-17 11:39:10"
+    },
+    {
+      "id": 143,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-17 12:39:25",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-17 12:39:25"
+    },
+    {
+      "id": 144,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-17 17:42:36",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-17 17:42:36"
+    },
+    {
+      "id": 145,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-18 09:18:46",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-18 09:18:46"
+    },
+    {
+      "id": 146,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-18 19:44:19",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-04-18 19:44:19"
+    },
+    {
+      "id": 147,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-18 19:44:26",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-04-18 19:44:26"
+    },
+    {
+      "id": 148,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-18 19:44:33",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.100",
+      "created_at": "2026-04-18 19:44:33"
+    },
+    {
+      "id": 149,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-22 09:21:16",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.102",
+      "created_at": "2026-04-22 09:21:16"
+    },
+    {
+      "id": 150,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-22 09:21:18",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-22 09:21:18"
+    },
+    {
+      "id": 151,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-22 15:14:09",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-22 15:14:09"
+    },
+    {
+      "id": 152,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-22 15:15:39",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.102",
+      "created_at": "2026-04-22 15:15:39"
+    },
+    {
+      "id": 153,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-22 16:14:35",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-22 16:14:35"
+    },
+    {
+      "id": 154,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-22 16:15:09",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.102",
+      "created_at": "2026-04-22 16:15:09"
+    },
+    {
+      "id": 155,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-22 18:26:50",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.102",
+      "created_at": "2026-04-22 18:26:50"
+    },
+    {
+      "id": 156,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-22 18:26:57",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.102",
+      "created_at": "2026-04-22 18:26:57"
+    },
+    {
+      "id": 157,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-24 09:07:24",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.102",
+      "created_at": "2026-04-24 09:07:24"
+    },
+    {
+      "id": 158,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-24 09:07:31",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.102",
+      "created_at": "2026-04-24 09:07:31"
+    },
+    {
+      "id": 159,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-24 17:19:04",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-24 17:19:04"
+    },
+    {
+      "id": 160,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-24 17:19:09",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-24 17:19:09"
+    },
+    {
+      "id": 161,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-24 17:19:17",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.103",
+      "created_at": "2026-04-24 17:19:17"
+    },
+    {
+      "id": 162,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-24 12:14:44",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-24 12:14:44"
+    },
+    {
+      "id": 163,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-24 17:39:33",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-24 17:39:33"
+    },
+    {
+      "id": 164,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-24 17:39:42",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-24 17:39:42"
+    },
+    {
+      "id": 165,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-25 09:20:33",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.106",
+      "created_at": "2026-04-25 09:20:33"
+    },
+    {
+      "id": 166,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-25 09:21:04",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-04-25 09:21:04"
+    },
+    {
+      "id": 167,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-25 16:07:24",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-04-25 16:07:24"
+    },
+    {
+      "id": 168,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-25 16:09:06",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.106",
+      "created_at": "2026-04-25 16:09:06"
+    },
+    {
+      "id": 169,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-25 17:09:22",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.106",
+      "created_at": "2026-04-25 17:09:22"
+    },
+    {
+      "id": 170,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-25 17:10:27",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-04-25 17:10:27"
+    },
+    {
+      "id": 171,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-25 18:25:21",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.106",
+      "created_at": "2026-04-25 18:25:21"
+    },
+    {
+      "id": 172,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-25 18:48:41",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-04-25 18:48:41"
+    },
+    {
+      "id": 173,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-28 09:20:55",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-04-28 09:20:55"
+    },
+    {
+      "id": 174,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-28 09:20:58",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.106",
+      "created_at": "2026-04-28 09:20:58"
+    },
+    {
+      "id": 175,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-28 15:15:22",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-04-28 15:15:22"
+    },
+    {
+      "id": 176,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-28 15:16:58",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.106",
+      "created_at": "2026-04-28 15:16:58"
+    },
+    {
+      "id": 177,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-28 16:14:09",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.106",
+      "created_at": "2026-04-28 16:14:09"
+    },
+    {
+      "id": 178,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-28 16:14:44",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-04-28 16:14:44"
+    },
+    {
+      "id": 179,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-28 18:13:45",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.106",
+      "created_at": "2026-04-28 18:13:45"
+    },
+    {
+      "id": 180,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-29 09:15:30",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.106",
+      "created_at": "2026-04-29 09:15:30"
+    },
+    {
+      "id": 181,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-29 09:15:43",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-04-29 09:15:43"
+    },
+    {
+      "id": 182,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-29 15:25:34",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-04-29 15:25:34"
+    },
+    {
+      "id": 183,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-29 15:30:18",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.106",
+      "created_at": "2026-04-29 15:30:18"
+    },
+    {
+      "id": 184,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-29 16:01:59",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-04-29 16:01:59"
+    },
+    {
+      "id": 185,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-29 16:19:08",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.106",
+      "created_at": "2026-04-29 16:19:08"
+    },
+    {
+      "id": 186,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-29 17:52:22",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-04-29 17:52:22"
+    },
+    {
+      "id": 187,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-30 09:23:43",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-30 09:23:43"
+    },
+    {
+      "id": 188,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-04-30 09:24:08",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-04-30 09:24:08"
+    },
+    {
+      "id": 189,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-30 15:34:54",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-04-30 15:34:54"
+    },
+    {
+      "id": 190,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-04-30 15:40:47",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-30 15:40:47"
+    },
+    {
+      "id": 191,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-30 16:26:54",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-04-30 16:26:54"
+    },
+    {
+      "id": 192,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-04-30 16:39:04",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-30 16:39:04"
+    },
+    {
+      "id": 193,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-30 18:32:46",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.107",
+      "created_at": "2026-04-30 18:32:46"
+    },
+    {
+      "id": 194,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-04-30 18:32:46",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-04-30 18:32:46"
+    },
+    {
+      "id": 195,
+      "employee_id": 2,
+      "record_type": "ENTRADA",
+      "record_time": "2026-05-02 08:39:50",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-05-02 08:39:50"
+    },
+    {
+      "id": 196,
+      "employee_id": 3,
+      "record_type": "ENTRADA",
+      "record_time": "2026-05-02 09:19:59",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.108",
+      "created_at": "2026-05-02 09:19:59"
+    },
+    {
+      "id": 197,
+      "employee_id": 2,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-05-02 16:55:03",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-05-02 16:55:03"
+    },
+    {
+      "id": 198,
+      "employee_id": 2,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-05-02 16:55:09",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-05-02 16:55:09"
+    },
+    {
+      "id": 199,
+      "employee_id": 2,
+      "record_type": "SAIDA",
+      "record_time": "2026-05-02 16:55:26",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.101",
+      "created_at": "2026-05-02 16:55:26"
+    },
+    {
+      "id": 200,
+      "employee_id": 3,
+      "record_type": "SAIDA_INTERVALO",
+      "record_time": "2026-05-02 20:12:28",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.108",
+      "created_at": "2026-05-02 20:12:28"
+    },
+    {
+      "id": 201,
+      "employee_id": 3,
+      "record_type": "RETORNO_INTERVALO",
+      "record_time": "2026-05-02 20:12:47",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.108",
+      "created_at": "2026-05-02 20:12:47"
+    },
+    {
+      "id": 202,
+      "employee_id": 3,
+      "record_type": "SAIDA",
+      "record_time": "2026-05-02 20:13:04",
+      "notes": "Registro automático",
+      "ip_origin": "192.168.0.108",
+      "created_at": "2026-05-02 20:13:04"
+    }
+  ],
+  "time_adjustments": [
+    {
+      "id": 1,
+      "record_id": 52,
+      "employee_id": 2,
+      "admin_user_id": 1,
+      "old_value": "2026-03-28 17:19:17",
+      "new_value": "2026-03-28 09:30:17",
+      "reason": "esquecimento",
+      "created_at": "2026-03-28 17:20:25"
+    },
+    {
+      "id": 2,
+      "record_id": 53,
+      "employee_id": 3,
+      "admin_user_id": 1,
+      "old_value": "2026-03-28 17:20:57",
+      "new_value": "2026-03-28 09:30:57",
+      "reason": "esquecimento",
+      "created_at": "2026-03-28 17:21:35"
+    },
+    {
+      "id": 3,
+      "record_id": 98,
+      "employee_id": 3,
+      "admin_user_id": 1,
+      "old_value": "2026-04-08 18:40:42",
+      "new_value": "2026-04-08 15:45:42",
+      "reason": "sistema indisponivel",
+      "created_at": "2026-04-08 18:46:44"
+    },
+    {
+      "id": 4,
+      "record_id": 98,
+      "employee_id": 3,
+      "admin_user_id": 1,
+      "old_value": "2026-04-08 15:45:42",
+      "new_value": "2026-04-08 16:45:42",
+      "reason": "sistema indisponivel",
+      "created_at": "2026-04-08 18:49:16"
+    }
+  ],
+  "system_logs": [
+    {
+      "id": 1,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-03-18 16:11:45"
+    },
+    {
+      "id": 2,
+      "user_name": "Administrador",
+      "action": "CADASTRO_FUNCIONARIO",
+      "details": "Funcionário Tuane Celina Nascimento Alves cadastrado",
+      "created_at": "2026-03-18 16:12:34"
+    },
+    {
+      "id": 3,
+      "user_name": "Administrador",
+      "action": "CONFIGURACOES",
+      "details": "WhatsApp da empresa atualizado",
+      "created_at": "2026-03-18 16:13:26"
+    },
+    {
+      "id": 4,
+      "user_name": "Administrador",
+      "action": "REGISTRO_PONTO",
+      "details": "Tuane Celina Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-03-18 16:14:01"
+    },
+    {
+      "id": 5,
+      "user_name": "Administrador",
+      "action": "CADASTRO_FUNCIONARIO",
+      "details": "Funcionário Amanda Luiza Fiuza Batista cadastrado",
+      "created_at": "2026-03-18 16:44:04"
+    },
+    {
+      "id": 6,
+      "user_name": "Administrador",
+      "action": "CADASTRO_FUNCIONARIO",
+      "details": "Funcionário Kauã Johnson Do Nascimento Alves cadastrado",
+      "created_at": "2026-03-18 16:50:31"
+    },
+    {
+      "id": 7,
+      "user_name": "Administrador",
+      "action": "ATUALIZACAO_JORNADA_FUNCIONARIO",
+      "details": "Jornadas atualizadas para Amanda Luiza Fiuza Batista",
+      "created_at": "2026-03-18 16:50:47"
+    },
+    {
+      "id": 8,
+      "user_name": "Administrador",
+      "action": "BACKUP",
+      "details": "Backup gerado: backup_20260318_170732.db",
+      "created_at": "2026-03-18 17:07:32"
+    },
+    {
+      "id": 9,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-03-18 17:08:48"
+    },
+    {
+      "id": 10,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-03-18 18:09:54"
+    },
+    {
+      "id": 11,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Tuane Celina Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-03-18 18:11:40"
+    },
+    {
+      "id": 12,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-03-20 09:09:40"
+    },
+    {
+      "id": 13,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-03-20 09:13:25"
+    },
+    {
+      "id": 14,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Tuane Celina Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-03-20 10:01:51"
+    },
+    {
+      "id": 15,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-03-20 17:09:32"
+    },
+    {
+      "id": 16,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-03-20 17:09:50"
+    },
+    {
+      "id": 17,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-03-20 17:10:01"
+    },
+    {
+      "id": 18,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-03-20 17:43:17"
+    },
+    {
+      "id": 19,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-03-20 17:44:05"
+    },
+    {
+      "id": 20,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-03-20 17:44:19"
+    },
+    {
+      "id": 21,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-03-21 08:47:19"
+    },
+    {
+      "id": 22,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-03-21 08:47:28"
+    },
+    {
+      "id": 23,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-03-21 18:27:11"
+    },
+    {
+      "id": 24,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-03-21 18:27:22"
+    },
+    {
+      "id": 25,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-03-21 18:27:37"
+    },
+    {
+      "id": 26,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-03-21 18:32:20"
+    },
+    {
+      "id": 27,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-03-21 18:32:33"
+    },
+    {
+      "id": 28,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-03-21 18:32:51"
+    },
+    {
+      "id": 29,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-03-23 08:15:32"
+    },
+    {
+      "id": 30,
+      "user_name": "Administrador",
+      "action": "CONFIGURACOES",
+      "details": "WhatsApp da empresa atualizado",
+      "created_at": "2026-03-23 08:19:13"
+    },
+    {
+      "id": 31,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-03-23 08:19:15"
+    },
+    {
+      "id": 32,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-03-24 09:09:13"
+    },
+    {
+      "id": 33,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-03-24 09:09:50"
+    },
+    {
+      "id": 34,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-03-24 14:05:34"
+    },
+    {
+      "id": 35,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-03-24 14:06:08"
+    },
+    {
+      "id": 36,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-03-24 15:26:22"
+    },
+    {
+      "id": 37,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-03-24 15:26:32"
+    },
+    {
+      "id": 38,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-03-24 15:26:37"
+    },
+    {
+      "id": 39,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-03-24 15:26:51"
+    },
+    {
+      "id": 40,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-03-24 15:26:59"
+    },
+    {
+      "id": 41,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-03-24 15:27:08"
+    },
+    {
+      "id": 42,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-03-24 15:49:51"
+    },
+    {
+      "id": 43,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-03-24 15:50:37"
+    },
+    {
+      "id": 44,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-03-24 16:34:44"
+    },
+    {
+      "id": 45,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-03-24 16:34:52"
+    },
+    {
+      "id": 46,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-03-25 08:49:46"
+    },
+    {
+      "id": 47,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-03-25 08:51:36"
+    },
+    {
+      "id": 48,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-03-25 08:51:56"
+    },
+    {
+      "id": 49,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-03-25 08:52:37"
+    },
+    {
+      "id": 50,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-03-25 09:09:04"
+    },
+    {
+      "id": 51,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-03-25 09:09:17"
+    },
+    {
+      "id": 52,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-03-25 15:45:06"
+    },
+    {
+      "id": 53,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-03-25 15:51:15"
+    },
+    {
+      "id": 54,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-03-25 16:41:18"
+    },
+    {
+      "id": 55,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-03-25 16:46:49"
+    },
+    {
+      "id": 56,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-03-25 17:51:42"
+    },
+    {
+      "id": 57,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-03-25 18:20:00"
+    },
+    {
+      "id": 58,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-03-26 09:06:05"
+    },
+    {
+      "id": 59,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-03-26 09:06:07"
+    },
+    {
+      "id": 60,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-03-26 15:30:00"
+    },
+    {
+      "id": 61,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-03-26 15:42:07"
+    },
+    {
+      "id": 62,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-03-26 16:00:22"
+    },
+    {
+      "id": 63,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-03-26 16:29:29"
+    },
+    {
+      "id": 64,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-03-26 17:15:16"
+    },
+    {
+      "id": 65,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-03-27 09:07:42"
+    },
+    {
+      "id": 66,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-03-27 09:08:52"
+    },
+    {
+      "id": 67,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-03-27 15:14:52"
+    },
+    {
+      "id": 68,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-03-27 15:18:21"
+    },
+    {
+      "id": 69,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-03-27 15:35:19"
+    },
+    {
+      "id": 70,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-03-27 15:48:34"
+    },
+    {
+      "id": 71,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-03-27 17:36:20"
+    },
+    {
+      "id": 72,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-03-27 17:37:58"
+    },
+    {
+      "id": 73,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-03-28 16:13:07"
+    },
+    {
+      "id": 74,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-03-28 16:13:29"
+    },
+    {
+      "id": 75,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-03-28 17:19:17"
+    },
+    {
+      "id": 76,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-03-28 17:19:18"
+    },
+    {
+      "id": 77,
+      "user_name": "Administrador",
+      "action": "AJUSTE_REGISTRO",
+      "details": "Registro 52 ajustado. Motivo: esquecimento",
+      "created_at": "2026-03-28 17:20:25"
+    },
+    {
+      "id": 78,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-03-28 17:20:57"
+    },
+    {
+      "id": 79,
+      "user_name": "Administrador",
+      "action": "AJUSTE_REGISTRO",
+      "details": "Registro 53 ajustado. Motivo: esquecimento",
+      "created_at": "2026-03-28 17:21:35"
+    },
+    {
+      "id": 80,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-03-28 17:22:09"
+    },
+    {
+      "id": 81,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-03-31 09:12:35"
+    },
+    {
+      "id": 82,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-03-31 09:12:50"
+    },
+    {
+      "id": 83,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-03-31 16:54:46"
+    },
+    {
+      "id": 84,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-03-31 16:54:47"
+    },
+    {
+      "id": 85,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-03-31 16:54:53"
+    },
+    {
+      "id": 86,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-03-31 16:54:58"
+    },
+    {
+      "id": 87,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-03-31 16:55:00"
+    },
+    {
+      "id": 88,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-03-31 16:55:07"
+    },
+    {
+      "id": 89,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-01 09:17:10"
+    },
+    {
+      "id": 90,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-04-01 09:17:12"
+    },
+    {
+      "id": 91,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-04-01 09:36:47"
+    },
+    {
+      "id": 92,
+      "user_name": "Administrador",
+      "action": "EXPORTAR_PDF",
+      "details": "Espelho de ponto do funcionário 3 - 03/2026",
+      "created_at": "2026-04-01 09:37:17"
+    },
+    {
+      "id": 93,
+      "user_name": "Administrador",
+      "action": "EXPORTAR_PDF",
+      "details": "Espelho de ponto do funcionário 2 - 03/2026",
+      "created_at": "2026-04-01 09:38:54"
+    },
+    {
+      "id": 94,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-04-01 09:40:41"
+    },
+    {
+      "id": 95,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-01 14:33:23"
+    },
+    {
+      "id": 96,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-01 14:41:42"
+    },
+    {
+      "id": 97,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-01 15:24:33"
+    },
+    {
+      "id": 98,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-01 15:44:41"
+    },
+    {
+      "id": 99,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-01 18:17:56"
+    },
+    {
+      "id": 100,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-04-01 18:19:00"
+    },
+    {
+      "id": 101,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-04-01 20:01:34"
+    },
+    {
+      "id": 102,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-04-01 20:03:35"
+    },
+    {
+      "id": 103,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-02 09:16:30"
+    },
+    {
+      "id": 104,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-04-02 09:18:28"
+    },
+    {
+      "id": 105,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-02 14:53:09"
+    },
+    {
+      "id": 106,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-02 15:08:08"
+    },
+    {
+      "id": 107,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-02 15:53:28"
+    },
+    {
+      "id": 108,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-02 16:14:32"
+    },
+    {
+      "id": 109,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-04-02 18:46:57"
+    },
+    {
+      "id": 110,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-04-02 18:47:22"
+    },
+    {
+      "id": 111,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-02 18:50:32"
+    },
+    {
+      "id": 112,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-04-02 19:40:24"
+    },
+    {
+      "id": 113,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-04-02 20:32:29"
+    },
+    {
+      "id": 114,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-04-02 20:32:41"
+    },
+    {
+      "id": 115,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-04-04 08:26:14"
+    },
+    {
+      "id": 116,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-04 08:34:22"
+    },
+    {
+      "id": 117,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-04 16:29:45"
+    },
+    {
+      "id": 118,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-04 16:30:04"
+    },
+    {
+      "id": 119,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-04 16:34:19"
+    },
+    {
+      "id": 120,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-04 16:34:34"
+    },
+    {
+      "id": 121,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-04 17:29:36"
+    },
+    {
+      "id": 122,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-04-04 20:07:35"
+    },
+    {
+      "id": 123,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-04-06 12:04:49"
+    },
+    {
+      "id": 124,
+      "user_name": "Administrador",
+      "action": "EXPORTAR_PDF",
+      "details": "Espelho de ponto do funcionário 3 - 03/2026",
+      "created_at": "2026-04-06 12:05:28"
+    },
+    {
+      "id": 125,
+      "user_name": "Administrador",
+      "action": "EXPORTAR_PDF",
+      "details": "Espelho de ponto do funcionário 2 - 03/2026",
+      "created_at": "2026-04-06 12:08:55"
+    },
+    {
+      "id": 126,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-04-06 18:07:23"
+    },
+    {
+      "id": 127,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-07 09:16:31"
+    },
+    {
+      "id": 128,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-04-07 09:17:18"
+    },
+    {
+      "id": 129,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-04-07 11:46:39"
+    },
+    {
+      "id": 130,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-04-07 11:47:50"
+    },
+    {
+      "id": 131,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-07 15:10:24"
+    },
+    {
+      "id": 132,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-07 15:17:05"
+    },
+    {
+      "id": 133,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-07 16:10:53"
+    },
+    {
+      "id": 134,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-07 16:17:46"
+    },
+    {
+      "id": 135,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-07 18:05:45"
+    },
+    {
+      "id": 136,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-08 09:20:50"
+    },
+    {
+      "id": 137,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-04-08 09:21:01"
+    },
+    {
+      "id": 138,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-08 15:45:35"
+    },
+    {
+      "id": 139,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-08 15:47:10"
+    },
+    {
+      "id": 140,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-08 16:47:19"
+    },
+    {
+      "id": 141,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-08 18:40:42"
+    },
+    {
+      "id": 142,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-08 18:41:17"
+    },
+    {
+      "id": 143,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-04-08 18:45:31"
+    },
+    {
+      "id": 144,
+      "user_name": "Administrador",
+      "action": "AJUSTE_REGISTRO",
+      "details": "Registro 98 ajustado. Motivo: sistema indisponivel",
+      "created_at": "2026-04-08 18:46:44"
+    },
+    {
+      "id": 145,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-04-08 18:47:52"
+    },
+    {
+      "id": 146,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-04-08 18:48:11"
+    },
+    {
+      "id": 147,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-04-08 18:48:36"
+    },
+    {
+      "id": 148,
+      "user_name": "Administrador",
+      "action": "AJUSTE_REGISTRO",
+      "details": "Registro 98 ajustado. Motivo: sistema indisponivel",
+      "created_at": "2026-04-08 18:49:16"
+    },
+    {
+      "id": 149,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-04-08 18:49:37"
+    },
+    {
+      "id": 150,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-09 09:13:30"
+    },
+    {
+      "id": 151,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-04-09 09:13:34"
+    },
+    {
+      "id": 152,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-04-09 13:02:14"
+    },
+    {
+      "id": 153,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-04-09 13:02:30"
+    },
+    {
+      "id": 154,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-09 15:00:14"
+    },
+    {
+      "id": 155,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-09 15:16:16"
+    },
+    {
+      "id": 156,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-09 16:01:16"
+    },
+    {
+      "id": 157,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-09 16:09:02"
+    },
+    {
+      "id": 158,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-09 18:27:41"
+    },
+    {
+      "id": 159,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-04-09 18:44:18"
+    },
+    {
+      "id": 160,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-04-10 09:09:57"
+    },
+    {
+      "id": 161,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-10 09:10:12"
+    },
+    {
+      "id": 162,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-10 15:19:41"
+    },
+    {
+      "id": 163,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-10 15:42:36"
+    },
+    {
+      "id": 164,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-10 16:20:45"
+    },
+    {
+      "id": 165,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-10 16:42:00"
+    },
+    {
+      "id": 166,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-04-10 18:21:44"
+    },
+    {
+      "id": 167,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-10 18:21:53"
+    },
+    {
+      "id": 168,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-04-11 09:04:58"
+    },
+    {
+      "id": 169,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-11 09:07:38"
+    },
+    {
+      "id": 170,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-11 15:09:37"
+    },
+    {
+      "id": 171,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-11 15:09:54"
+    },
+    {
+      "id": 172,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-11 15:38:03"
+    },
+    {
+      "id": 173,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-11 15:41:22"
+    },
+    {
+      "id": 174,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-04-11 17:33:06"
+    },
+    {
+      "id": 175,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-11 18:18:29"
+    },
+    {
+      "id": 176,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-14 09:17:56"
+    },
+    {
+      "id": 177,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-04-14 09:18:05"
+    },
+    {
+      "id": 178,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-14 15:31:18"
+    },
+    {
+      "id": 179,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-14 15:34:18"
+    },
+    {
+      "id": 180,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-14 16:31:39"
+    },
+    {
+      "id": 181,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-14 16:34:14"
+    },
+    {
+      "id": 182,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-14 17:59:35"
+    },
+    {
+      "id": 183,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-04-14 18:00:03"
+    },
+    {
+      "id": 184,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-15 09:35:15"
+    },
+    {
+      "id": 185,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-15 16:37:40"
+    },
+    {
+      "id": 186,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-15 17:34:54"
+    },
+    {
+      "id": 187,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-15 18:39:00"
+    },
+    {
+      "id": 188,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-16 09:35:03"
+    },
+    {
+      "id": 189,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-16 15:41:31"
+    },
+    {
+      "id": 190,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-16 16:35:30"
+    },
+    {
+      "id": 191,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-16 18:34:28"
+    },
+    {
+      "id": 192,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-17 09:14:41"
+    },
+    {
+      "id": 193,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-17 11:39:10"
+    },
+    {
+      "id": 194,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-17 12:39:25"
+    },
+    {
+      "id": 195,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-17 17:42:36"
+    },
+    {
+      "id": 196,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-18 09:18:46"
+    },
+    {
+      "id": 197,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-18 19:44:19"
+    },
+    {
+      "id": 198,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-18 19:44:26"
+    },
+    {
+      "id": 199,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-18 19:44:33"
+    },
+    {
+      "id": 200,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-22 09:21:16"
+    },
+    {
+      "id": 201,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-04-22 09:21:18"
+    },
+    {
+      "id": 202,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-22 15:14:09"
+    },
+    {
+      "id": 203,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-22 15:15:39"
+    },
+    {
+      "id": 204,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-22 16:14:35"
+    },
+    {
+      "id": 205,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-22 16:15:09"
+    },
+    {
+      "id": 206,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-04-22 18:26:50"
+    },
+    {
+      "id": 207,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-22 18:26:57"
+    },
+    {
+      "id": 208,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-24 09:07:24"
+    },
+    {
+      "id": 209,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-04-24 09:07:31"
+    },
+    {
+      "id": 210,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-24 17:19:04"
+    },
+    {
+      "id": 211,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-24 17:19:09"
+    },
+    {
+      "id": 212,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-24 17:19:17"
+    },
+    {
+      "id": 213,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-24 12:14:44"
+    },
+    {
+      "id": 214,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-24 17:39:33"
+    },
+    {
+      "id": 215,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-04-24 17:39:42"
+    },
+    {
+      "id": 216,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-25 09:20:33"
+    },
+    {
+      "id": 217,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-04-25 09:21:04"
+    },
+    {
+      "id": 218,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-25 16:07:24"
+    },
+    {
+      "id": 219,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-25 16:09:06"
+    },
+    {
+      "id": 220,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-25 17:09:22"
+    },
+    {
+      "id": 221,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-25 17:10:27"
+    },
+    {
+      "id": 222,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-25 18:25:21"
+    },
+    {
+      "id": 223,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-04-25 18:48:41"
+    },
+    {
+      "id": 224,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-04-28 09:20:55"
+    },
+    {
+      "id": 225,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-28 09:20:58"
+    },
+    {
+      "id": 226,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-28 15:15:22"
+    },
+    {
+      "id": 227,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-28 15:16:58"
+    },
+    {
+      "id": 228,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-28 16:14:09"
+    },
+    {
+      "id": 229,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-28 16:14:44"
+    },
+    {
+      "id": 230,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-28 18:13:45"
+    },
+    {
+      "id": 231,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-29 09:15:30"
+    },
+    {
+      "id": 232,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-04-29 09:15:43"
+    },
+    {
+      "id": 233,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-29 15:25:34"
+    },
+    {
+      "id": 234,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-29 15:30:18"
+    },
+    {
+      "id": 235,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-29 16:01:59"
+    },
+    {
+      "id": 236,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-29 16:19:08"
+    },
+    {
+      "id": 237,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-04-29 17:52:22"
+    },
+    {
+      "id": 238,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-04-30 09:23:43"
+    },
+    {
+      "id": 239,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-04-30 09:24:08"
+    },
+    {
+      "id": 240,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-30 15:34:54"
+    },
+    {
+      "id": 241,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-04-30 15:40:47"
+    },
+    {
+      "id": 242,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-30 16:26:54"
+    },
+    {
+      "id": 243,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-04-30 16:39:04"
+    },
+    {
+      "id": 244,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-04-30 18:32:46"
+    },
+    {
+      "id": 245,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-04-30 18:32:46"
+    },
+    {
+      "id": 246,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-05-01 12:08:16"
+    },
+    {
+      "id": 247,
+      "user_name": "Administrador",
+      "action": "EXPORTAR_EXCEL",
+      "details": "Relatório mensal 04/2026",
+      "created_at": "2026-05-01 12:21:19"
+    },
+    {
+      "id": 248,
+      "user_name": "Administrador",
+      "action": "EXPORTAR_PDF",
+      "details": "Espelho de ponto do funcionário 2 - 04/2026",
+      "created_at": "2026-05-01 12:21:22"
+    },
+    {
+      "id": 249,
+      "user_name": "Administrador",
+      "action": "EXPORTAR_PDF",
+      "details": "Espelho de ponto do funcionário 3 - 04/2026",
+      "created_at": "2026-05-01 12:21:27"
+    },
+    {
+      "id": 250,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou ENTRADA",
+      "created_at": "2026-05-02 08:39:50"
+    },
+    {
+      "id": 251,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou ENTRADA",
+      "created_at": "2026-05-02 09:19:59"
+    },
+    {
+      "id": 252,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA_INTERVALO",
+      "created_at": "2026-05-02 16:55:03"
+    },
+    {
+      "id": 253,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou RETORNO_INTERVALO",
+      "created_at": "2026-05-02 16:55:09"
+    },
+    {
+      "id": 254,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Amanda Luiza Fiuza Batista registrou SAIDA",
+      "created_at": "2026-05-02 16:55:26"
+    },
+    {
+      "id": 255,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA_INTERVALO",
+      "created_at": "2026-05-02 20:12:28"
+    },
+    {
+      "id": 256,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou RETORNO_INTERVALO",
+      "created_at": "2026-05-02 20:12:47"
+    },
+    {
+      "id": 257,
+      "user_name": "Sistema",
+      "action": "REGISTRO_PONTO",
+      "details": "Kauã Johnson Do Nascimento Alves registrou SAIDA",
+      "created_at": "2026-05-02 20:13:04"
+    },
+    {
+      "id": 258,
+      "user_name": "Administrador",
+      "action": "LOGOUT",
+      "details": "Usuário saiu do sistema",
+      "created_at": "2026-05-03 14:18:27"
+    },
+    {
+      "id": 259,
+      "user_name": "Administrador",
+      "action": "LOGIN",
+      "details": "Usuário admin entrou no sistema",
+      "created_at": "2026-05-03 14:18:52"
+    }
+  ],
+  "settings": [
+    {
+      "key": "company_whatsapp",
+      "value": "5531984423450",
+      "updated_at": "2026-03-23 08:19:13"
+    }
+  ]
+}
