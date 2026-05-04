@@ -1,1 +1,6 @@
-flaskwaitressrequestspsycopg2-binaryopenpyxlreportlab
+flask
+waitress
+requests
+psycopg2-binary
+openpyxl
+reportlab

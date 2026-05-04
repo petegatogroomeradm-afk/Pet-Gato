@@ -15,6 +15,7 @@ from urllib.parse import quote
 
 from flask import (
     Flask,
+    jsonify,
     flash,
     g,
     redirect,
@@ -863,18 +864,6 @@ def create_backup() -> Path:
 @app.route("/")
 def index():
     return redirect(url_for("punch"))
-
-def liberar_empresa(slug_empresa):
-    conn = get_db()
-    conn.execute("""
-        UPDATE empresas
-        SET status='ATIVO',
-            acesso_liberado=1,
-            data_pagamento=datetime('now'),
-            data_expiracao=datetime('now', '+30 days')
-        WHERE slug=?
-    """, (slug_empresa,))
-    conn.commit()
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -2509,37 +2498,107 @@ def billing_create_payment(plan_key: str):
 
 
 @app.route("/webhook", methods=["GET", "POST"])
+
 @app.route("/webhook/mercadopago", methods=["GET", "POST"])
 def mercadopago_webhook():
-    ensure_billing_ready()
-    payload = request.get_json(silent=True) or {}
-    topic = request.args.get("topic") or payload.get("type") or payload.get("topic") or payload.get("action") or payload.get("action")
-    payment_id = request.args.get("id")
+    """Webhook Mercado Pago - versão SaaS definitiva.
 
-    if not payment_id and isinstance(payload.get("data"), dict):
-        payment_id = payload["data"].get("id")
-    if topic and "payment" not in str(topic):
-        return {"status": "ignored", "topic": topic}, 200
-    if not payment_id:
-        return {"status": "ignored", "reason": "missing payment id"}, 200
+    Aceita:
+    - GET: teste simples no navegador;
+    - POST: notificações reais/simuladas do Mercado Pago.
+
+    Quando o pagamento estiver approved, ativa a empresa por 30 dias
+    usando external_reference no formato:
+    company:<id>:plan:<PLANO>:event:<billing_event_id>
+    """
+    if request.method == "GET":
+        return jsonify({"status": "online", "webhook": "mercadopago"}), 200
 
     try:
-        payment = fetch_mercadopago_payment(str(payment_id))
-        status = payment.get("status", "")
-        external_reference = payment.get("external_reference", "")
-        ref = parse_external_reference(external_reference)
-        company_id = int(ref.get("company", "0") or 0)
-        plan_key = ref.get("plan", "BASICO")
-        event_id = int(ref.get("event", "0") or 0)
-        if status == "approved" and company_id:
-            activate_company_payment(company_id, plan_key, str(payment_id), event_id or None)
-        elif event_id:
-            execute_db("UPDATE billing_events SET status = ?, mp_payment_id = ? WHERE id = ?", (status.upper() or "PENDENTE", str(payment_id), event_id))
-        return {"status": "ok"}, 200
-    except Exception as exc:
-        print("Erro webhook Mercado Pago:", exc)
-        return {"status": "error", "message": str(exc)}, 200
+        payload = request.get_json(force=True, silent=True) or {}
+        print("Webhook Mercado Pago recebido:", payload)
 
+        # O Mercado Pago pode mandar o ID por JSON, querystring ou resource.
+        payment_id = (
+            request.args.get("id")
+            or request.args.get("data.id")
+            or (payload.get("data") or {}).get("id")
+            or payload.get("id")
+        )
+
+        resource = payload.get("resource") or request.args.get("resource")
+        if not payment_id and resource and "/payments/" in str(resource):
+            payment_id = str(resource).rstrip("/").split("/")[-1]
+
+        if not payment_id:
+            return jsonify({"status": "ignored", "reason": "missing payment id"}), 200
+
+        token = mp_access_token()
+        if not token:
+            print("Webhook Mercado Pago: MP_ACCESS_TOKEN não configurado.")
+            return jsonify({"status": "ignored", "reason": "missing token"}), 200
+
+        headers = {"Authorization": f"Bearer {token}"}
+        response = requests.get(
+            f"https://api.mercadopago.com/v1/payments/{payment_id}",
+            headers=headers,
+            timeout=8,
+        )
+
+        try:
+            payment = response.json()
+        except Exception:
+            payment = {"raw": response.text}
+
+        print("Consulta pagamento Mercado Pago:", payment)
+
+        if response.status_code >= 400:
+            return jsonify({"status": "ignored", "reason": "mp_query_error", "payment_id": str(payment_id)}), 200
+
+        status = payment.get("status")
+        external_reference = payment.get("external_reference") or ""
+        ref = parse_external_reference(external_reference)
+
+        company_id = ref.get("company") or ref.get("company_id")
+        plan_key = (ref.get("plan") or "BASICO").upper()
+        event_id_raw = ref.get("event") or ref.get("event_id")
+
+        event_id = None
+        if event_id_raw:
+            try:
+                event_id = int(event_id_raw)
+            except Exception:
+                event_id = None
+
+        # Registra retorno no evento financeiro, mesmo antes de aprovado.
+        if event_id:
+            try:
+                execute_db(
+                    """
+                    UPDATE billing_events
+                    SET mp_payment_id = ?, webhook_payload = ?
+                    WHERE id = ?
+                    """,
+                    (str(payment_id), str(payment)[:4000], event_id),
+                )
+            except Exception as exc:
+                print("Aviso webhook: não consegui atualizar payload do billing_events:", exc)
+
+        if status == "approved" and company_id:
+            activate_company_payment(int(company_id), plan_key, str(payment_id), event_id)
+            return jsonify({"status": "approved", "company_id": int(company_id), "event_id": event_id}), 200
+
+        return jsonify({"status": "received", "payment_status": status or "unknown", "payment_id": str(payment_id)}), 200
+
+    except Exception as exc:
+        # Retorna 200 para evitar timeout/retry infinito do Mercado Pago, mas registra o erro no log do Render.
+        print("Erro webhook Mercado Pago:", exc)
+        return jsonify({"status": "error_logged"}), 200
+
+
+@app.route("/webhook", methods=["GET", "POST"])
+def webhook_alias():
+    return mercadopago_webhook()
 
 @app.route("/pagamento/sucesso")
 def payment_success():
@@ -2726,6 +2785,13 @@ def billing_reminder_message(company) -> str:
         f"{app_public_url()}/assinatura"
     )
 
+
+
+
+@app.route("/financeiro")
+@admin_required
+def financeiro_alias():
+    return financeiro_saas()
 
 @app.route("/financeiro-saas")
 @admin_required
