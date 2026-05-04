@@ -2827,6 +2827,21 @@ def financeiro_verificar_pagamentos():
     flash(f"Verificação concluída. Consultados: {checked}. Aprovados: {approved}.", "success")
     return redirect(url_for("financeiro_saas"))
 
+@app.route("/cron/verificar-vencimentos", methods=["GET"])
+def cron_verificar_vencimentos():
+    try:
+        result = saas_block_overdue_companies()
+        return {
+            "status": "ok",
+            "acao": "vencimentos verificados",
+            "checked": result.get("checked", 0),
+            "blocked": result.get("blocked", 0),
+            "due_soon": result.get("due_soon", 0),
+        }, 200
+    except Exception as exc:
+        print("Erro cron verificar vencimentos:", exc)
+        return {"status": "error", "message": str(exc)}, 200
+
 @app.route("/webhook", methods=["POST"])
 def webhook():
     data = request.json
