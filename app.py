@@ -2473,6 +2473,25 @@ def block_overdue_companies() -> None:
         elif not paid_until and trial_until and trial_until < today:
             execute_db("UPDATE companies SET status = 'BLOQUEADO', payment_status = 'TESTE_EXPIRADO' WHERE id = ?", (company["id"],))
 
+@app.route("/cron/verificar-vencimentos")
+def cron_verificar_vencimentos():
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE companies
+            SET acesso_liberado = FALSE
+            WHERE pago_ate IS NOT NULL
+            AND pago_ate < NOW()
+        """)
+
+        conn.commit()
+
+        return {"status": "ok", "acao": "vencimentos verificados"}
+
+    except Exception as e:
+        return {"erro": str(e)}, 500
 
 @app.route("/assinatura/pagar/<plan_key>", methods=["POST"])
 @admin_required
@@ -2738,6 +2757,20 @@ def billing_reminder_message(company) -> str:
         f"{app_public_url()}/assinatura"
     )
 
+@app.route("/cron/verificar-vencimentos", methods=["GET"])
+def cron_verificar_vencimentos():
+    try:
+        result = saas_block_overdue_companies()
+        return {
+            "status": "ok",
+            "acao": "vencimentos verificados",
+            "checked": result.get("checked", 0),
+            "blocked": result.get("blocked", 0),
+            "due_soon": result.get("due_soon", 0),
+        }, 200
+    except Exception as exc:
+        print("Erro cron verificar vencimentos:", exc)
+        return {"status": "error", "message": str(exc)}, 200
 
 @app.route("/financeiro-saas")
 @admin_required
