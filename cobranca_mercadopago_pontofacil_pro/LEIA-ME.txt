@@ -1,0 +1,33 @@
+# Cobrança Mercado Pago - PontoFácil Pro
+
+Este pacote adiciona cobrança automática via Mercado Pago ao sistema multiempresa.
+
+## Variáveis no Render
+
+Key: MP_ACCESS_TOKEN
+Value: seu Access Token de produção do Mercado Pago
+
+Key: APP_PUBLIC_URL
+Value: https://ponto.petegato.com.br
+
+## Como aplicar
+
+```powershell
+cd "D:\Relogio de ponto WEB"
+python "D:\Relogio de ponto WEB\cobranca_mercadopago_pontofacil_pro\aplicar_cobranca_mercadopago.py"
+git add .
+git commit -m "Adiciona cobranca Mercado Pago"
+git push
+```
+
+Depois acesse:
+https://ponto.petegato.com.br/assinatura
+
+## Inclui
+
+- Tela de assinatura PontoFácil Pro
+- Botões de pagamento Pix/cartão via Mercado Pago Checkout
+- Histórico financeiro
+- Webhook /webhook/mercadopago
+- Ativação automática por 30 dias após pagamento aprovado
+- Campos financeiros nas empresas e eventos

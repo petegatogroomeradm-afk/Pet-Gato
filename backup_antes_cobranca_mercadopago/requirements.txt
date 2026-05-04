@@ -4,4 +4,3 @@ openpyxl
 reportlab
 waitress
 psycopg2-binary
-requests

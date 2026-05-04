@@ -1,16 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="page-header"><h1>Planos comerciais</h1></div>
+<div class="page-header"><div><h1>PontoFácil Pro</h1><p>Planos comerciais para controle de ponto online.</p></div></div>
 <div class="grid grid-3">
   {% for key, p in PLAN_LIMITS.items() %}
   <section class="card">
-    <h2>{{ p.name }}</h2>
-    <h1>{{ p.price }}</h1>
+    <h2>{{ p.name }}</h2><h1>{{ p.price }}</h1>
     <p>Limite: {% if p.employees > 9000 %}Ilimitado{% else %}{{ p.employees }} funcionários{% endif %}</p>
+    <a class="btn primary" href="{{ url_for('subscription_page') }}">Assinar</a>
   </section>
   {% endfor %}
 </div>
-{% if company %}
-<section class="card"><h2>Empresa atual</h2><p>{{ company.name }} — Plano {{ company.plan }}</p></section>
-{% endif %}
+{% if company %}<section class="card"><h2>Empresa atual</h2><p>{{ company.name }} — Plano {{ company.plan }}</p></section>{% endif %}
 {% endblock %}
