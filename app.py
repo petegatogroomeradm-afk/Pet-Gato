@@ -83,38 +83,34 @@ def has_admin_key() -> bool:
 
 @app.before_request
 def security_gate():
-    allowed_public = ["static", "service_worker", "health"]
+    """Segurança corrigida para SaaS + Checkout Pro.
 
-    if request.endpoint in allowed_public:
+    - /ponto e / continuam protegidos por IP da loja ou chave admin.
+    - /login, /assinatura, /assinatura/pagar, /webhook/mercadopago e /pagamento/* ficam livres do bloqueio por IP/chave.
+      A proteção de login continua sendo feita pelo @admin_required nas rotas internas.
+    - Painel administrativo de clientes usa sessão/login, não bloqueio por IP.
+    """
+    allowed_endpoints = {"static", "service_worker", "health"}
+    if request.endpoint in allowed_endpoints:
         return None
 
+    public_prefixes = (
+        "/login",
+        "/assinatura",
+        "/assinatura/pagar",
+        "/webhook/mercadopago",
+        "/pagamento",
+    )
+    if request.path.startswith(public_prefixes):
+        return None
+
+    # Tela de ponto pública da loja: só libera na rede autorizada ou com chave segura.
     if request.path.startswith("/ponto") or request.path == "/":
         if not is_store_network() and not has_admin_key():
-            return render_template(
-                "blocked.html",
-                ip=get_client_ip()
-            ), 403
-
-    admin_paths = [
-    "/dashboard",
-    "/funcionarios",
-    "/registros",
-    "/relatorios",
-    "/jornadas",
-    "/configuracoes",
-    "/notificacoes",
-    "/assinatura",
-    "/logout",
-]
-
-    if any(request.path.startswith(path) for path in admin_paths):
-        if not has_admin_key():
-            return render_template(
-                "blocked.html",
-                ip=get_client_ip()
-            ), 403
+            return render_template("blocked.html", ip=get_client_ip()), 403
 
     return None
+
 
 # ---------------------------
 # Database helpers

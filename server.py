@@ -1,6 +1,10 @@
-from waitress import serve
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from app import app
 
 if __name__ == "__main__":
-    print("Servidor profissional iniciado em http://0.0.0.0:8080")
-    serve(app, host="0.0.0.0", port=8080, threads=8)
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
