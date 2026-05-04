@@ -86,7 +86,7 @@ def security_gate():
     """Segurança corrigida para SaaS + Checkout Pro.
 
     - /ponto e / continuam protegidos por IP da loja ou chave admin.
-    - /login, /assinatura, /assinatura/pagar, /webhook/mercadopago e /pagamento/* ficam livres do bloqueio por IP/chave.
+    - /login, /assinatura, /assinatura/pagar, /webhook, /webhook/mercadopago e /pagamento/* ficam livres do bloqueio por IP/chave.
       A proteção de login continua sendo feita pelo @admin_required nas rotas internas.
     - Painel administrativo de clientes usa sessão/login, não bloqueio por IP.
     """
@@ -2508,11 +2508,12 @@ def billing_create_payment(plan_key: str):
     return redirect(url_for("subscription_page"))
 
 
+@app.route("/webhook", methods=["GET", "POST"])
 @app.route("/webhook/mercadopago", methods=["GET", "POST"])
 def mercadopago_webhook():
     ensure_billing_ready()
     payload = request.get_json(silent=True) or {}
-    topic = request.args.get("topic") or payload.get("type") or payload.get("topic")
+    topic = request.args.get("topic") or payload.get("type") or payload.get("topic") or payload.get("action")
     payment_id = request.args.get("id")
 
     if not payment_id and isinstance(payload.get("data"), dict):
