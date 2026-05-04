@@ -1,6 +1,0 @@
-Flask
-Werkzeug
-openpyxl
-reportlab
-waitress
-psycopg2-binary

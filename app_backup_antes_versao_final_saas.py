@@ -83,38 +83,34 @@ def has_admin_key() -> bool:
 
 @app.before_request
 def security_gate():
-    allowed_public = ["static", "service_worker", "health"]
+    """Segurança corrigida para SaaS + Checkout Pro.
 
-    if request.endpoint in allowed_public:
+    - /ponto e / continuam protegidos por IP da loja ou chave admin.
+    - /login, /assinatura, /assinatura/pagar, /webhook, /webhook/mercadopago e /pagamento/* ficam livres do bloqueio por IP/chave.
+      A proteção de login continua sendo feita pelo @admin_required nas rotas internas.
+    - Painel administrativo de clientes usa sessão/login, não bloqueio por IP.
+    """
+    allowed_endpoints = {"static", "service_worker", "health"}
+    if request.endpoint in allowed_endpoints:
         return None
 
+    public_prefixes = (
+        "/login",
+        "/assinatura",
+        "/assinatura/pagar",
+        "/webhook/mercadopago",
+        "/pagamento",
+    )
+    if request.path.startswith(public_prefixes):
+        return None
+
+    # Tela de ponto pública da loja: só libera na rede autorizada ou com chave segura.
     if request.path.startswith("/ponto") or request.path == "/":
         if not is_store_network() and not has_admin_key():
-            return render_template(
-                "blocked.html",
-                ip=get_client_ip()
-            ), 403
-
-    admin_paths = [
-    "/dashboard",
-    "/funcionarios",
-    "/registros",
-    "/relatorios",
-    "/jornadas",
-    "/configuracoes",
-    "/notificacoes",
-    "/assinatura",
-    "/logout",
-]
-
-    if any(request.path.startswith(path) for path in admin_paths):
-        if not has_admin_key():
-            return render_template(
-                "blocked.html",
-                ip=get_client_ip()
-            ), 403
+            return render_template("blocked.html", ip=get_client_ip()), 403
 
     return None
+
 
 # ---------------------------
 # Database helpers
@@ -696,12 +692,31 @@ def calculate_day_summary(employee_id: int, ref_date: str) -> Dict[str, Any]:
     }
 
 
+
 def admin_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         if not session.get("user_id"):
             flash("Faça login para acessar o painel.", "warning")
             return redirect(url_for("login"))
+
+        # Super admin sempre entra.
+        try:
+            if is_super_admin():
+                return func(*args, **kwargs)
+        except Exception:
+            pass
+
+        # Cliente comum precisa estar ativo/pago/teste válido.
+        try:
+            company = current_company()
+            if company and not company_access_allowed(company):
+                if request.endpoint != "subscription_page" and not request.path.startswith("/assinatura"):
+                    flash("Assinatura pendente ou vencida. Regularize para liberar o painel.", "warning")
+                    return redirect(url_for("subscription_page"))
+        except Exception as exc:
+            print("Aviso verificação assinatura:", exc)
+
         return func(*args, **kwargs)
     return wrapper
 
@@ -849,6 +864,17 @@ def create_backup() -> Path:
 def index():
     return redirect(url_for("punch"))
 
+def liberar_empresa(slug_empresa):
+    conn = get_db()
+    conn.execute("""
+        UPDATE empresas
+        SET status='ATIVO',
+            acesso_liberado=1,
+            data_pagamento=datetime('now'),
+            data_expiracao=datetime('now', '+30 days')
+        WHERE slug=?
+    """, (slug_empresa,))
+    conn.commit()
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -2311,9 +2337,17 @@ def create_billing_event(company_id: int, plan_key: str) -> int:
 
 
 def create_mercadopago_preference(company: Any, plan_key: str, event_id: int) -> Dict[str, Any]:
+    """Cria uma preferência do Checkout Pro do Mercado Pago.
+
+    Fluxo recomendado para SaaS:
+    - o cliente clica em Pagar agora;
+    - o Mercado Pago abre uma página segura com Pix e cartão;
+    - o webhook confirma o pagamento e libera a empresa automaticamente.
+    """
     token = mp_access_token()
     if not token:
         raise RuntimeError("MP_ACCESS_TOKEN não configurado no Render.")
+
     base_url = app_public_url()
     if not base_url:
         raise RuntimeError("APP_PUBLIC_URL não configurado no Render.")
@@ -2325,14 +2359,20 @@ def create_mercadopago_preference(company: Any, plan_key: str, event_id: int) ->
     external_reference = event["external_reference"]
 
     payload = {
-        "items": [{
-            "title": f"{SYSTEM_COMMERCIAL_NAME} - Plano {plan_label(plan_key)}",
-            "quantity": 1,
-            "currency_id": "BRL",
-            "unit_price": amount,
-            "description": "Assinatura mensal do sistema de ponto online",
-        }],
-        "payer": {"email": payer_email, "name": payer_name},
+        "items": [
+            {
+                "id": f"pontofacil-{plan_key.lower()}",
+                "title": f"{SYSTEM_COMMERCIAL_NAME} - Plano {plan_label(plan_key)}",
+                "quantity": 1,
+                "currency_id": "BRL",
+                "unit_price": float(amount),
+                "description": "Assinatura mensal do sistema de ponto online",
+            }
+        ],
+        "payer": {
+            "email": payer_email,
+            "name": payer_name,
+        },
         "external_reference": external_reference,
         "notification_url": f"{base_url}/webhook/mercadopago",
         "back_urls": {
@@ -2342,13 +2382,41 @@ def create_mercadopago_preference(company: Any, plan_key: str, event_id: int) ->
         },
         "auto_return": "approved",
         "statement_descriptor": "PONTOFACILPRO",
+        "payment_methods": {
+            "installments": 12,
+            "excluded_payment_types": [
+                {"id": "ticket"}
+            ],
+        },
     }
 
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    response = requests.post("https://api.mercadopago.com/checkout/preferences", json=payload, headers=headers, timeout=30)
-    data = response.json()
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+
+    response = requests.post(
+        "https://api.mercadopago.com/checkout/preferences",
+        json=payload,
+        headers=headers,
+        timeout=30,
+    )
+
+    try:
+        data = response.json()
+    except Exception:
+        raise RuntimeError(f"Mercado Pago retornou resposta inválida: HTTP {response.status_code} - {response.text[:300]}")
+
     if response.status_code >= 400:
-        raise RuntimeError(f"Mercado Pago retornou erro: {data}")
+        message = data.get("message") or data.get("error") or str(data)
+        raise RuntimeError(
+            "Mercado Pago retornou erro ao criar Checkout Pro: "
+            f"{message}. Confira se MP_ACCESS_TOKEN é o Access Token de produção copiado sem espaços."
+        )
+
+    if not (data.get("init_point") or data.get("sandbox_init_point")):
+        raise RuntimeError(f"Mercado Pago criou a preferência, mas não retornou link de checkout: {data}")
+
     return data
 
 
@@ -2440,11 +2508,12 @@ def billing_create_payment(plan_key: str):
     return redirect(url_for("subscription_page"))
 
 
+@app.route("/webhook", methods=["GET", "POST"])
 @app.route("/webhook/mercadopago", methods=["GET", "POST"])
 def mercadopago_webhook():
     ensure_billing_ready()
     payload = request.get_json(silent=True) or {}
-    topic = request.args.get("topic") or payload.get("type") or payload.get("topic")
+    topic = request.args.get("topic") or payload.get("type") or payload.get("topic") or payload.get("action") or payload.get("action")
     payment_id = request.args.get("id")
 
     if not payment_id and isinstance(payload.get("data"), dict):
@@ -2488,6 +2557,254 @@ def payment_failure():
 def payment_pending():
     flash("Pagamento pendente. Assim que o Mercado Pago confirmar, o plano será ativado automaticamente.", "warning")
     return redirect(url_for("subscription_page"))
+
+
+
+
+# =========================================================
+# Automação SaaS - cobrança, bloqueio, liberação e avisos
+# =========================================================
+_SAAS_AUTOMATION_READY = False
+
+
+def _safe_get(row, key, default=""):
+    if not row:
+        return default
+    try:
+        return row.get(key, default)
+    except Exception:
+        try:
+            return row[key]
+        except Exception:
+            return default
+
+
+def company_access_allowed(company) -> bool:
+    """Regra central: ativo, pago ou teste válido libera acesso."""
+    if not company:
+        return False
+    status = str(_safe_get(company, "status", "")).upper()
+    payment_status = str(_safe_get(company, "payment_status", "")).upper()
+    paid_until = str(_safe_get(company, "paid_until", "") or "")
+    trial_until = str(_safe_get(company, "trial_until", "") or "")
+    today = today_str()
+
+    if status == "ATIVO" and (not paid_until or paid_until >= today):
+        return True
+    if payment_status == "PAGO" and paid_until and paid_until >= today:
+        return True
+    if status == "TESTE" and trial_until and trial_until >= today:
+        return True
+    return False
+
+
+def ensure_saas_automation_ready() -> None:
+    """Garante colunas para automação sem apagar dados."""
+    global _SAAS_AUTOMATION_READY
+    if _SAAS_AUTOMATION_READY:
+        return
+    try:
+        ensure_billing_ready()
+    except Exception:
+        try:
+            ensure_multiempresa_ready()
+        except Exception:
+            pass
+
+    for column in ["blocked_at", "last_billing_alert_at", "next_billing_at"]:
+        try:
+            if not _column_exists("companies", column):
+                execute_db(f"ALTER TABLE companies ADD COLUMN {column} TEXT")
+        except Exception as exc:
+            print(f"Aviso SaaS: não foi possível criar companies.{column}: {exc}")
+
+    for column in ["notified_at", "webhook_payload"]:
+        try:
+            if not _column_exists("billing_events", column):
+                execute_db(f"ALTER TABLE billing_events ADD COLUMN {column} TEXT")
+        except Exception as exc:
+            print(f"Aviso SaaS: não foi possível criar billing_events.{column}: {exc}")
+
+    _SAAS_AUTOMATION_READY = True
+
+
+@app.before_request
+def saas_automation_bootstrap():
+    if request.endpoint not in ("static", "health", "service_worker"):
+        try:
+            ensure_saas_automation_ready()
+            auto_block_overdue_companies()
+        except Exception as exc:
+            print("Aviso automação SaaS:", exc)
+
+
+def auto_block_overdue_companies() -> int:
+    """Bloqueia empresas vencidas automaticamente, exceto super admin/Pet & Gatô interno."""
+    today = today_str()
+    changed = 0
+    rows = query_db("SELECT * FROM companies")
+    for company in rows:
+        cid = _safe_get(company, "id")
+        slug = str(_safe_get(company, "slug", ""))
+        status = str(_safe_get(company, "status", "")).upper()
+        paid_until = str(_safe_get(company, "paid_until", "") or "")
+        trial_until = str(_safe_get(company, "trial_until", "") or "")
+
+        # Mantém sua empresa base liberada, se desejar administrar sem cobrança.
+        if slug == "pet-gato":
+            continue
+
+        if status == "ATIVO" and paid_until and paid_until < today:
+            execute_db(
+                "UPDATE companies SET status='BLOQUEADO', payment_status='VENCIDO', blocked_at=? WHERE id=?",
+                (now_iso(), cid),
+            )
+            changed += 1
+        elif status == "TESTE" and trial_until and trial_until < today:
+            execute_db(
+                "UPDATE companies SET status='BLOQUEADO', payment_status='TESTE_EXPIRADO', blocked_at=? WHERE id=?",
+                (now_iso(), cid),
+            )
+            changed += 1
+    return changed
+
+
+def activate_company_payment(company_id: int, plan_key: str, payment_id: str, event_id: Optional[int] = None) -> None:
+    """Libera empresa por 30 dias após pagamento aprovado."""
+    paid_until = (date.today() + timedelta(days=30)).strftime("%Y-%m-%d")
+    next_billing = (date.today() + timedelta(days=27)).strftime("%Y-%m-%d")
+    execute_db(
+        """
+        UPDATE companies
+        SET plan = ?, status = 'ATIVO', payment_status = 'PAGO', paid_until = ?,
+            last_payment_at = ?, next_billing_at = ?, blocked_at = NULL
+        WHERE id = ?
+        """,
+        (plan_key.upper(), paid_until, now_iso(), next_billing, company_id),
+    )
+    if event_id:
+        execute_db(
+            """
+            UPDATE billing_events
+            SET status = 'PAGO', mp_payment_id = ?, paid_at = ?
+            WHERE id = ?
+            """,
+            (str(payment_id), now_iso(), event_id),
+        )
+    try:
+        send_billing_whatsapp_notice(company_id, f"✅ Pagamento aprovado! Seu acesso ao PontoFácil Pro foi liberado até {paid_until}.")
+    except Exception as exc:
+        print("Aviso WhatsApp pagamento aprovado:", exc)
+
+
+def send_billing_whatsapp_notice(company_id: int, message: str) -> Optional[str]:
+    company = query_db("SELECT * FROM companies WHERE id = ?", (company_id,), one=True)
+    phone = _safe_get(company, "phone", "")
+    if not phone:
+        return None
+    link = build_whatsapp_link(phone, message)
+    try:
+        execute_db(
+            "INSERT INTO system_logs (user_name, action, details, created_at) VALUES (?, ?, ?, ?)",
+            ("Sistema", "WHATSAPP_COBRANCA", f"Empresa {company_id}: {message}", now_iso()),
+        )
+    except Exception:
+        pass
+    return link
+
+
+def billing_reminder_message(company) -> str:
+    name = _safe_get(company, "name", "Cliente")
+    plan = plan_label(_safe_get(company, "plan", "BASICO")) if "plan_label" in globals() else _safe_get(company, "plan", "BASICO")
+    paid_until = _safe_get(company, "paid_until", "-") or "-"
+    return (
+        f"Olá, {name}!%0A%0A"
+        f"Sua assinatura do PontoFácil Pro está pendente ou próxima do vencimento.%0A"
+        f"Plano: {plan}%0A"
+        f"Pago até: {paid_until}%0A%0A"
+        f"Acesse o painel e clique em Assinatura para regularizar.%0A"
+        f"{app_public_url()}/assinatura"
+    )
+
+
+@app.route("/financeiro-saas")
+@admin_required
+def financeiro_saas():
+    if not is_super_admin():
+        flash("Acesso restrito ao administrador master.", "danger")
+        return redirect(url_for("dashboard"))
+    ensure_saas_automation_ready()
+    rows = query_db("SELECT * FROM companies ORDER BY id ASC")
+    companies = []
+    total_mrr = 0.0
+    for c in rows:
+        row = dict(c)
+        plan = str(row.get("plan") or "BASICO").upper()
+        row["price"] = plan_price(plan) if "plan_price" in globals() else 0
+        row["access_ok"] = company_access_allowed(row)
+        row["billing_whatsapp"] = build_whatsapp_link(row.get("phone", ""), billing_reminder_message(row))
+        if row.get("status") == "ATIVO":
+            total_mrr += float(row["price"])
+        companies.append(row)
+    events = query_db("SELECT * FROM billing_events ORDER BY created_at DESC, id DESC LIMIT 100")
+    return render_template("financeiro_saas.html", companies=companies, events=events, total_mrr=total_mrr)
+
+
+@app.route("/financeiro-saas/verificar-pagamentos", methods=["POST"])
+@admin_required
+def financeiro_verificar_pagamentos():
+    if not is_super_admin():
+        flash("Acesso restrito.", "danger")
+        return redirect(url_for("dashboard"))
+    ensure_saas_automation_ready()
+    pending = query_db("SELECT * FROM billing_events WHERE status IN ('AGUARDANDO_PAGAMENTO','PENDENTE') ORDER BY id DESC LIMIT 50")
+    checked = 0
+    approved = 0
+    for event in pending:
+        payment_id = _safe_get(event, "mp_payment_id", "")
+        if not payment_id:
+            continue
+        try:
+            payment = fetch_mercadopago_payment(str(payment_id))
+            checked += 1
+            if payment.get("status") == "approved":
+                ref = parse_external_reference(payment.get("external_reference", ""))
+                activate_company_payment(int(ref.get("company", 0)), ref.get("plan", "BASICO"), str(payment_id), int(_safe_get(event, "id")))
+                approved += 1
+        except Exception as exc:
+            print("Erro verificação manual pagamento:", exc)
+    flash(f"Verificação concluída. Consultados: {checked}. Aprovados: {approved}.", "success")
+    return redirect(url_for("financeiro_saas"))
+
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    data = request.json
+
+    if data.get("type") == "payment":
+        payment_id = data["data"]["id"]
+
+        url = f"https://api.mercadopago.com/v1/payments/{payment_id}"
+        headers = {
+            "Authorization": f"Bearer {os.getenv('MP_ACCESS_TOKEN')}"
+        }
+
+        resp = requests.get(url, headers=headers).json()
+
+        if resp.get("status") == "approved":
+            external_ref = resp.get("external_reference")
+
+            # 🔥 ATIVA A EMPRESA AQUI
+            liberar_empresa(external_ref)
+
+    return "ok"
+
+@app.route("/saas/status")
+def saas_status():
+    return {"status": "ok", "system": "PontoFácil Pro", "time": now_iso()}, 200
+
+# =========================================================
+# Fim Automação SaaS
+# =========================================================
 
 
 # Inicializa as tabelas tanto no Render/PostgreSQL quanto no Windows/SQLite.
