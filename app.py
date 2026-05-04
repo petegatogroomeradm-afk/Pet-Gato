@@ -2513,7 +2513,7 @@ def billing_create_payment(plan_key: str):
 def mercadopago_webhook():
     ensure_billing_ready()
     payload = request.get_json(silent=True) or {}
-    topic = request.args.get("topic") or payload.get("type") or payload.get("topic") or payload.get("action")
+    topic = request.args.get("topic") or payload.get("type") or payload.get("topic") or payload.get("action") or payload.get("action")
     payment_id = request.args.get("id")
 
     if not payment_id and isinstance(payload.get("data"), dict):
