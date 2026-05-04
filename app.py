@@ -2755,6 +2755,12 @@ def financeiro_saas():
         row["price"] = plan_price(plan) if "plan_price" in globals() else 0
         row["access_ok"] = company_access_allowed(row)
         row["billing_whatsapp"] = build_whatsapp_link(row.get("phone", ""), billing_reminder_message(row))
+        try:
+            row["due_status"] = saas_due_label(row)
+            row["days_overdue"] = saas_days_overdue(row)
+        except Exception:
+            row["due_status"] = "-"
+            row["days_overdue"] = 0
         if row.get("status") == "ATIVO":
             total_mrr += float(row["price"])
         companies.append(row)
@@ -2813,6 +2819,170 @@ def webhook():
 @app.route("/saas/status")
 def saas_status():
     return {"status": "ok", "system": "PontoFácil Pro", "time": now_iso()}, 200
+
+
+
+# =========================================================
+# SaaS - Bloqueio por vencimento + WhatsApp de cobrança
+# =========================================================
+
+def saas_parse_date(value):
+    """Converte datas salvas como TEXT para date. Aceita YYYY-MM-DD e datetime."""
+    if not value:
+        return None
+    try:
+        if isinstance(value, date) and not isinstance(value, datetime):
+            return value
+    except Exception:
+        pass
+    text_value = str(value).strip()
+    if not text_value:
+        return None
+    try:
+        return datetime.strptime(text_value[:10], "%Y-%m-%d").date()
+    except Exception:
+        return None
+
+
+def saas_days_overdue(company) -> int:
+    paid_until = saas_parse_date(_safe_get(company, "paid_until", ""))
+    if not paid_until:
+        return 0
+    delta = date.today() - paid_until
+    return max(delta.days, 0)
+
+
+def saas_due_label(company) -> str:
+    paid_until = saas_parse_date(_safe_get(company, "paid_until", ""))
+    trial_until = saas_parse_date(_safe_get(company, "trial_until", ""))
+    status = str(_safe_get(company, "status", "")).upper()
+    today = date.today()
+
+    if paid_until:
+        if paid_until < today:
+            return f"VENCIDO HÁ {(today - paid_until).days} DIA(S)"
+        if (paid_until - today).days <= 5:
+            return f"VENCE EM {(paid_until - today).days} DIA(S)"
+        return "EM DIA"
+
+    if status == "TESTE" and trial_until:
+        if trial_until < today:
+            return f"TESTE VENCIDO HÁ {(today - trial_until).days} DIA(S)"
+        return f"TESTE ATÉ {trial_until.strftime('%d/%m/%Y')}"
+
+    return "SEM VENCIMENTO"
+
+
+def billing_reminder_message(company) -> str:
+    """Mensagem comercial usada no botão WhatsApp do Financeiro SaaS."""
+    name = _safe_get(company, "name", "Cliente")
+    plan_key = str(_safe_get(company, "plan", "BASICO") or "BASICO").upper()
+    try:
+        plan = plan_label(plan_key)
+        price = plan_price(plan_key)
+        price_text = f"R$ {price:.2f}".replace(".", ",")
+    except Exception:
+        plan = plan_key
+        price_text = "valor do plano"
+
+    paid_until = _safe_get(company, "paid_until", "") or "-"
+    due_status = saas_due_label(company)
+    base_url = app_public_url() if "app_public_url" in globals() else ""
+
+    return (
+        f"Olá, {name}!%0A%0A"
+        f"Identificamos que sua assinatura do PontoFácil Pro precisa de atenção.%0A"
+        f"Plano: {plan}%0A"
+        f"Valor: {price_text}%0A"
+        f"Status: {due_status}%0A"
+        f"Pago até: {paid_until}%0A%0A"
+        f"Para manter o painel liberado, regularize pelo link:%0A"
+        f"{base_url}/assinatura%0A%0A"
+        f"Após a confirmação do pagamento, o sistema libera automaticamente por mais 30 dias."
+    )
+
+
+def saas_block_overdue_companies() -> dict:
+    """Bloqueia empresas vencidas e prepara WhatsApp de cobrança."""
+    ensure_saas_automation_ready()
+    today = date.today()
+    rows = query_db("SELECT * FROM companies ORDER BY id ASC")
+    blocked = 0
+    due_soon = 0
+    total_checked = 0
+
+    for company in rows:
+        total_checked += 1
+        cid = int(_safe_get(company, "id", 0) or 0)
+        if not cid:
+            continue
+
+        status = str(_safe_get(company, "status", "")).upper()
+        paid_until = saas_parse_date(_safe_get(company, "paid_until", ""))
+        trial_until = saas_parse_date(_safe_get(company, "trial_until", ""))
+        payment_status = str(_safe_get(company, "payment_status", "")).upper()
+
+        should_block = False
+        reason = ""
+
+        # Só bloqueia quando houver uma data objetiva de vencimento.
+        if paid_until and paid_until < today:
+            should_block = True
+            reason = f"Assinatura vencida em {paid_until.strftime('%d/%m/%Y')}"
+        elif status == "TESTE" and trial_until and trial_until < today:
+            should_block = True
+            reason = f"Teste grátis vencido em {trial_until.strftime('%d/%m/%Y')}"
+        elif paid_until and 0 <= (paid_until - today).days <= 5:
+            due_soon += 1
+
+        if should_block:
+            # Mantém dados financeiros; apenas bloqueia acesso e marca pagamento como vencido.
+            execute_db(
+                "UPDATE companies SET status = ?, payment_status = ? WHERE id = ?",
+                ("BLOQUEADO", "VENCIDO", cid),
+            )
+            try:
+                execute_db(
+                    """
+                    INSERT INTO billing_events (company_id, event_type, description, amount, status, created_at, plan)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        cid,
+                        "COBRANCA",
+                        reason,
+                        f"{plan_price(_safe_get(company, 'plan', 'BASICO')):.2f}" if "plan_price" in globals() else "0.00",
+                        "VENCIDO",
+                        now_iso(),
+                        str(_safe_get(company, "plan", "BASICO") or "BASICO").upper(),
+                    ),
+                )
+            except Exception as exc:
+                print("Aviso: não foi possível registrar billing_event de vencimento:", exc)
+            blocked += 1
+
+    return {"checked": total_checked, "blocked": blocked, "due_soon": due_soon}
+
+
+@app.route("/financeiro-saas/verificar-vencimentos", methods=["POST"])
+@admin_required
+def financeiro_verificar_vencimentos():
+    if not is_super_admin():
+        flash("Acesso restrito.", "danger")
+        return redirect(url_for("dashboard"))
+
+    result = saas_block_overdue_companies()
+    flash(
+        f"Vencimentos verificados. Empresas analisadas: {result['checked']}. "
+        f"Bloqueadas: {result['blocked']}. Próximas do vencimento: {result['due_soon']}.",
+        "success",
+    )
+    return redirect(url_for("financeiro_saas"))
+
+# =========================================================
+# Fim SaaS - Bloqueio por vencimento + WhatsApp de cobrança
+# =========================================================
+
 
 # =========================================================
 # Fim Automação SaaS

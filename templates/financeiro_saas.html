@@ -17,6 +17,11 @@
   <form method="post" action="{{ url_for('financeiro_verificar_pagamentos') }}">
     <button class="btn primary" type="submit">Verificar pagamentos pendentes</button>
   </form>
+
+<form method="post" action="{{ url_for('financeiro_verificar_vencimentos') }}" style="margin-top:10px;">
+  <button class="btn primary" type="submit">Verificar vencimentos e bloquear atrasados</button>
+</form>
+
 </section>
 
 <section class="card">
@@ -25,7 +30,8 @@
     <table>
       <thead>
         <tr>
-          <th>Empresa</th><th>Plano</th><th>Valor</th><th>Status</th><th>Pago até</th><th>Acesso</th><th>WhatsApp</th>
+          <th>Empresa</th><th>Plano</th><th>Valor</th><th>Status</th><th>Pago até</th><th>Acesso</th>
+        <th>Vencimento</th><th>WhatsApp</th>
         </tr>
       </thead>
       <tbody>
@@ -37,7 +43,8 @@
           <td>{{ c.status }} / {{ c.payment_status or '-' }}</td>
           <td>{{ c.paid_until or '-' }}</td>
           <td>{% if c.access_ok %}<span class="pill success">Liberado</span>{% else %}<span class="pill danger">Bloqueado</span>{% endif %}</td>
-          <td>{% if c.billing_whatsapp %}<a class="btn small" target="_blank" href="{{ c.billing_whatsapp }}">Cobrar</a>{% else %}-{% endif %}</td>
+          <td>{{ c.due_status or '-' }}</td>
+        <td>{% if c.billing_whatsapp %}<a class="btn small" target="_blank" href="{{ c.billing_whatsapp }}">Cobrar</a>{% else %}-{% endif %}</td>
         </tr>
       {% else %}
         <tr><td colspan="7">Nenhuma empresa cadastrada.</td></tr>
