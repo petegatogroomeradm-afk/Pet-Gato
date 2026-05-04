@@ -50,6 +50,9 @@
                 <a href="{{ url_for('records') }}">Registros</a>
                 <a href="{{ url_for('reports') }}">Relatórios</a>
                 <a href="{{ url_for('notificacoes') }}">Notificações</a>
+                {% if session.get('role') in ['super_admin', 'master'] or session.get('user_name') == 'Administrador' %}
+                <a href="{{ url_for('financeiro_saas') }}">Financeiro SaaS</a>
+                {% endif %}
                 <a href="{{ url_for('settings_page') }}">Configurações</a>
                 <a href="{{ url_for('logout') }}">Sair</a>
             {% else %}

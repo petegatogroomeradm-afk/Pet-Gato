@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Financeiro SaaS</h1>
+    <p>Automação de cobrança, status de clientes, bloqueios e WhatsApp de renovação.</p>
+  </div>
+</div>
+
+<section class="card">
+  <h2>Resumo comercial</h2>
+  <div class="grid grid-3">
+    <div class="metric-card"><span>MRR estimado</span><strong>R$ {{ '%.2f'|format(total_mrr) }}</strong></div>
+    <div class="metric-card"><span>Clientes</span><strong>{{ companies|length }}</strong></div>
+    <div class="metric-card"><span>Eventos financeiros</span><strong>{{ events|length }}</strong></div>
+  </div>
+  <form method="post" action="{{ url_for('financeiro_verificar_pagamentos') }}">
+    <button class="btn primary" type="submit">Verificar pagamentos pendentes</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Clientes e assinaturas</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Empresa</th><th>Plano</th><th>Valor</th><th>Status</th><th>Pago até</th><th>Acesso</th><th>WhatsApp</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for c in companies %}
+        <tr>
+          <td><strong>{{ c.name }}</strong><br><small>{{ c.slug }}</small></td>
+          <td>{{ c.plan }}</td>
+          <td>R$ {{ '%.2f'|format(c.price) }}</td>
+          <td>{{ c.status }} / {{ c.payment_status or '-' }}</td>
+          <td>{{ c.paid_until or '-' }}</td>
+          <td>{% if c.access_ok %}<span class="pill success">Liberado</span>{% else %}<span class="pill danger">Bloqueado</span>{% endif %}</td>
+          <td>{% if c.billing_whatsapp %}<a class="btn small" target="_blank" href="{{ c.billing_whatsapp }}">Cobrar</a>{% else %}-{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7">Nenhuma empresa cadastrada.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Últimos eventos financeiros</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Data</th><th>Empresa</th><th>Tipo</th><th>Plano</th><th>Valor</th><th>Status</th><th>Pagamento</th></tr></thead>
+      <tbody>
+      {% for e in events %}
+        <tr>
+          <td>{{ e.created_at }}</td><td>{{ e.company_id }}</td><td>{{ e.event_type }}</td><td>{{ e.plan or '-' }}</td><td>R$ {{ e.amount }}</td><td>{{ e.status }}</td><td>{{ e.mp_payment_id or '-' }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7">Nenhum evento financeiro.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
