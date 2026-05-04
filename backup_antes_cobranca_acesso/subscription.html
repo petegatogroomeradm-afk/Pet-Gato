@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>PontoFácil Pro</h1>
+    <p>Assinatura, cobrança automática via Mercado Pago, Pix e cartão.</p>
+  </div>
+</div>
+
+<section class="card">
+  {% if company %}
+    <h2>{{ company.name }}</h2>
+    <p>Plano atual: <strong>{{ company.plan }}</strong></p>
+    <p>Status: <strong>{{ company.status }}</strong></p>
+    <p>Pagamento: <strong>{{ company.payment_status or '-' }}</strong></p>
+    <p>Pago até: <strong>{{ company.paid_until or '-' }}</strong></p>
+    <p>Teste grátis até: {{ company.trial_until or '-' }}</p>
+  {% else %}
+    <p>Nenhuma empresa ativa na sessão.</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Escolher plano</h2>
+  <div class="grid grid-3">
+    {% for key, p in PLAN_LIMITS.items() %}
+      <div class="card" style="box-shadow:none; border:1px solid rgba(139,92,246,.18);">
+        <h3>{{ p.name }}</h3>
+        <h1>{{ p.price }}</h1>
+        <p>Limite: {% if p.employees > 9000 %}Ilimitado{% else %}{{ p.employees }} funcionários{% endif %}</p>
+        <form method="post" action="{{ url_for('billing_create_payment', plan_key=key) }}">
+          <button class="btn primary" type="submit">Pagar com Pix ou cartão</button>
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+  <p class="muted">O pagamento é processado pelo Mercado Pago. Após aprovação, a empresa é ativada automaticamente por 30 dias.</p>
+</section>
+
+<section class="card">
+  <h2>Histórico financeiro</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Valor</th><th>Status</th><th>Checkout</th></tr></thead>
+      <tbody>
+      {% for e in events %}
+        <tr>
+          <td>{{ e.created_at }}</td><td>{{ e.event_type }}</td><td>{{ e.description }}</td><td>R$ {{ e.amount }}</td><td>{{ e.status }}</td>
+          <td>{% if e.checkout_url %}<a class="btn small" target="_blank" href="{{ e.checkout_url }}">Abrir</a>{% else %}-{% endif %}</td>
+        </tr>
+      {% else %}<tr><td colspan="6">Nenhum evento financeiro.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

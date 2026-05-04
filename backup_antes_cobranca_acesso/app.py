@@ -83,21 +83,36 @@ def has_admin_key() -> bool:
 
 @app.before_request
 def security_gate():
-    """Controle de acesso de rede.
-
-    Regra profissional para SaaS:
-    - /ponto continua restrito à rede autorizada da loja, ou à chave master.
-    - /login e painel administrativo não exigem chave na URL; o controle é feito por login + assinatura.
-    - /empresas continua protegido pela sessão do super admin dentro da própria rota.
-    """
-    allowed_public = ["static", "service_worker", "health", "mercadopago_webhook"]
+    allowed_public = ["static", "service_worker", "health"]
 
     if request.endpoint in allowed_public:
         return None
 
     if request.path.startswith("/ponto") or request.path == "/":
         if not is_store_network() and not has_admin_key():
-            return render_template("blocked.html", ip=get_client_ip()), 403
+            return render_template(
+                "blocked.html",
+                ip=get_client_ip()
+            ), 403
+
+    admin_paths = [
+    "/dashboard",
+    "/funcionarios",
+    "/registros",
+    "/relatorios",
+    "/jornadas",
+    "/configuracoes",
+    "/notificacoes",
+    "/assinatura",
+    "/logout",
+]
+
+    if any(request.path.startswith(path) for path in admin_paths):
+        if not has_admin_key():
+            return render_template(
+                "blocked.html",
+                ip=get_client_ip()
+            ), 403
 
     return None
 
@@ -687,35 +702,6 @@ def admin_required(func):
         if not session.get("user_id"):
             flash("Faça login para acessar o painel.", "warning")
             return redirect(url_for("login"))
-
-        # Super admin nunca é bloqueado por assinatura.
-        try:
-            if is_super_admin():
-                return func(*args, **kwargs)
-        except NameError:
-            pass
-
-        # Rotas permitidas mesmo com assinatura vencida/inativa.
-        allowed_when_blocked = {
-            "subscription_page",
-            "billing_create_payment",
-            "payment_success",
-            "payment_failure",
-            "payment_pending",
-            "logout",
-            "plans_page",
-        }
-        if request.endpoint in allowed_when_blocked:
-            return func(*args, **kwargs)
-
-        try:
-            company = current_company()
-            if company and not company_access_allowed(company):
-                flash("Sua assinatura está pendente ou vencida. Regularize para acessar o painel.", "warning")
-                return redirect(url_for("subscription_page"))
-        except NameError:
-            pass
-
         return func(*args, **kwargs)
     return wrapper
 
@@ -2124,70 +2110,6 @@ def current_company():
     return query_db("SELECT * FROM companies WHERE id = ?", (cid,), one=True)
 
 
-def _row_get(row: Any, key: str, default: Any = None) -> Any:
-    """Compatível com sqlite3.Row, RealDictRow e dict."""
-    if not row:
-        return default
-    try:
-        value = row.get(key, default)
-    except AttributeError:
-        try:
-            value = row[key]
-        except Exception:
-            value = default
-    return value if value is not None else default
-
-
-def company_access_allowed(company: Any) -> bool:
-    """Define se uma empresa cliente pode acessar o painel.
-
-    Regras:
-    - Super admin sempre acessa.
-    - Empresa ATIVO acessa se estiver paga ou em teste válido.
-    - Empresa TESTE acessa enquanto trial_until não venceu.
-    - Empresa BLOQUEADO/INATIVO/VENCIDO não acessa.
-    """
-    if is_super_admin():
-        return True
-
-    status = str(_row_get(company, "status", "")).upper()
-    today = today_str()
-    paid_until = str(_row_get(company, "paid_until", "") or "")
-    trial_until = str(_row_get(company, "trial_until", "") or "")
-
-    if status in ("BLOQUEADO", "INATIVO", "VENCIDO", "CANCELADO"):
-        return False
-
-    if paid_until and paid_until >= today:
-        return True
-
-    if trial_until and trial_until >= today:
-        return True
-
-    # Compatibilidade: empresas antigas marcadas como ATIVO sem campo paid_until ainda entram.
-    # Para clientes novos, use TESTE com trial_until ou pagamento aprovado.
-    if status == "ATIVO" and not paid_until and not trial_until:
-        return True
-
-    return False
-
-
-def company_access_status(company: Any) -> Dict[str, Any]:
-    status = str(_row_get(company, "status", "")).upper()
-    today = today_str()
-    paid_until = str(_row_get(company, "paid_until", "") or "")
-    trial_until = str(_row_get(company, "trial_until", "") or "")
-    allowed = company_access_allowed(company)
-    reason = "Ativo"
-    if paid_until:
-        reason = f"Pago até {paid_until}"
-    elif trial_until:
-        reason = f"Teste grátis até {trial_until}"
-    if not allowed:
-        reason = "Assinatura pendente ou vencida"
-    return {"allowed": allowed, "reason": reason, "status": status, "paid_until": paid_until, "trial_until": trial_until}
-
-
 def is_super_admin() -> bool:
     return session.get("role") in ("super_admin", "master") or session.get("user_name") == "Administrador"
 
@@ -2222,8 +2144,6 @@ def inject_company_globals():
         "current_company": current_company,
         "PLAN_LIMITS": PLAN_LIMITS,
         "is_super_admin": is_super_admin,
-        "company_access_allowed": company_access_allowed,
-        "company_access_status": company_access_status,
     }
 
 
@@ -2301,17 +2221,11 @@ def plans_page():
 @admin_required
 def subscription_page():
     ensure_multiempresa_ready()
-    try:
-        ensure_billing_ready()
-    except Exception:
-        pass
     company = current_company()
     events = []
-    access_info = None
     if company:
         events = query_db("SELECT * FROM billing_events WHERE company_id = ? ORDER BY created_at DESC", (company["id"],))
-        access_info = company_access_status(company)
-    return render_template("subscription.html", company=company, events=events, access_info=access_info)
+    return render_template("subscription.html", company=company, events=events)
 
 
 
@@ -2374,11 +2288,9 @@ def ensure_billing_ready() -> None:
 
 @app.before_request
 def billing_bootstrap():
-    if request.endpoint not in ("static", "health", "service_worker", "mercadopago_webhook"):
+    if request.endpoint not in ("static", "health", "service_worker"):
         try:
             ensure_billing_ready()
-            if session.get("user_id") and not is_super_admin():
-                block_overdue_companies()
         except Exception as exc:
             print("Erro ao inicializar cobrança:", exc)
 
