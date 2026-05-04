@@ -95,19 +95,15 @@ def security_gate():
             ), 403
 
     admin_paths = [
-        "/login",
-        "/dashboard",
-        "/funcionarios",
-        "/registros",
-        "/relatorios",
-        "/jornadas",
-        "/configuracoes",
-        "/notificacoes",
-        "/empresas",
-        "/planos",
-        "/assinatura",
-        "/logout",
-    ]
+    "/dashboard",
+    "/funcionarios",
+    "/registros",
+    "/relatorios",
+    "/jornadas",
+    "/configuracoes",
+    "/notificacoes",
+    "/logout",
+]
 
     if any(request.path.startswith(path) for path in admin_paths):
         if not has_admin_key():
