@@ -864,17 +864,6 @@ def create_backup() -> Path:
 def index():
     return redirect(url_for("punch"))
 
-def liberar_empresa(slug_empresa):
-    conn = get_db()
-    conn.execute("""
-        UPDATE empresas
-        SET status='ATIVO',
-            acesso_liberado=1,
-            data_pagamento=datetime('now'),
-            data_expiracao=datetime('now', '+30 days')
-        WHERE slug=?
-    """, (slug_empresa,))
-    conn.commit()
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -2473,25 +2462,6 @@ def block_overdue_companies() -> None:
         elif not paid_until and trial_until and trial_until < today:
             execute_db("UPDATE companies SET status = 'BLOQUEADO', payment_status = 'TESTE_EXPIRADO' WHERE id = ?", (company["id"],))
 
-@app.route("/cron/verificar-vencimentos")
-def cron_verificar_vencimentos():
-    try:
-        conn = get_db()
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            UPDATE companies
-            SET acesso_liberado = FALSE
-            WHERE pago_ate IS NOT NULL
-            AND pago_ate < NOW()
-        """)
-
-        conn.commit()
-
-        return {"status": "ok", "acao": "vencimentos verificados"}
-
-    except Exception as e:
-        return {"erro": str(e)}, 500
 
 @app.route("/assinatura/pagar/<plan_key>", methods=["POST"])
 @admin_required
@@ -2757,20 +2727,6 @@ def billing_reminder_message(company) -> str:
         f"{app_public_url()}/assinatura"
     )
 
-@app.route("/cron/verificar-vencimentos", methods=["GET"])
-def cron_verificar_vencimentos():
-    try:
-        result = saas_block_overdue_companies()
-        return {
-            "status": "ok",
-            "acao": "vencimentos verificados",
-            "checked": result.get("checked", 0),
-            "blocked": result.get("blocked", 0),
-            "due_soon": result.get("due_soon", 0),
-        }, 200
-    except Exception as exc:
-        print("Erro cron verificar vencimentos:", exc)
-        return {"status": "error", "message": str(exc)}, 200
 
 @app.route("/financeiro-saas")
 @admin_required
@@ -2827,42 +2783,7 @@ def financeiro_verificar_pagamentos():
     flash(f"Verificação concluída. Consultados: {checked}. Aprovados: {approved}.", "success")
     return redirect(url_for("financeiro_saas"))
 
-@app.route("/cron/verificar-vencimentos", methods=["GET"])
-def cron_verificar_vencimentos():
-    try:
-        result = saas_block_overdue_companies()
-        return {
-            "status": "ok",
-            "acao": "vencimentos verificados",
-            "checked": result.get("checked", 0),
-            "blocked": result.get("blocked", 0),
-            "due_soon": result.get("due_soon", 0),
-        }, 200
-    except Exception as exc:
-        print("Erro cron verificar vencimentos:", exc)
-        return {"status": "error", "message": str(exc)}, 200
 
-@app.route("/webhook", methods=["POST"])
-def webhook():
-    data = request.json
-
-    if data.get("type") == "payment":
-        payment_id = data["data"]["id"]
-
-        url = f"https://api.mercadopago.com/v1/payments/{payment_id}"
-        headers = {
-            "Authorization": f"Bearer {os.getenv('MP_ACCESS_TOKEN')}"
-        }
-
-        resp = requests.get(url, headers=headers).json()
-
-        if resp.get("status") == "approved":
-            external_ref = resp.get("external_reference")
-
-            # 🔥 ATIVA A EMPRESA AQUI
-            liberar_empresa(external_ref)
-
-    return "ok"
 
 @app.route("/saas/status")
 def saas_status():
@@ -3026,6 +2947,22 @@ def financeiro_verificar_vencimentos():
         "success",
     )
     return redirect(url_for("financeiro_saas"))
+
+
+@app.route("/cron/verificar-vencimentos", methods=["GET"])
+def cron_verificar_vencimentos():
+    try:
+        result = saas_block_overdue_companies()
+        return {
+            "status": "ok",
+            "acao": "vencimentos verificados",
+            "checked": result.get("checked", 0),
+            "blocked": result.get("blocked", 0),
+            "due_soon": result.get("due_soon", 0),
+        }, 200
+    except Exception as exc:
+        print("Erro cron verificar vencimentos:", exc)
+        return {"status": "error", "message": str(exc)}, 200
 
 # =========================================================
 # Fim SaaS - Bloqueio por vencimento + WhatsApp de cobrança
