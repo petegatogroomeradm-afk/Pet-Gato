@@ -83,36 +83,21 @@ def has_admin_key() -> bool:
 
 @app.before_request
 def security_gate():
-    allowed_public = ["static", "service_worker", "health"]
+    """Controle de acesso de rede.
+
+    Regra profissional para SaaS:
+    - /ponto continua restrito à rede autorizada da loja, ou à chave master.
+    - /login e painel administrativo não exigem chave na URL; o controle é feito por login + assinatura.
+    - /empresas continua protegido pela sessão do super admin dentro da própria rota.
+    """
+    allowed_public = ["static", "service_worker", "health", "mercadopago_webhook"]
 
     if request.endpoint in allowed_public:
         return None
 
     if request.path.startswith("/ponto") or request.path == "/":
         if not is_store_network() and not has_admin_key():
-            return render_template(
-                "blocked.html",
-                ip=get_client_ip()
-            ), 403
-
-    admin_paths = [
-    "/dashboard",
-    "/funcionarios",
-    "/registros",
-    "/relatorios",
-    "/jornadas",
-    "/configuracoes",
-    "/notificacoes",
-    "/assinatura",
-    "/logout",
-]
-
-    if any(request.path.startswith(path) for path in admin_paths):
-        if not has_admin_key():
-            return render_template(
-                "blocked.html",
-                ip=get_client_ip()
-            ), 403
+            return render_template("blocked.html", ip=get_client_ip()), 403
 
     return None
 
@@ -702,6 +687,35 @@ def admin_required(func):
         if not session.get("user_id"):
             flash("Faça login para acessar o painel.", "warning")
             return redirect(url_for("login"))
+
+        # Super admin nunca é bloqueado por assinatura.
+        try:
+            if is_super_admin():
+                return func(*args, **kwargs)
+        except NameError:
+            pass
+
+        # Rotas permitidas mesmo com assinatura vencida/inativa.
+        allowed_when_blocked = {
+            "subscription_page",
+            "billing_create_payment",
+            "payment_success",
+            "payment_failure",
+            "payment_pending",
+            "logout",
+            "plans_page",
+        }
+        if request.endpoint in allowed_when_blocked:
+            return func(*args, **kwargs)
+
+        try:
+            company = current_company()
+            if company and not company_access_allowed(company):
+                flash("Sua assinatura está pendente ou vencida. Regularize para acessar o painel.", "warning")
+                return redirect(url_for("subscription_page"))
+        except NameError:
+            pass
+
         return func(*args, **kwargs)
     return wrapper
 
@@ -2110,6 +2124,70 @@ def current_company():
     return query_db("SELECT * FROM companies WHERE id = ?", (cid,), one=True)
 
 
+def _row_get(row: Any, key: str, default: Any = None) -> Any:
+    """Compatível com sqlite3.Row, RealDictRow e dict."""
+    if not row:
+        return default
+    try:
+        value = row.get(key, default)
+    except AttributeError:
+        try:
+            value = row[key]
+        except Exception:
+            value = default
+    return value if value is not None else default
+
+
+def company_access_allowed(company: Any) -> bool:
+    """Define se uma empresa cliente pode acessar o painel.
+
+    Regras:
+    - Super admin sempre acessa.
+    - Empresa ATIVO acessa se estiver paga ou em teste válido.
+    - Empresa TESTE acessa enquanto trial_until não venceu.
+    - Empresa BLOQUEADO/INATIVO/VENCIDO não acessa.
+    """
+    if is_super_admin():
+        return True
+
+    status = str(_row_get(company, "status", "")).upper()
+    today = today_str()
+    paid_until = str(_row_get(company, "paid_until", "") or "")
+    trial_until = str(_row_get(company, "trial_until", "") or "")
+
+    if status in ("BLOQUEADO", "INATIVO", "VENCIDO", "CANCELADO"):
+        return False
+
+    if paid_until and paid_until >= today:
+        return True
+
+    if trial_until and trial_until >= today:
+        return True
+
+    # Compatibilidade: empresas antigas marcadas como ATIVO sem campo paid_until ainda entram.
+    # Para clientes novos, use TESTE com trial_until ou pagamento aprovado.
+    if status == "ATIVO" and not paid_until and not trial_until:
+        return True
+
+    return False
+
+
+def company_access_status(company: Any) -> Dict[str, Any]:
+    status = str(_row_get(company, "status", "")).upper()
+    today = today_str()
+    paid_until = str(_row_get(company, "paid_until", "") or "")
+    trial_until = str(_row_get(company, "trial_until", "") or "")
+    allowed = company_access_allowed(company)
+    reason = "Ativo"
+    if paid_until:
+        reason = f"Pago até {paid_until}"
+    elif trial_until:
+        reason = f"Teste grátis até {trial_until}"
+    if not allowed:
+        reason = "Assinatura pendente ou vencida"
+    return {"allowed": allowed, "reason": reason, "status": status, "paid_until": paid_until, "trial_until": trial_until}
+
+
 def is_super_admin() -> bool:
     return session.get("role") in ("super_admin", "master") or session.get("user_name") == "Administrador"
 
@@ -2144,6 +2222,8 @@ def inject_company_globals():
         "current_company": current_company,
         "PLAN_LIMITS": PLAN_LIMITS,
         "is_super_admin": is_super_admin,
+        "company_access_allowed": company_access_allowed,
+        "company_access_status": company_access_status,
     }
 
 
@@ -2221,11 +2301,17 @@ def plans_page():
 @admin_required
 def subscription_page():
     ensure_multiempresa_ready()
+    try:
+        ensure_billing_ready()
+    except Exception:
+        pass
     company = current_company()
     events = []
+    access_info = None
     if company:
         events = query_db("SELECT * FROM billing_events WHERE company_id = ? ORDER BY created_at DESC", (company["id"],))
-    return render_template("subscription.html", company=company, events=events)
+        access_info = company_access_status(company)
+    return render_template("subscription.html", company=company, events=events, access_info=access_info)
 
 
 
@@ -2288,9 +2374,11 @@ def ensure_billing_ready() -> None:
 
 @app.before_request
 def billing_bootstrap():
-    if request.endpoint not in ("static", "health", "service_worker"):
+    if request.endpoint not in ("static", "health", "service_worker", "mercadopago_webhook"):
         try:
             ensure_billing_ready()
+            if session.get("user_id") and not is_super_admin():
+                block_overdue_companies()
         except Exception as exc:
             print("Erro ao inicializar cobrança:", exc)
 
@@ -2311,17 +2399,9 @@ def create_billing_event(company_id: int, plan_key: str) -> int:
 
 
 def create_mercadopago_preference(company: Any, plan_key: str, event_id: int) -> Dict[str, Any]:
-    """Cria uma preferência do Checkout Pro do Mercado Pago.
-
-    Fluxo recomendado para SaaS:
-    - o cliente clica em Pagar agora;
-    - o Mercado Pago abre uma página segura com Pix e cartão;
-    - o webhook confirma o pagamento e libera a empresa automaticamente.
-    """
     token = mp_access_token()
     if not token:
         raise RuntimeError("MP_ACCESS_TOKEN não configurado no Render.")
-
     base_url = app_public_url()
     if not base_url:
         raise RuntimeError("APP_PUBLIC_URL não configurado no Render.")
@@ -2333,20 +2413,14 @@ def create_mercadopago_preference(company: Any, plan_key: str, event_id: int) ->
     external_reference = event["external_reference"]
 
     payload = {
-        "items": [
-            {
-                "id": f"pontofacil-{plan_key.lower()}",
-                "title": f"{SYSTEM_COMMERCIAL_NAME} - Plano {plan_label(plan_key)}",
-                "quantity": 1,
-                "currency_id": "BRL",
-                "unit_price": float(amount),
-                "description": "Assinatura mensal do sistema de ponto online",
-            }
-        ],
-        "payer": {
-            "email": payer_email,
-            "name": payer_name,
-        },
+        "items": [{
+            "title": f"{SYSTEM_COMMERCIAL_NAME} - Plano {plan_label(plan_key)}",
+            "quantity": 1,
+            "currency_id": "BRL",
+            "unit_price": amount,
+            "description": "Assinatura mensal do sistema de ponto online",
+        }],
+        "payer": {"email": payer_email, "name": payer_name},
         "external_reference": external_reference,
         "notification_url": f"{base_url}/webhook/mercadopago",
         "back_urls": {
@@ -2356,41 +2430,13 @@ def create_mercadopago_preference(company: Any, plan_key: str, event_id: int) ->
         },
         "auto_return": "approved",
         "statement_descriptor": "PONTOFACILPRO",
-        "payment_methods": {
-            "installments": 12,
-            "excluded_payment_types": [
-                {"id": "ticket"}
-            ],
-        },
     }
 
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-    }
-
-    response = requests.post(
-        "https://api.mercadopago.com/checkout/preferences",
-        json=payload,
-        headers=headers,
-        timeout=30,
-    )
-
-    try:
-        data = response.json()
-    except Exception:
-        raise RuntimeError(f"Mercado Pago retornou resposta inválida: HTTP {response.status_code} - {response.text[:300]}")
-
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    response = requests.post("https://api.mercadopago.com/checkout/preferences", json=payload, headers=headers, timeout=30)
+    data = response.json()
     if response.status_code >= 400:
-        message = data.get("message") or data.get("error") or str(data)
-        raise RuntimeError(
-            "Mercado Pago retornou erro ao criar Checkout Pro: "
-            f"{message}. Confira se MP_ACCESS_TOKEN é o Access Token de produção copiado sem espaços."
-        )
-
-    if not (data.get("init_point") or data.get("sandbox_init_point")):
-        raise RuntimeError(f"Mercado Pago criou a preferência, mas não retornou link de checkout: {data}")
-
+        raise RuntimeError(f"Mercado Pago retornou erro: {data}")
     return data
 
 

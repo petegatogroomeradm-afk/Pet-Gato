@@ -1,0 +1,14 @@
+PontoFácil Pro - Checkout Pro Mercado Pago
+
+Variáveis obrigatórias no Render:
+MP_ACCESS_TOKEN = Access Token de produção do Mercado Pago
+APP_PUBLIC_URL = https://ponto.petegato.com.br
+
+Aplicação:
+cd "D:\Relogio de ponto WEB"
+python "D:\Relogio de ponto WEB\checkout_pro_pontofacil_final\aplicar_checkout_pro.py"
+git add .
+git commit -m "Ativa Checkout Pro Mercado Pago"
+git push
+
+Depois acesse /assinatura e clique em Pagar agora.
