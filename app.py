@@ -864,6 +864,17 @@ def create_backup() -> Path:
 def index():
     return redirect(url_for("punch"))
 
+def liberar_empresa(slug_empresa):
+    conn = get_db()
+    conn.execute("""
+        UPDATE empresas
+        SET status='ATIVO',
+            acesso_liberado=1,
+            data_pagamento=datetime('now'),
+            data_expiracao=datetime('now', '+30 days')
+        WHERE slug=?
+    """, (slug_empresa,))
+    conn.commit()
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -2764,6 +2775,27 @@ def financeiro_verificar_pagamentos():
     flash(f"Verificação concluída. Consultados: {checked}. Aprovados: {approved}.", "success")
     return redirect(url_for("financeiro_saas"))
 
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    data = request.json
+
+    if data.get("type") == "payment":
+        payment_id = data["data"]["id"]
+
+        url = f"https://api.mercadopago.com/v1/payments/{payment_id}"
+        headers = {
+            "Authorization": f"Bearer {os.getenv('MP_ACCESS_TOKEN')}"
+        }
+
+        resp = requests.get(url, headers=headers).json()
+
+        if resp.get("status") == "approved":
+            external_ref = resp.get("external_reference")
+
+            # 🔥 ATIVA A EMPRESA AQUI
+            liberar_empresa(external_ref)
+
+    return "ok"
 
 @app.route("/saas/status")
 def saas_status():
