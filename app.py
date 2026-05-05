@@ -57,11 +57,10 @@ app.config["BACKUPS_DIR"] = str(BACKUPS_DIR)
 
 STORE_ALLOWED_IP = os.environ.get("STORE_ALLOWED_IP", "").strip()
 ADMIN_SECRET_KEY = os.environ.get("ADMIN_SECRET_KEY", "").strip()
-ADMIN_BYPASS = os.environ.get("ADMIN_BYPASS", "").strip()
 
 
 def get_client_ip() -> str:
-    """Retorna o IP público real do usuário atrás do proxy do Render."""
+    """Retorna o IP real do usuário atrás do proxy do Render."""
     for header in ("X-Forwarded-For", "X-Real-IP", "CF-Connecting-IP", "True-Client-IP"):
         value = request.headers.get(header, "")
         if value:
@@ -69,16 +68,20 @@ def get_client_ip() -> str:
     return request.remote_addr or ""
 
 
-def get_allowed_store_ips() -> list[str]:
-    """Aceita 1 ou vários IPs separados por vírgula em STORE_ALLOWED_IP."""
-    raw = os.environ.get("STORE_ALLOWED_IP", "")
-    return [ip.strip() for ip in raw.split(",") if ip.strip()]
+def ip_liberado(ip: str) -> bool:
+    """Valida o IP real do cliente contra STORE_ALLOWED_IP.
+
+    Aceita uma lista separada por vírgula, exemplo:
+    STORE_ALLOWED_IP=177.137.83.2,179.55.10.22
+    """
+    ip = (ip or "").strip()
+    allowed_ips = os.getenv("STORE_ALLOWED_IP", "")
+    allowed_list = [item.strip() for item in allowed_ips.split(",") if item.strip()]
+    return bool(ip and ip in allowed_list)
 
 
 def is_store_network() -> bool:
-    client_ip = get_client_ip().strip()
-    allowed_ips = get_allowed_store_ips()
-    return client_ip in allowed_ips
+    return ip_liberado(get_client_ip())
 
 
 def has_admin_key() -> bool:
@@ -91,10 +94,12 @@ def has_admin_key() -> bool:
 
 @app.before_request
 def security_gate():
-    """Segurança do ponto:
-    - /ponto e / são liberados somente pelo IP público da loja ou chave admin.
-    - STORE_ALLOWED_IP aceita vários IPs separados por vírgula.
-    - /login, /assinatura, /webhook, /pagamento, /cron ficam públicos quando necessário.
+    """Segurança corrigida para SaaS + Checkout Pro.
+
+    - /ponto e / continuam protegidos por IP da loja ou chave admin.
+    - /login, /assinatura, /assinatura/pagar, /webhook, /webhook/mercadopago e /pagamento/* ficam livres do bloqueio por IP/chave.
+      A proteção de login continua sendo feita pelo @admin_required nas rotas internas.
+    - Painel administrativo de clientes usa sessão/login, não bloqueio por IP.
     """
     allowed_endpoints = {"static", "service_worker", "health"}
     if request.endpoint in allowed_endpoints:
@@ -104,10 +109,8 @@ def security_gate():
         "/login",
         "/assinatura",
         "/assinatura/pagar",
-        "/webhook",
         "/webhook/mercadopago",
         "/pagamento",
-        "/cron",
     )
     if request.path.startswith(public_prefixes):
         return None
@@ -935,7 +938,7 @@ def punch():
             INSERT INTO time_records (employee_id, record_type, record_time, notes, ip_origin, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (employee["id"], next_type, moment, "Registro automático", request.remote_addr or "local", now_iso()),
+            (employee["id"], next_type, moment, "Registro automático", get_client_ip() or "local", now_iso()),
         )
         preview = calculate_day_summary(employee["id"], today_str())
         log_action("REGISTRO_PONTO", f"{employee['name']} registrou {next_type}")
@@ -2238,6 +2241,79 @@ def switch_company(company_id: int):
 def plans_page():
     ensure_multiempresa_ready()
     return render_template("plans.html", company=current_company())
+
+@app.route("/admin/forcar-vencimento")
+def forcar_vencimento():
+    """Rota temporária e protegida para teste real de bloqueio por vencimento.
+
+    Uso:
+    /admin/forcar-vencimento?chave=SUA_ADMIN_SECRET_KEY&slug=pet-gato
+    Depois acesse /cron/verificar-vencimentos para o sistema bloquear.
+    """
+    chave = request.args.get("chave", "").strip()
+    if not ADMIN_SECRET_KEY or chave != ADMIN_SECRET_KEY:
+        return {"status": "unauthorized", "message": "chave inválida"}, 403
+
+    ensure_multiempresa_ready()
+    slug = request.args.get("slug", "pet-gato").strip() or "pet-gato"
+    vencido_em = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+
+    company = query_db("SELECT * FROM companies WHERE slug = ?", (slug,), one=True)
+    if not company:
+        return {"status": "not_found", "message": f"empresa não encontrada: {slug}"}, 404
+
+    execute_db(
+        """
+        UPDATE companies
+        SET status = ?, payment_status = ?, paid_until = ?
+        WHERE slug = ?
+        """,
+        ("ATIVO", "PAGO", vencido_em, slug),
+    )
+
+    return {
+        "status": "ok",
+        "msg": "vencimento forçado para teste",
+        "slug": slug,
+        "paid_until": vencido_em,
+        "proximo_passo": "/cron/verificar-vencimentos",
+    }, 200
+
+
+@app.route("/admin/restaurar-acesso-teste")
+def restaurar_acesso_teste():
+    """Restaura acesso após o teste de bloqueio.
+
+    Uso:
+    /admin/restaurar-acesso-teste?chave=SUA_ADMIN_SECRET_KEY&slug=pet-gato
+    """
+    chave = request.args.get("chave", "").strip()
+    if not ADMIN_SECRET_KEY or chave != ADMIN_SECRET_KEY:
+        return {"status": "unauthorized", "message": "chave inválida"}, 403
+
+    ensure_multiempresa_ready()
+    slug = request.args.get("slug", "pet-gato").strip() or "pet-gato"
+    novo_vencimento = (date.today() + timedelta(days=30)).strftime("%Y-%m-%d")
+
+    company = query_db("SELECT * FROM companies WHERE slug = ?", (slug,), one=True)
+    if not company:
+        return {"status": "not_found", "message": f"empresa não encontrada: {slug}"}, 404
+
+    execute_db(
+        """
+        UPDATE companies
+        SET status = ?, payment_status = ?, paid_until = ?, last_payment_at = ?
+        WHERE slug = ?
+        """,
+        ("ATIVO", "PAGO", novo_vencimento, now_iso(), slug),
+    )
+
+    return {
+        "status": "ok",
+        "msg": "acesso restaurado para teste",
+        "slug": slug,
+        "paid_until": novo_vencimento,
+    }, 200
 
 
 @app.route("/assinatura")
