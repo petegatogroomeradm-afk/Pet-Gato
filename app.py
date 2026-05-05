@@ -57,10 +57,11 @@ app.config["BACKUPS_DIR"] = str(BACKUPS_DIR)
 
 STORE_ALLOWED_IP = os.environ.get("STORE_ALLOWED_IP", "").strip()
 ADMIN_SECRET_KEY = os.environ.get("ADMIN_SECRET_KEY", "").strip()
+ADMIN_BYPASS = os.environ.get("ADMIN_BYPASS", "").strip()
 
 
 def get_client_ip() -> str:
-    """Retorna o IP real do usuário atrás do proxy do Render."""
+    """Retorna o IP público real do usuário atrás do proxy do Render."""
     for header in ("X-Forwarded-For", "X-Real-IP", "CF-Connecting-IP", "True-Client-IP"):
         value = request.headers.get(header, "")
         if value:
@@ -68,9 +69,16 @@ def get_client_ip() -> str:
     return request.remote_addr or ""
 
 
+def get_allowed_store_ips() -> list[str]:
+    """Aceita 1 ou vários IPs separados por vírgula em STORE_ALLOWED_IP."""
+    raw = os.environ.get("STORE_ALLOWED_IP", "")
+    return [ip.strip() for ip in raw.split(",") if ip.strip()]
+
+
 def is_store_network() -> bool:
-    client_ip = get_client_ip()
-    return bool(STORE_ALLOWED_IP and client_ip == STORE_ALLOWED_IP)
+    client_ip = get_client_ip().strip()
+    allowed_ips = get_allowed_store_ips()
+    return client_ip in allowed_ips
 
 
 def has_admin_key() -> bool:
@@ -83,12 +91,10 @@ def has_admin_key() -> bool:
 
 @app.before_request
 def security_gate():
-    """Segurança corrigida para SaaS + Checkout Pro.
-
-    - /ponto e / continuam protegidos por IP da loja ou chave admin.
-    - /login, /assinatura, /assinatura/pagar, /webhook, /webhook/mercadopago e /pagamento/* ficam livres do bloqueio por IP/chave.
-      A proteção de login continua sendo feita pelo @admin_required nas rotas internas.
-    - Painel administrativo de clientes usa sessão/login, não bloqueio por IP.
+    """Segurança do ponto:
+    - /ponto e / são liberados somente pelo IP público da loja ou chave admin.
+    - STORE_ALLOWED_IP aceita vários IPs separados por vírgula.
+    - /login, /assinatura, /webhook, /pagamento, /cron ficam públicos quando necessário.
     """
     allowed_endpoints = {"static", "service_worker", "health"}
     if request.endpoint in allowed_endpoints:
@@ -98,8 +104,10 @@ def security_gate():
         "/login",
         "/assinatura",
         "/assinatura/pagar",
+        "/webhook",
         "/webhook/mercadopago",
         "/pagamento",
+        "/cron",
     )
     if request.path.startswith(public_prefixes):
         return None
