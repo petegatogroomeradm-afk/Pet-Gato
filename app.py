@@ -209,6 +209,37 @@ def build_whatsapp_link(phone: str, message: str) -> Optional[str]:
         return None
     return f"https://wa.me/{digits}?text={quote(message)}"
 
+def enviar_whatsapp(numero, mensagem):
+    """Envia WhatsApp de cobrança via CallMeBot.
+
+    Configure no Render uma variável de ambiente:
+    CALLMEBOT_APIKEY=SUA_CHAVE
+
+    Retorna True quando a requisição é enviada com sucesso e False quando
+    faltar telefone/chave ou ocorrer erro. A função não derruba o cron.
+    """
+    try:
+        numero = normalize_phone(numero or "")
+        api_key = os.getenv("CALLMEBOT_APIKEY", "").strip() or os.getenv("WHATSAPP_APIKEY", "").strip()
+
+        if not numero:
+            print("WhatsApp ignorado: número vazio")
+            return False
+        if not api_key:
+            print("WhatsApp ignorado: CALLMEBOT_APIKEY não configurado")
+            return False
+
+        url = "https://api.callmebot.com/whatsapp.php"
+        response = requests.get(
+            url,
+            params={"phone": numero, "text": mensagem, "apikey": api_key},
+            timeout=15,
+        )
+        print("WhatsApp cobrança:", response.status_code, response.text[:120])
+        return response.status_code == 200
+    except Exception as e:
+        print("Erro WhatsApp:", e)
+        return False
 
 def weekday_name(idx: int) -> str:
     return WEEKDAY_LABELS.get(idx, str(idx))
@@ -2242,21 +2273,8 @@ def plans_page():
     ensure_multiempresa_ready()
     return render_template("plans.html", company=current_company())
 
+
 @app.route("/admin/forcar-vencimento")
-def forcar_vencimento():
-    conn = get_db()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        UPDATE companies
-        SET paid_until = NOW() - INTERVAL '1 day',
-            status = 'active'
-        WHERE slug = 'pet-gato'
-    """)
-
-    conn.commit()
-    return {"status": "vencimento forçado"}
-
 def forcar_vencimento():
     """Rota temporária e protegida para teste real de bloqueio por vencimento.
 
@@ -2970,13 +2988,22 @@ def billing_reminder_message(company) -> str:
 
 
 def saas_block_overdue_companies() -> dict:
-    """Bloqueia empresas vencidas e prepara WhatsApp de cobrança."""
+    """Bloqueia empresas vencidas e envia WhatsApp de cobrança uma vez.
+
+    Regras:
+    - bloqueia empresas com paid_until menor que hoje;
+    - bloqueia empresas em TESTE com trial_until vencido;
+    - não reenvia cobrança para quem já estava BLOQUEADO;
+    - registra billing_event de vencimento;
+    - envia WhatsApp para o telefone cadastrado da empresa quando houver chave configurada.
+    """
     ensure_saas_automation_ready()
     today = date.today()
     rows = query_db("SELECT * FROM companies ORDER BY id ASC")
     blocked = 0
     due_soon = 0
     total_checked = 0
+    whatsapp_sent = 0
 
     for company in rows:
         total_checked += 1
@@ -2987,7 +3014,6 @@ def saas_block_overdue_companies() -> dict:
         status = str(_safe_get(company, "status", "")).upper()
         paid_until = saas_parse_date(_safe_get(company, "paid_until", ""))
         trial_until = saas_parse_date(_safe_get(company, "trial_until", ""))
-        payment_status = str(_safe_get(company, "payment_status", "")).upper()
 
         should_block = False
         reason = ""
@@ -3002,34 +3028,63 @@ def saas_block_overdue_companies() -> dict:
         elif paid_until and 0 <= (paid_until - today).days <= 5:
             due_soon += 1
 
-        if should_block:
-            # Mantém dados financeiros; apenas bloqueia acesso e marca pagamento como vencido.
+        if not should_block:
+            continue
+
+        already_blocked = status == "BLOQUEADO"
+
+        # Mantém dados financeiros; apenas bloqueia acesso e marca pagamento como vencido.
+        execute_db(
+            "UPDATE companies SET status = ?, payment_status = ? WHERE id = ?",
+            ("BLOQUEADO", "VENCIDO", cid),
+        )
+
+        try:
             execute_db(
-                "UPDATE companies SET status = ?, payment_status = ? WHERE id = ?",
-                ("BLOQUEADO", "VENCIDO", cid),
+                """
+                INSERT INTO billing_events (company_id, event_type, description, amount, status, created_at, plan)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    cid,
+                    "COBRANCA",
+                    reason,
+                    f"{plan_price(_safe_get(company, 'plan', 'BASICO')):.2f}" if "plan_price" in globals() else "0.00",
+                    "VENCIDO",
+                    now_iso(),
+                    str(_safe_get(company, "plan", "BASICO") or "BASICO").upper(),
+                ),
             )
+        except Exception as exc:
+            print("Aviso: não foi possível registrar billing_event de vencimento:", exc)
+
+        # Envia WhatsApp apenas na primeira vez que bloquear, evitando cobrança repetida a cada cron.
+        if not already_blocked:
+            telefone = _safe_get(company, "phone", "") or ""
+            nome = _safe_get(company, "name", "Cliente") or "Cliente"
+            plano = str(_safe_get(company, "plan", "BASICO") or "BASICO").upper()
             try:
-                execute_db(
-                    """
-                    INSERT INTO billing_events (company_id, event_type, description, amount, status, created_at, plan)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        cid,
-                        "COBRANCA",
-                        reason,
-                        f"{plan_price(_safe_get(company, 'plan', 'BASICO')):.2f}" if "plan_price" in globals() else "0.00",
-                        "VENCIDO",
-                        now_iso(),
-                        str(_safe_get(company, "plan", "BASICO") or "BASICO").upper(),
-                    ),
-                )
-            except Exception as exc:
-                print("Aviso: não foi possível registrar billing_event de vencimento:", exc)
-            blocked += 1
+                valor = f"R$ {plan_price(plano):.2f}".replace(".", ",") if "plan_price" in globals() else "valor do plano"
+            except Exception:
+                valor = "valor do plano"
+            link_pagamento = f"{app_public_url()}/assinatura" if "app_public_url" in globals() else "/assinatura"
 
-    return {"checked": total_checked, "blocked": blocked, "due_soon": due_soon}
+            mensagem = (
+                f"Olá, {nome}!\n\n"
+                f"Sua assinatura do PontoFácil Pro venceu e o acesso ao painel foi bloqueado automaticamente.\n\n"
+                f"Plano: {plano}\n"
+                f"Valor: {valor}\n"
+                f"Motivo: {reason}\n\n"
+                f"Regularize pelo link abaixo para liberar novamente:\n{link_pagamento}\n\n"
+                f"Após a confirmação do pagamento, o sistema libera automaticamente por mais 30 dias."
+            )
 
+            if telefone and enviar_whatsapp(telefone, mensagem):
+                whatsapp_sent += 1
+
+        blocked += 1
+
+    return {"checked": total_checked, "blocked": blocked, "due_soon": due_soon, "whatsapp_sent": whatsapp_sent}
 
 @app.route("/financeiro-saas/verificar-vencimentos", methods=["POST"])
 @admin_required
@@ -3041,7 +3096,7 @@ def financeiro_verificar_vencimentos():
     result = saas_block_overdue_companies()
     flash(
         f"Vencimentos verificados. Empresas analisadas: {result['checked']}. "
-        f"Bloqueadas: {result['blocked']}. Próximas do vencimento: {result['due_soon']}.",
+        f"Bloqueadas: {result['blocked']}. Próximas do vencimento: {result['due_soon']}. WhatsApp enviados: {result.get('whatsapp_sent', 0)}.",
         "success",
     )
     return redirect(url_for("financeiro_saas"))
@@ -3057,6 +3112,7 @@ def cron_verificar_vencimentos():
             "checked": result.get("checked", 0),
             "blocked": result.get("blocked", 0),
             "due_soon": result.get("due_soon", 0),
+            "whatsapp_sent": result.get("whatsapp_sent", 0),
         }, 200
     except Exception as exc:
         print("Erro cron verificar vencimentos:", exc)
