@@ -2257,22 +2257,6 @@ def forcar_vencimento():
     conn.commit()
     return {"status": "vencimento forçado"}
 
-@app.route("/admin/forcar-vencimento")
-def forcar_vencimento():
-    conn = get_db()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        UPDATE companies
-        SET paid_until = NOW() - INTERVAL '1 day',
-            status = 'active'
-        WHERE slug = 'pet-gato'
-    """)
-
-    conn.commit()
-    return {"status": "vencimento forçado"}
-
-@app.route("/admin/forcar-vencimento")
 def forcar_vencimento():
     """Rota temporária e protegida para teste real de bloqueio por vencimento.
 
