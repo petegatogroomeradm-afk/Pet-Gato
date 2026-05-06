@@ -209,37 +209,95 @@ def build_whatsapp_link(phone: str, message: str) -> Optional[str]:
         return None
     return f"https://wa.me/{digits}?text={quote(message)}"
 
-def enviar_whatsapp(numero, mensagem):
-    """Envia WhatsApp de cobrança via CallMeBot.
 
-    Configure no Render uma variável de ambiente:
-    CALLMEBOT_APIKEY=SUA_CHAVE
+def normalize_whatsapp_number(phone: str) -> str:
+    """Normaliza número para a API oficial do WhatsApp Cloud.
 
-    Retorna True quando a requisição é enviada com sucesso e False quando
-    faltar telefone/chave ou ocorrer erro. A função não derruba o cron.
+    Esperado pela Meta: código do país + DDD + número, apenas dígitos.
+    Se vier só DDD+número brasileiro (10 ou 11 dígitos), adiciona 55.
     """
-    try:
-        numero = normalize_phone(numero or "")
-        api_key = os.getenv("CALLMEBOT_APIKEY", "").strip() or os.getenv("WHATSAPP_APIKEY", "").strip()
+    digits = normalize_phone(phone or "")
+    if digits and not digits.startswith("55") and len(digits) in (10, 11):
+        digits = "55" + digits
+    return digits
 
-        if not numero:
-            print("WhatsApp ignorado: número vazio")
-            return False
-        if not api_key:
-            print("WhatsApp ignorado: CALLMEBOT_APIKEY não configurado")
-            return False
 
-        url = "https://api.callmebot.com/whatsapp.php"
-        response = requests.get(
-            url,
-            params={"phone": numero, "text": mensagem, "apikey": api_key},
-            timeout=15,
-        )
-        print("WhatsApp cobrança:", response.status_code, response.text[:120])
-        return response.status_code == 200
-    except Exception as e:
-        print("Erro WhatsApp:", e)
+def enviar_whatsapp_oficial(numero: str, mensagem: str, template_name: Optional[str] = None, template_params: Optional[List[str]] = None) -> bool:
+    """Envia WhatsApp pela API oficial da Meta / WhatsApp Business Cloud API.
+
+    Variáveis necessárias no Render:
+    WHATSAPP_TOKEN=token permanente da Meta
+    WHATSAPP_PHONE_NUMBER_ID=id do número do WhatsApp Business
+
+    Opcionais:
+    WHATSAPP_API_VERSION=v23.0
+    WHATSAPP_TEMPLATE_LANGUAGE=pt_BR
+    WHATSAPP_BILLING_TEMPLATE_NAME=nome_do_template_aprovado
+
+    Observação: mensagens iniciadas pela empresa normalmente exigem template aprovado.
+    Se template_name não for informado, envia texto simples, que só funciona dentro da janela de atendimento permitida pela Meta.
+    """
+    token = os.getenv("WHATSAPP_TOKEN", "").strip()
+    phone_number_id = os.getenv("WHATSAPP_PHONE_NUMBER_ID", "").strip()
+    api_version = os.getenv("WHATSAPP_API_VERSION", "v23.0").strip() or "v23.0"
+    language_code = os.getenv("WHATSAPP_TEMPLATE_LANGUAGE", "pt_BR").strip() or "pt_BR"
+    to_number = normalize_whatsapp_number(numero)
+
+    if not token or not phone_number_id:
+        print("WhatsApp oficial não configurado: faltam WHATSAPP_TOKEN ou WHATSAPP_PHONE_NUMBER_ID")
         return False
+    if not to_number:
+        print("WhatsApp oficial não enviado: número vazio")
+        return False
+
+    url = f"https://graph.facebook.com/{api_version}/{phone_number_id}/messages"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+
+    if template_name:
+        parameters = [
+            {"type": "text", "text": str(value or "-")}
+            for value in (template_params or [])
+        ]
+        components = []
+        if parameters:
+            components.append({"type": "body", "parameters": parameters})
+
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": to_number,
+            "type": "template",
+            "template": {
+                "name": template_name,
+                "language": {"code": language_code},
+                "components": components,
+            },
+        }
+    else:
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": to_number,
+            "type": "text",
+            "text": {"preview_url": False, "body": mensagem},
+        }
+
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=20)
+        if response.status_code in (200, 201):
+            print("WhatsApp oficial enviado:", response.text[:300])
+            return True
+        print("Erro WhatsApp oficial:", response.status_code, response.text[:1000])
+        return False
+    except Exception as exc:
+        print("Erro WhatsApp oficial:", exc)
+        return False
+
+
+def enviar_whatsapp(numero: str, mensagem: str, template_name: Optional[str] = None, template_params: Optional[List[str]] = None) -> bool:
+    """Compatibilidade interna: usa sempre a API oficial da Meta."""
+    return enviar_whatsapp_oficial(numero, mensagem, template_name=template_name, template_params=template_params)
 
 def weekday_name(idx: int) -> str:
     return WEEKDAY_LABELS.get(idx, str(idx))
@@ -2273,7 +2331,6 @@ def plans_page():
     ensure_multiempresa_ready()
     return render_template("plans.html", company=current_company())
 
-
 @app.route("/admin/forcar-vencimento")
 def forcar_vencimento():
     """Rota temporária e protegida para teste real de bloqueio por vencimento.
@@ -2815,33 +2872,22 @@ def activate_company_payment(company_id: int, plan_key: str, payment_id: str, ev
 
 
 def send_billing_whatsapp_notice(company_id: int, message: str) -> Optional[str]:
+    """Envia aviso financeiro por WhatsApp oficial e registra log."""
     company = query_db("SELECT * FROM companies WHERE id = ?", (company_id,), one=True)
     phone = _safe_get(company, "phone", "")
     if not phone:
         return None
-    link = build_whatsapp_link(phone, message)
+
+    ok = enviar_whatsapp_oficial(phone, message)
     try:
         execute_db(
             "INSERT INTO system_logs (user_name, action, details, created_at) VALUES (?, ?, ?, ?)",
-            ("Sistema", "WHATSAPP_COBRANCA", f"Empresa {company_id}: {message}", now_iso()),
+            ("Sistema", "WHATSAPP_OFICIAL", f"Empresa {company_id}: enviado={ok} | {message}", now_iso()),
         )
     except Exception:
         pass
-    return link
 
-
-def billing_reminder_message(company) -> str:
-    name = _safe_get(company, "name", "Cliente")
-    plan = plan_label(_safe_get(company, "plan", "BASICO")) if "plan_label" in globals() else _safe_get(company, "plan", "BASICO")
-    paid_until = _safe_get(company, "paid_until", "-") or "-"
-    return (
-        f"Olá, {name}!%0A%0A"
-        f"Sua assinatura do PontoFácil Pro está pendente ou próxima do vencimento.%0A"
-        f"Plano: {plan}%0A"
-        f"Pago até: {paid_until}%0A%0A"
-        f"Acesse o painel e clique em Assinatura para regularizar.%0A"
-        f"{app_public_url()}/assinatura"
-    )
+    return build_whatsapp_link(phone, message)
 
 
 @app.route("/financeiro-saas")
@@ -2988,14 +3034,18 @@ def billing_reminder_message(company) -> str:
 
 
 def saas_block_overdue_companies() -> dict:
-    """Bloqueia empresas vencidas e envia WhatsApp de cobrança uma vez.
+    """Bloqueia empresas vencidas e envia cobrança via WhatsApp oficial.
 
-    Regras:
-    - bloqueia empresas com paid_until menor que hoje;
-    - bloqueia empresas em TESTE com trial_until vencido;
-    - não reenvia cobrança para quem já estava BLOQUEADO;
-    - registra billing_event de vencimento;
-    - envia WhatsApp para o telefone cadastrado da empresa quando houver chave configurada.
+    Evita cobrança repetida: só envia WhatsApp quando a empresa ainda não estava BLOQUEADA.
+    Para template aprovado da Meta, configure no Render:
+    WHATSAPP_BILLING_TEMPLATE_NAME=nome_do_template
+    WHATSAPP_TEMPLATE_LANGUAGE=pt_BR
+
+    Variáveis enviadas ao template, nesta ordem:
+    1. nome da empresa
+    2. plano
+    3. data de vencimento
+    4. link de pagamento/assinatura
     """
     ensure_saas_automation_ready()
     today = date.today()
@@ -3003,7 +3053,6 @@ def saas_block_overdue_companies() -> dict:
     blocked = 0
     due_soon = 0
     total_checked = 0
-    whatsapp_sent = 0
 
     for company in rows:
         total_checked += 1
@@ -3017,14 +3066,16 @@ def saas_block_overdue_companies() -> dict:
 
         should_block = False
         reason = ""
+        vencimento_txt = "-"
 
-        # Só bloqueia quando houver uma data objetiva de vencimento.
         if paid_until and paid_until < today:
             should_block = True
-            reason = f"Assinatura vencida em {paid_until.strftime('%d/%m/%Y')}"
+            vencimento_txt = paid_until.strftime("%d/%m/%Y")
+            reason = f"Assinatura vencida em {vencimento_txt}"
         elif status == "TESTE" and trial_until and trial_until < today:
             should_block = True
-            reason = f"Teste grátis vencido em {trial_until.strftime('%d/%m/%Y')}"
+            vencimento_txt = trial_until.strftime("%d/%m/%Y")
+            reason = f"Teste grátis vencido em {vencimento_txt}"
         elif paid_until and 0 <= (paid_until - today).days <= 5:
             due_soon += 1
 
@@ -3033,11 +3084,18 @@ def saas_block_overdue_companies() -> dict:
 
         already_blocked = status == "BLOQUEADO"
 
-        # Mantém dados financeiros; apenas bloqueia acesso e marca pagamento como vencido.
         execute_db(
             "UPDATE companies SET status = ?, payment_status = ? WHERE id = ?",
             ("BLOQUEADO", "VENCIDO", cid),
         )
+
+        plan_key = str(_safe_get(company, "plan", "BASICO") or "BASICO").upper()
+        try:
+            amount = f"{plan_price(plan_key):.2f}"
+            plan_name = plan_label(plan_key)
+        except Exception:
+            amount = "0.00"
+            plan_name = plan_key
 
         try:
             execute_db(
@@ -3045,46 +3103,46 @@ def saas_block_overdue_companies() -> dict:
                 INSERT INTO billing_events (company_id, event_type, description, amount, status, created_at, plan)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
-                (
-                    cid,
-                    "COBRANCA",
-                    reason,
-                    f"{plan_price(_safe_get(company, 'plan', 'BASICO')):.2f}" if "plan_price" in globals() else "0.00",
-                    "VENCIDO",
-                    now_iso(),
-                    str(_safe_get(company, "plan", "BASICO") or "BASICO").upper(),
-                ),
+                (cid, "COBRANCA", reason, amount, "VENCIDO", now_iso(), plan_key),
             )
         except Exception as exc:
             print("Aviso: não foi possível registrar billing_event de vencimento:", exc)
 
-        # Envia WhatsApp apenas na primeira vez que bloquear, evitando cobrança repetida a cada cron.
+        # WhatsApp oficial: envia apenas no momento da virada para BLOQUEADO.
         if not already_blocked:
-            telefone = _safe_get(company, "phone", "") or ""
-            nome = _safe_get(company, "name", "Cliente") or "Cliente"
-            plano = str(_safe_get(company, "plan", "BASICO") or "BASICO").upper()
-            try:
-                valor = f"R$ {plan_price(plano):.2f}".replace(".", ",") if "plan_price" in globals() else "valor do plano"
-            except Exception:
-                valor = "valor do plano"
-            link_pagamento = f"{app_public_url()}/assinatura" if "app_public_url" in globals() else "/assinatura"
-
-            mensagem = (
-                f"Olá, {nome}!\n\n"
-                f"Sua assinatura do PontoFácil Pro venceu e o acesso ao painel foi bloqueado automaticamente.\n\n"
-                f"Plano: {plano}\n"
-                f"Valor: {valor}\n"
-                f"Motivo: {reason}\n\n"
-                f"Regularize pelo link abaixo para liberar novamente:\n{link_pagamento}\n\n"
-                f"Após a confirmação do pagamento, o sistema libera automaticamente por mais 30 dias."
-            )
-
-            if telefone and enviar_whatsapp(telefone, mensagem):
-                whatsapp_sent += 1
+            phone = _safe_get(company, "phone", "")
+            if phone:
+                company_name = _safe_get(company, "name", "Cliente")
+                link_pagamento = f"{app_public_url()}/assinatura" if "app_public_url" in globals() else "/assinatura"
+                message = (
+                    f"Olá, {company_name}!\n\n"
+                    f"Sua assinatura do PontoFácil Pro está vencida.\n"
+                    f"Plano: {plan_name}\n"
+                    f"Vencimento: {vencimento_txt}\n\n"
+                    f"O acesso ao painel foi bloqueado automaticamente.\n"
+                    f"Para liberar novamente, regularize pelo link:\n{link_pagamento}\n\n"
+                    f"Após a confirmação do pagamento, o sistema libera automaticamente por mais 30 dias."
+                )
+                template_name = os.getenv("WHATSAPP_BILLING_TEMPLATE_NAME", "").strip()
+                template_params = [company_name, plan_name, vencimento_txt, link_pagamento]
+                ok = enviar_whatsapp_oficial(
+                    phone,
+                    message,
+                    template_name=template_name or None,
+                    template_params=template_params,
+                )
+                try:
+                    execute_db(
+                        "INSERT INTO system_logs (user_name, action, details, created_at) VALUES (?, ?, ?, ?)",
+                        ("Sistema", "WHATSAPP_COBRANCA_OFICIAL", f"Empresa {cid}: enviado={ok} | {reason}", now_iso()),
+                    )
+                except Exception:
+                    pass
 
         blocked += 1
 
-    return {"checked": total_checked, "blocked": blocked, "due_soon": due_soon, "whatsapp_sent": whatsapp_sent}
+    return {"checked": total_checked, "blocked": blocked, "due_soon": due_soon}
+
 
 @app.route("/financeiro-saas/verificar-vencimentos", methods=["POST"])
 @admin_required
@@ -3096,7 +3154,7 @@ def financeiro_verificar_vencimentos():
     result = saas_block_overdue_companies()
     flash(
         f"Vencimentos verificados. Empresas analisadas: {result['checked']}. "
-        f"Bloqueadas: {result['blocked']}. Próximas do vencimento: {result['due_soon']}. WhatsApp enviados: {result.get('whatsapp_sent', 0)}.",
+        f"Bloqueadas: {result['blocked']}. Próximas do vencimento: {result['due_soon']}.",
         "success",
     )
     return redirect(url_for("financeiro_saas"))
@@ -3112,7 +3170,6 @@ def cron_verificar_vencimentos():
             "checked": result.get("checked", 0),
             "blocked": result.get("blocked", 0),
             "due_soon": result.get("due_soon", 0),
-            "whatsapp_sent": result.get("whatsapp_sent", 0),
         }, 200
     except Exception as exc:
         print("Erro cron verificar vencimentos:", exc)
