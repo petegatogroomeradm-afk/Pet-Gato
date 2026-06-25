@@ -1,74 +1,57 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="page-header">
-  <div>
-    <h1>Financeiro SaaS</h1>
-    <p>Automação de cobrança, status de clientes, bloqueios e WhatsApp de renovação.</p>
-  </div>
-</div>
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Financeiro SaaS</title><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head>
+<body>
+{% include 'nav.html' ignore missing %}
+<main class="page-wrap saas-v2">
+  <h1>Financeiro SaaS</h1>
+  <p class="muted">Cobranças, bloqueios, renovações e histórico útil dos clientes.</p>
+  {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}{% for cat,msg in messages %}<div class="alert {{cat}}">{{msg}}</div>{% endfor %}{% endif %}{% endwith %}
 
-<section class="card">
-  <h2>Resumo comercial</h2>
-  <div class="grid grid-3">
-    <div class="metric-card"><span>MRR estimado</span><strong>R$ {{ '%.2f'|format(total_mrr) }}</strong></div>
+  <section class="cards-grid">
+    <div class="metric-card"><span>MRR estimado</span><strong>{{ saas_money(total_mrr) }}</strong></div>
     <div class="metric-card"><span>Clientes</span><strong>{{ companies|length }}</strong></div>
-    <div class="metric-card"><span>Eventos financeiros</span><strong>{{ events|length }}</strong></div>
-  </div>
-  <form method="post" action="{{ url_for('financeiro_verificar_pagamentos') }}">
-    <button class="btn primary" type="submit">Verificar pagamentos pendentes</button>
-  </form>
+    <div class="metric-card"><span>Bloqueados</span><strong>{{ companies|selectattr('status','equalto','BLOQUEADO')|list|length }}</strong></div>
+  </section>
 
-<form method="post" action="{{ url_for('financeiro_verificar_vencimentos') }}" style="margin-top:10px;">
-  <button class="btn primary" type="submit">Verificar vencimentos e bloquear atrasados</button>
-</form>
+  <section class="card-pro action-row">
+    <form method="post" action="{{ url_for('financeiro_verificar_pagamentos') }}"><button class="btn-main">Verificar pagamentos pendentes</button></form>
+    <form method="post" action="{{ url_for('financeiro_verificar_vencimentos') }}"><button class="btn-main">Verificar vencimentos e bloquear atrasados</button></form>
+    <form method="post" action="{{ url_for('financeiro_saas_limpar_eventos') }}"><button class="btn-secondary">Limpar histórico repetido</button></form>
+  </section>
 
-</section>
-
-<section class="card">
-  <h2>Clientes e assinaturas</h2>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Empresa</th><th>Plano</th><th>Valor</th><th>Status</th><th>Pago até</th><th>Acesso</th>
-        <th>Vencimento</th><th>WhatsApp</th>
-        </tr>
-      </thead>
+  <section class="card-pro">
+    <h2>Clientes e assinaturas</h2>
+    <div class="table-responsive mobile-cards"><table>
+      <thead><tr><th>Empresa</th><th>Plano</th><th>Valor</th><th>Status</th><th>Pago até</th><th>Vencimento</th><th>WhatsApp</th><th>Ações</th></tr></thead>
       <tbody>
       {% for c in companies %}
-        <tr>
-          <td><strong>{{ c.name }}</strong><br><small>{{ c.slug }}</small></td>
-          <td>{{ c.plan }}</td>
-          <td>R$ {{ '%.2f'|format(c.price) }}</td>
-          <td>{{ c.status }} / {{ c.payment_status or '-' }}</td>
-          <td>{{ c.paid_until or '-' }}</td>
-          <td>{% if c.access_ok %}<span class="pill success">Liberado</span>{% else %}<span class="pill danger">Bloqueado</span>{% endif %}</td>
-          <td>{{ c.due_status or '-' }}</td>
-        <td>{% if c.billing_whatsapp %}<a class="btn small" target="_blank" href="{{ c.billing_whatsapp }}">Cobrar</a>{% else %}-{% endif %}</td>
-        </tr>
-      {% else %}
-        <tr><td colspan="7">Nenhuma empresa cadastrada.</td></tr>
-      {% endfor %}
+      <tr>
+        <td data-label="Empresa"><strong>{{c.name}}</strong><br><small>{{c.slug}}</small></td>
+        <td data-label="Plano">{{c.plan}}</td>
+        <td data-label="Valor">{{ saas_money(c.price) }}</td>
+        <td data-label="Status"><span class="badge status-{{c.status|lower}}">{{c.status}} / {{c.payment_status or '-'}}</span></td>
+        <td data-label="Pago até">{{c.paid_until or '-'}}</td>
+        <td data-label="Vencimento">{{c.due_status}}</td>
+        <td data-label="WhatsApp">{% if c.billing_whatsapp %}<a class="btn-mini" href="{{c.billing_whatsapp}}" target="_blank">Enviar</a>{% else %}-{% endif %}</td>
+        <td data-label="Ações" class="actions-cell">
+          <form method="post" action="{{ url_for('saas_company_gerar_cobranca', company_id=c.id) }}"><input type="hidden" name="plan" value="{{c.plan}}"><button class="btn-mini pay">Gerar cobrança</button></form>
+          <form method="post" action="{{ url_for('saas_company_liberar', company_id=c.id) }}"><input type="hidden" name="days" value="30"><button class="btn-mini ok">Liberar</button></form>
+          <form method="post" action="{{ url_for('saas_company_bloquear', company_id=c.id) }}"><button class="btn-mini danger">Bloquear</button></form>
+        </td>
+      </tr>
+      {% else %}<tr><td colspan="8">Nenhum cliente.</td></tr>{% endfor %}
       </tbody>
-    </table>
-  </div>
-</section>
+    </table></div>
+  </section>
 
-<section class="card">
-  <h2>Últimos eventos financeiros</h2>
-  <div class="table-wrap">
-    <table>
+  <section class="card-pro">
+    <h2>Histórico financeiro útil</h2>
+    <div class="table-responsive mobile-cards"><table>
       <thead><tr><th>Data</th><th>Empresa</th><th>Tipo</th><th>Plano</th><th>Valor</th><th>Status</th><th>Pagamento</th></tr></thead>
-      <tbody>
-      {% for e in events %}
-        <tr>
-          <td>{{ e.created_at }}</td><td>{{ e.company_id }}</td><td>{{ e.event_type }}</td><td>{{ e.plan or '-' }}</td><td>R$ {{ e.amount }}</td><td>{{ e.status }}</td><td>{{ e.mp_payment_id or '-' }}</td>
-        </tr>
-      {% else %}
-        <tr><td colspan="7">Nenhum evento financeiro.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
-{% endblock %}
+      <tbody>{% for e in events %}<tr>
+        <td data-label="Data">{{e.created_at}}</td><td data-label="Empresa">{{e.company_name or e.company_id}}</td><td data-label="Tipo">{{e.event_type}}</td><td data-label="Plano">{{e.plan or '-'}}</td><td data-label="Valor">{{ saas_money(e.amount) }}</td><td data-label="Status">{{e.status}}</td><td data-label="Pagamento">{% if e.checkout_url %}<a href="{{e.checkout_url}}" target="_blank">Abrir pagamento</a>{% else %}{{e.mp_payment_id or '-'}}{% endif %}</td>
+      </tr>{% else %}<tr><td colspan="7">Sem eventos úteis.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+</main></body></html>

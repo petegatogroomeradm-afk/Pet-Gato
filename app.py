@@ -3185,6 +3185,207 @@ def cron_verificar_vencimentos():
 # =========================================================
 
 
+
+
+
+
+# =========================================================
+# Upgrade SaaS V2 Profissional - empresas, financeiro, mobile e notificações
+# =========================================================
+
+def saas_money(value) -> str:
+    try:
+        return f"R$ {float(value):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except Exception:
+        return "R$ 0,00"
+
+
+def saas_useful_events(limit: int = 80):
+    """Histórico financeiro limpo: mantém eventos realmente úteis."""
+    ensure_billing_ready()
+    useful_status = (
+        "PAGO", "APPROVED", "APROVADO", "VENCIDO", "REJECTED", "CANCELLED",
+        "CANCELADO", "AGUARDANDO_PAGAMENTO", "PENDENTE", "LIBERADO_MANUAL", "BLOQUEADO_MANUAL"
+    )
+    placeholders = ",".join(["?"] * len(useful_status))
+    try:
+        return query_db(
+            f"""
+            SELECT be.*, c.name AS company_name, c.slug AS company_slug
+            FROM billing_events be
+            LEFT JOIN companies c ON c.id = be.company_id
+            WHERE be.status IN ({placeholders})
+            ORDER BY be.created_at DESC, be.id DESC
+            LIMIT ?
+            """,
+            tuple(useful_status) + (limit,),
+        )
+    except Exception:
+        return query_db("SELECT * FROM billing_events ORDER BY created_at DESC, id DESC LIMIT ?", (limit,))
+
+
+def saas_register_event(company_id: int, event_type: str, description: str, amount: str = "0.00", status: str = "PENDENTE", plan: str = "") -> int:
+    ensure_billing_ready()
+    return execute_db(
+        """
+        INSERT INTO billing_events (company_id, event_type, description, amount, status, created_at, plan)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (company_id, event_type, description, amount, status, now_iso(), plan),
+    )
+
+
+def saas_company_by_id(company_id: int):
+    ensure_multiempresa_ready()
+    return query_db("SELECT * FROM companies WHERE id = ?", (company_id,), one=True)
+
+
+@app.route("/empresas/<int:company_id>/liberar", methods=["POST"])
+@admin_required
+def saas_company_liberar(company_id: int):
+    if not is_super_admin():
+        flash("Acesso restrito.", "danger")
+        return redirect(url_for("dashboard"))
+    days = request.form.get("days", type=int) or 30
+    company = saas_company_by_id(company_id)
+    if not company:
+        flash("Empresa não encontrada.", "danger")
+        return redirect(url_for("companies_page"))
+    paid_until = (date.today() + timedelta(days=days)).strftime("%Y-%m-%d")
+    execute_db(
+        """
+        UPDATE companies
+        SET status = 'ATIVO', payment_status = 'PAGO', paid_until = ?, blocked_at = NULL, last_payment_at = ?
+        WHERE id = ?
+        """,
+        (paid_until, now_iso(), company_id),
+    )
+    saas_register_event(company_id, "LIBERACAO", f"Acesso liberado manualmente por {days} dias", "0.00", "LIBERADO_MANUAL", _safe_get(company, "plan", ""))
+    flash(f"Empresa liberada até {paid_until}.", "success")
+    return redirect(request.referrer or url_for("companies_page"))
+
+
+@app.route("/empresas/<int:company_id>/bloquear", methods=["POST"])
+@admin_required
+def saas_company_bloquear(company_id: int):
+    if not is_super_admin():
+        flash("Acesso restrito.", "danger")
+        return redirect(url_for("dashboard"))
+    company = saas_company_by_id(company_id)
+    if not company:
+        flash("Empresa não encontrada.", "danger")
+        return redirect(url_for("companies_page"))
+    execute_db(
+        "UPDATE companies SET status = 'BLOQUEADO', payment_status = 'BLOQUEADO_MANUAL', blocked_at = ? WHERE id = ?",
+        (now_iso(), company_id),
+    )
+    saas_register_event(company_id, "BLOQUEIO", "Empresa bloqueada manualmente", "0.00", "BLOQUEADO_MANUAL", _safe_get(company, "plan", ""))
+    flash("Empresa bloqueada.", "warning")
+    return redirect(request.referrer or url_for("companies_page"))
+
+
+@app.route("/empresas/<int:company_id>/gerar-cobranca", methods=["POST"])
+@admin_required
+def saas_company_gerar_cobranca(company_id: int):
+    if not is_super_admin():
+        flash("Acesso restrito.", "danger")
+        return redirect(url_for("dashboard"))
+    ensure_billing_ready()
+    company = saas_company_by_id(company_id)
+    if not company:
+        flash("Empresa não encontrada.", "danger")
+        return redirect(url_for("companies_page"))
+    plan_key = (request.form.get("plan") or _safe_get(company, "plan", "BASICO") or "BASICO").upper()
+    if plan_key not in PLAN_LIMITS:
+        plan_key = "BASICO"
+    try:
+        event_id = create_billing_event(company_id, plan_key)
+        preference = create_mercadopago_preference(company, plan_key, event_id)
+        checkout_url = preference.get("init_point") or preference.get("sandbox_init_point") or ""
+        execute_db("UPDATE billing_events SET mp_preference_id = ?, checkout_url = ? WHERE id = ?", (preference.get("id", ""), checkout_url, event_id))
+        if checkout_url:
+            try:
+                msg = f"Olá, {_safe_get(company, 'name', 'Cliente')}! Sua cobrança do {SYSTEM_COMMERCIAL_NAME} foi gerada. Plano {plan_label(plan_key)}. Pague pelo link: {checkout_url}"
+                enviar_whatsapp(_safe_get(company, "phone", ""), msg)
+            except Exception as exc:
+                print("Aviso WhatsApp cobrança manual:", exc)
+            flash("Cobrança gerada com sucesso.", "success")
+        else:
+            flash("Cobrança criada, mas sem link do Mercado Pago.", "warning")
+    except Exception as exc:
+        flash(f"Erro ao gerar cobrança: {exc}", "danger")
+    return redirect(request.referrer or url_for("financeiro_saas"))
+
+
+@app.route("/financeiro-saas/limpar-eventos", methods=["POST"])
+@admin_required
+def financeiro_saas_limpar_eventos():
+    if not is_super_admin():
+        flash("Acesso restrito.", "danger")
+        return redirect(url_for("dashboard"))
+    ensure_billing_ready()
+    # Mantém os 80 eventos mais recentes e apaga ruído antigo de cobrança repetida/vencida.
+    rows = query_db("SELECT id FROM billing_events ORDER BY created_at DESC, id DESC")
+    keep = {int(_safe_get(r, "id", 0)) for r in rows[:80]}
+    removed = 0
+    for r in rows[80:]:
+        rid = int(_safe_get(r, "id", 0) or 0)
+        if rid and rid not in keep:
+            try:
+                execute_db("DELETE FROM billing_events WHERE id = ?", (rid,))
+                removed += 1
+            except Exception as exc:
+                print("Aviso limpar evento:", exc)
+    flash(f"Histórico limpo. Eventos removidos: {removed}.", "success")
+    return redirect(url_for("financeiro_saas"))
+
+
+@app.route("/funcionarios/<int:employee_id>/excluir", methods=["POST"])
+@admin_required
+def delete_employee(employee_id: int):
+    employee = query_db("SELECT * FROM employees WHERE id = ?", (employee_id,), one=True)
+    if not employee:
+        flash("Funcionário não encontrado.", "danger")
+        return redirect(url_for("employees"))
+    total = query_db("SELECT COUNT(*) AS total FROM time_records WHERE employee_id = ?", (employee_id,), one=True)
+    count = int(_safe_get(total, "total", 0) or 0)
+    if count > 0:
+        execute_db("UPDATE employees SET active = 0 WHERE id = ?", (employee_id,))
+        flash("Funcionário possui histórico de ponto. Ele foi inativado para preservar os registros.", "warning")
+    else:
+        try:
+            execute_db("DELETE FROM employee_schedule_days WHERE employee_id = ?", (employee_id,))
+        except Exception:
+            pass
+        execute_db("DELETE FROM employees WHERE id = ?", (employee_id,))
+        flash("Funcionário excluído com sucesso.", "success")
+    return redirect(url_for("employees"))
+
+
+@app.route("/notificacoes/enviar-cobrancas", methods=["POST"])
+@admin_required
+def notificacoes_enviar_cobrancas():
+    if not is_super_admin():
+        flash("Acesso restrito.", "danger")
+        return redirect(url_for("dashboard"))
+    result = saas_block_overdue_companies()
+    flash(f"Cobranças SaaS verificadas. Bloqueadas: {result.get('blocked', 0)}. Próximas do vencimento: {result.get('due_soon', 0)}.", "success")
+    return redirect(url_for("notificacoes"))
+
+
+# Filtros extras disponíveis nos templates, sem quebrar o restante do app.
+@app.context_processor
+def inject_saas_v2_globals():
+    return {
+        "saas_money": saas_money,
+        "saas_due_label": saas_due_label if "saas_due_label" in globals() else None,
+        "company_access_allowed": company_access_allowed if "company_access_allowed" in globals() else None,
+    }
+
+# =========================================================
+# Fim Upgrade SaaS V2 Profissional
+
+
 # Inicializa as tabelas tanto no Render/PostgreSQL quanto no Windows/SQLite.
 with app.app_context():
     init_db()
