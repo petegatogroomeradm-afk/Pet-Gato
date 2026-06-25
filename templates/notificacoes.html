@@ -1,1 +1,157 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Notificações</title><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head><body>{% include 'nav.html' ignore missing %}<main class="page-wrap saas-v2"><h1>Notificações</h1><p class="muted">Alertas separados por ponto e cobranças SaaS.</p>{% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}{% for cat,msg in messages %}<div class="alert {{cat}}">{{msg}}</div>{% endfor %}{% endif %}{% endwith %}<section class="cards-grid"><form class="card-pro" method="post" action="{{ url_for('notifications_run_check') }}"><h2>Alertas de ponto</h2><p>Atrasos, batidas esquecidas, fechamento e feriados.</p><button class="btn-main">Verificar ponto agora</button></form><form class="card-pro" method="post" action="{{ url_for('notificacoes_enviar_cobrancas') }}"><h2>Cobranças SaaS</h2><p>Vencimentos, bloqueios e avisos financeiros.</p><button class="btn-main">Enviar/verificar cobranças</button></form></section><section class="card-pro"><h2>WhatsApp dos responsáveis</h2><form method="post" action="{{ url_for('notifications_settings') }}" class="grid-form"><label>WhatsApp 1<input name="notify_phone_1" value="{{phone1}}"></label><label>WhatsApp 2<input name="notify_phone_2" value="{{phone2}}"></label><button class="btn-main">Salvar números</button></form></section><section class="card-pro"><h2>Alertas recentes</h2><div class="table-responsive mobile-cards"><table><thead><tr><th>Data</th><th>Tipo</th><th>Funcionário</th><th>Mensagem</th><th>Status</th></tr></thead><tbody>{% for log in logs %}<tr><td data-label="Data">{{log.created_at}}</td><td data-label="Tipo">{{log.alert_type}}</td><td data-label="Funcionário">{{log.employee_name or '-'}}</td><td data-label="Mensagem">{{log.message}}</td><td data-label="Status">{{log.sent_status}}</td></tr>{% else %}<tr><td colspan="5">Sem alertas.</td></tr>{% endfor %}</tbody></table></div></section></main></body></html>
+{% include 'nav.html' ignore missing %}
+
+<section class="page-header">
+  <h1>Notificações</h1>
+  <p>Alertas separados por ponto e cobranças SaaS.</p>
+</section>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for cat,msg in messages %}
+      <div class="alert {{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<section class="grid-2 cards-notificacoes">
+  <div class="card">
+    <h2>Alertas de ponto</h2>
+    <p>Atrasos, batidas esquecidas, fechamento mensal e feriados.</p>
+    <form method="post" action="{{ url_for('notifications_run_check') }}">
+      <button class="btn-primary" type="submit">Verificar ponto agora</button>
+    </form>
+    <form method="post" action="{{ url_for('notifications_test', tipo='ponto') }}" style="margin-top:10px;">
+      <button class="btn-secondary" type="submit">Enviar teste de ponto</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Cobrança SaaS</h2>
+    <p>Vencimentos, bloqueios, liberações e avisos financeiros.</p>
+    <form method="post" action="{{ url_for('notifications_test', tipo='saas') }}">
+      <button class="btn-primary" type="submit">Enviar teste de cobrança</button>
+    </form>
+  </div>
+</section>
+
+<section class="card">
+  <h2>WhatsApp dos responsáveis</h2>
+  <form method="post" action="{{ url_for('notifications_settings') }}" class="form-grid">
+    <div>
+      <h3>Alertas de ponto</h3>
+      <label>WhatsApp ponto 1</label>
+      <input type="text" name="point_phone_1" value="{{ point_phone_1 or notify_phone_1 or '' }}" placeholder="5531999999999">
+      <label>WhatsApp ponto 2</label>
+      <input type="text" name="point_phone_2" value="{{ point_phone_2 or notify_phone_2 or '' }}" placeholder="5531999999999">
+    </div>
+
+    <div>
+      <h3>Cobrança SaaS</h3>
+      <label>WhatsApp cobrança 1</label>
+      <input type="text" name="billing_phone_1" value="{{ billing_phone_1 or point_phone_1 or '' }}" placeholder="5531999999999">
+      <label>WhatsApp cobrança 2</label>
+      <input type="text" name="billing_phone_2" value="{{ billing_phone_2 or point_phone_2 or '' }}" placeholder="5531999999999">
+    </div>
+
+    <div class="form-full">
+      <button class="btn-primary" type="submit">Salvar números</button>
+      <p class="muted">Use DDI + DDD + número. Exemplo: 5531999999999.</p>
+    </div>
+  </form>
+</section>
+
+<section class="grid-2">
+  <div class="card">
+    <h2>Alertas recentes de ponto</h2>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th><th>Tipo</th><th>Funcionário</th><th>Mensagem</th><th>Status</th><th>WhatsApp</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in point_logs %}
+          <tr>
+            <td data-label="Data">{{ log.created_at }}</td>
+            <td data-label="Tipo">{{ log.alert_type }}</td>
+            <td data-label="Funcionário">{{ log.employee_name or '-' }}</td>
+            <td data-label="Mensagem">{{ log.message }}</td>
+            <td data-label="Status">{{ log.sent_status }}</td>
+            <td data-label="WhatsApp">
+              {% if log.link1 %}<a href="{{ log.link1 }}" target="_blank">Enviar 1</a>{% endif %}
+              {% if log.link2 %}<a href="{{ log.link2 }}" target="_blank">Enviar 2</a>{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6">Nenhum alerta de ponto encontrado.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Alertas recentes de cobrança SaaS</h2>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th><th>Tipo</th><th>Mensagem</th><th>Status</th><th>WhatsApp</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in billing_logs %}
+          <tr>
+            <td data-label="Data">{{ log.created_at }}</td>
+            <td data-label="Tipo">{{ log.alert_type }}</td>
+            <td data-label="Mensagem">{{ log.message }}</td>
+            <td data-label="Status">{{ log.sent_status }}</td>
+            <td data-label="WhatsApp">
+              {% if log.link1 %}<a href="{{ log.link1 }}" target="_blank">Enviar 1</a>{% endif %}
+              {% if log.link2 %}<a href="{{ log.link2 }}" target="_blank">Enviar 2</a>{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5">Nenhum alerta de cobrança encontrado.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Manutenção dos alertas</h2>
+  <form method="post" action="{{ url_for('notifications_clean') }}" class="form-grid compact">
+    <div>
+      <label>Limpar alertas com mais de</label>
+      <input type="number" name="days" value="30" min="1">
+    </div>
+    <div>
+      <label>Modo</label>
+      <select name="mode">
+        <option value="old">Somente antigos</option>
+        <option value="all">Todos os alertas</option>
+      </select>
+    </div>
+    <div class="form-full">
+      <button class="btn-secondary" type="submit">Limpar alertas</button>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Feriados</h2>
+  <form method="post" action="{{ url_for('notifications_add_holiday') }}" class="form-grid compact">
+    <div><label>Data</label><input type="date" name="holiday_date"></div>
+    <div><label>Nome do feriado</label><input type="text" name="holiday_name" placeholder="Ex: Feriado municipal"></div>
+    <div>
+      <label>Tipo</label>
+      <select name="holiday_type">
+        <option>Nacional</option><option>Municipal</option><option>Ponto facultativo</option><option>Nacional/Municipal</option>
+      </select>
+    </div>
+    <div class="form-full"><button class="btn-primary" type="submit">Adicionar feriado</button></div>
+  </form>
+</section>

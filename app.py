@@ -1992,38 +1992,117 @@ def create_month_closing_notification(year: Optional[int] = None, month: Optiona
     create_notification(f"{year}-{month:02d}:FECHAMENTO", "FECHAMENTO_MENSAL", msg)
 
 
-@app.route("/notificacoes")
+
+@app.route("/notificacoes", methods=["GET", "POST"])
 @admin_required
 def notificacoes():
     ensure_notifications_ready()
-    phone1 = get_setting("notify_phone_1", "")
-    phone2 = get_setting("notify_phone_2", "")
-    logs = query_db("SELECT * FROM notification_logs ORDER BY created_at DESC, id DESC LIMIT 100")
-    prepared_logs = []
+
+    # Salva diretamente também em /notificacoes para funcionar mesmo se o form antigo postar aqui.
+    if request.method == "POST":
+        point_phone_1 = normalize_phone(request.form.get("point_phone_1", request.form.get("notify_phone_1", "")).strip())
+        point_phone_2 = normalize_phone(request.form.get("point_phone_2", request.form.get("notify_phone_2", "")).strip())
+        billing_phone_1 = normalize_phone(request.form.get("billing_phone_1", request.form.get("saas_phone_1", "")).strip())
+        billing_phone_2 = normalize_phone(request.form.get("billing_phone_2", request.form.get("saas_phone_2", "")).strip())
+
+        if not billing_phone_1:
+            billing_phone_1 = point_phone_1
+        if not billing_phone_2:
+            billing_phone_2 = point_phone_2
+
+        set_setting("notify_point_phone_1", point_phone_1)
+        set_setting("notify_point_phone_2", point_phone_2)
+        set_setting("notify_billing_phone_1", billing_phone_1)
+        set_setting("notify_billing_phone_2", billing_phone_2)
+
+        # Compatibilidade com código antigo.
+        set_setting("notify_phone_1", point_phone_1)
+        set_setting("notify_phone_2", point_phone_2)
+        set_setting("company_whatsapp", point_phone_1)
+
+        log_action("CONFIG_NOTIFICACOES", "WhatsApps dos responsáveis atualizados")
+        flash("Números de WhatsApp salvos com sucesso.", "success")
+        return redirect(url_for("notificacoes"))
+
+    point_phone_1 = get_setting("notify_point_phone_1", get_setting("notify_phone_1", ""))
+    point_phone_2 = get_setting("notify_point_phone_2", get_setting("notify_phone_2", ""))
+    billing_phone_1 = get_setting("notify_billing_phone_1", "") or point_phone_1
+    billing_phone_2 = get_setting("notify_billing_phone_2", "") or point_phone_2
+
+    logs = query_db("SELECT * FROM notification_logs ORDER BY created_at DESC, id DESC LIMIT 150")
+    point_logs = []
+    billing_logs = []
+    billing_tokens = ("COBRANCA", "COBRANÇA", "SAAS", "VENCIMENTO", "BLOQUEIO", "PAGAMENTO", "ASSINATURA", "FINANCEIRO")
+
     for log in logs:
         row = dict(log)
-        row["link1"] = wa_link(phone1, row["message"])
-        row["link2"] = wa_link(phone2, row["message"])
-        prepared_logs.append(row)
+        alert_type = str(row.get("alert_type") or "").upper()
+        is_billing = any(token in alert_type for token in billing_tokens)
+        if is_billing:
+            row["link1"] = wa_link(billing_phone_1, row.get("message", ""))
+            row["link2"] = wa_link(billing_phone_2, row.get("message", ""))
+            billing_logs.append(row)
+        else:
+            row["link1"] = wa_link(point_phone_1, row.get("message", ""))
+            row["link2"] = wa_link(point_phone_2, row.get("message", ""))
+            point_logs.append(row)
 
-    holidays = query_db("SELECT * FROM holidays ORDER BY holiday_date ASC")
+    try:
+        holidays = query_db("SELECT * FROM holidays ORDER BY holiday_date ASC")
+    except Exception:
+        holidays = []
+
     return render_template(
         "notificacoes.html",
-        notify_phone_1=phone1,
-        notify_phone_2=phone2,
-        logs=prepared_logs,
+        notify_phone_1=point_phone_1,
+        notify_phone_2=point_phone_2,
+        point_phone_1=point_phone_1,
+        point_phone_2=point_phone_2,
+        billing_phone_1=billing_phone_1,
+        billing_phone_2=billing_phone_2,
+        point_logs=point_logs,
+        billing_logs=billing_logs,
+        logs=point_logs + billing_logs,
         holidays=holidays,
         holiday_today=get_holiday(today_str()),
     )
 
 
-
-@app.route("/notificacoes/config", methods=["POST"])
+@app.route("/notificacoes/config", methods=["GET", "POST"])
 @admin_required
 def notifications_settings():
     ensure_notifications_ready()
-    set_setting("notify_phone_1", request.form.get("notify_phone_1", "").strip())
-    set_setting("notify_phone_2", request.form.get("notify_phone_2", "").strip())
+
+    if request.method == "GET":
+        return {
+            "status": "ok",
+            "rota": "/notificacoes/config",
+            "notify_phone_1": get_setting("notify_phone_1", ""),
+            "notify_phone_2": get_setting("notify_phone_2", ""),
+            "notify_point_phone_1": get_setting("notify_point_phone_1", ""),
+            "notify_point_phone_2": get_setting("notify_point_phone_2", ""),
+            "notify_billing_phone_1": get_setting("notify_billing_phone_1", ""),
+            "notify_billing_phone_2": get_setting("notify_billing_phone_2", ""),
+        }
+
+    point_phone_1 = normalize_phone(request.form.get("point_phone_1", request.form.get("notify_phone_1", "")).strip())
+    point_phone_2 = normalize_phone(request.form.get("point_phone_2", request.form.get("notify_phone_2", "")).strip())
+    billing_phone_1 = normalize_phone(request.form.get("billing_phone_1", request.form.get("saas_phone_1", "")).strip())
+    billing_phone_2 = normalize_phone(request.form.get("billing_phone_2", request.form.get("saas_phone_2", "")).strip())
+
+    if not billing_phone_1:
+        billing_phone_1 = point_phone_1
+    if not billing_phone_2:
+        billing_phone_2 = point_phone_2
+
+    set_setting("notify_point_phone_1", point_phone_1)
+    set_setting("notify_point_phone_2", point_phone_2)
+    set_setting("notify_billing_phone_1", billing_phone_1)
+    set_setting("notify_billing_phone_2", billing_phone_2)
+    set_setting("notify_phone_1", point_phone_1)
+    set_setting("notify_phone_2", point_phone_2)
+    set_setting("company_whatsapp", point_phone_1)
+
     flash("Números de WhatsApp salvos com sucesso.", "success")
     return redirect(url_for("notificacoes"))
 
@@ -2041,6 +2120,52 @@ def notifications_run_check():
 def notifications_month_close():
     create_month_closing_notification()
     flash("Fechamento mensal gerado em notificações.", "success")
+    return redirect(url_for("notificacoes"))
+
+
+@app.route("/notificacoes/teste/<tipo>", methods=["POST"])
+@admin_required
+def notifications_test(tipo: str):
+    ensure_notifications_ready()
+    tipo = (tipo or "ponto").lower()
+
+    if tipo == "saas":
+        phone1 = get_setting("notify_billing_phone_1", "") or get_setting("notify_phone_1", "")
+        phone2 = get_setting("notify_billing_phone_2", "") or get_setting("notify_phone_2", "")
+        alert_type = "COBRANCA_SAAS_TESTE"
+        msg = "Teste de cobrança SaaS - Pet & Gatô. WhatsApp financeiro configurado."
+        unique = f"{now_iso()}:TESTE:COBRANCA_SAAS"
+    else:
+        phone1 = get_setting("notify_point_phone_1", get_setting("notify_phone_1", ""))
+        phone2 = get_setting("notify_point_phone_2", get_setting("notify_phone_2", ""))
+        alert_type = "PONTO_TESTE"
+        msg = "Teste de alerta de ponto - Pet & Gatô. WhatsApp de ponto configurado."
+        unique = f"{now_iso()}:TESTE:PONTO"
+
+    create_notification(unique, alert_type, msg)
+    sent_count = 0
+    for phone in (phone1, phone2):
+        if phone and enviar_whatsapp(phone, msg):
+            sent_count += 1
+
+    flash(f"Teste gerado. Envios confirmados pela API: {sent_count}.", "success")
+    return redirect(url_for("notificacoes"))
+
+
+@app.route("/notificacoes/limpar", methods=["POST"])
+@admin_required
+def notifications_clean():
+    ensure_notifications_ready()
+    mode = request.form.get("mode", "old")
+    days = request.form.get("days", type=int) or 30
+
+    if mode == "all":
+        execute_db("DELETE FROM notification_logs")
+        flash("Todos os alertas foram limpos.", "success")
+    else:
+        limit_date = (date.today() - timedelta(days=days)).strftime("%Y-%m-%d")
+        execute_db("DELETE FROM notification_logs WHERE date(created_at) < ?", (limit_date,))
+        flash(f"Alertas com mais de {days} dias foram limpos.", "success")
     return redirect(url_for("notificacoes"))
 
 
