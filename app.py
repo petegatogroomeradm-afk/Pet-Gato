@@ -3189,6 +3189,9 @@ def cron_verificar_vencimentos():
 
 
 
+
+
+
 # =========================================================
 # Upgrade SaaS V2 Profissional - empresas, financeiro, mobile e notificações
 # =========================================================
