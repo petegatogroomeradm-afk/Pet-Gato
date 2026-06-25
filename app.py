@@ -2070,6 +2070,7 @@ def notificacoes():
 
 @app.route("/notificacoes/config", methods=["GET", "POST"])
 @admin_required
+@app.route("/notificacoes/config", methods=["POST"])
 def notifications_settings():
     ensure_notifications_ready()
 
