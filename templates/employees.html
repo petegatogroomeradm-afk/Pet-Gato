@@ -1,1 +1,144 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Funcionários</title><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head><body>{% include 'nav.html' ignore missing %}<main class="page-wrap saas-v2 employee-layout"><section class="card-pro"><h2>Cadastrar Funcionário</h2><form method="post" class="grid-form"><label>Nome<input name="name" required></label><label>CPF<input name="cpf"></label><label>Matrícula<input name="registration" required></label><label>Cargo<input name="role_name"></label><label>Telefone com DDD/55<input name="phone"></label><label>Data de admissão<input type="date" name="admission_date"></label><label>PIN<input type="password" name="pin" required></label><label>Jornada padrão<select name="schedule_id"><option value="">Sem jornada padrão</option>{% for s in schedules %}<option value="{{s.id}}">{{s.description}}</option>{% endfor %}</select></label><label>Jornada de terça a sexta<select name="schedule_tue_fri"><option value="">Não definir</option>{% for s in schedules %}<option value="{{s.id}}">{{s.description}}</option>{% endfor %}</select></label><label>Jornada de sábado<select name="schedule_sat"><option value="">Não definir</option>{% for s in schedules %}<option value="{{s.id}}">{{s.description}}</option>{% endfor %}</select></label><button class="btn-main">Salvar funcionário</button></form></section><section class="card-pro"><h2>Funcionários Cadastrados</h2><div class="table-responsive mobile-cards"><table><thead><tr><th>Nome</th><th>Matrícula</th><th>Telefone</th><th>Jornada</th><th>Status</th><th>Ação</th></tr></thead><tbody>{% for e in employees %}<tr><td data-label="Nome"><strong>{{e.name}}</strong></td><td data-label="Matrícula">{{e.registration}}</td><td data-label="Telefone">{{e.phone or '-'}}</td><td data-label="Jornada">{{e.schedule_description or '-'}}</td><td data-label="Status">{% if e.active %}Ativo{% else %}Inativo{% endif %}</td><td data-label="Ação" class="actions-cell"><a class="btn-mini" href="{{ url_for('toggle_employee', employee_id=e.id) }}">{% if e.active %}Inativar{% else %}Ativar{% endif %}</a><form method="post" action="{{ url_for('delete_employee', employee_id=e.id) }}" onsubmit="return confirm('Excluir funcionário? Se houver histórico, ele será apenas inativado.');"><button class="btn-mini danger">Excluir</button></form></td></tr>{% else %}<tr><td colspan="6">Nenhum funcionário.</td></tr>{% endfor %}</tbody></table></div></section></main></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Funcionários</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  {% include 'nav.html' ignore missing %}
+
+  <main class="page-wrap saas-v2 employee-layout employees-v2">
+    <section class="card-pro employee-form-card">
+      <div class="section-head">
+        <span class="eyebrow">Gestão de equipe</span>
+        <h2>Cadastrar Funcionário</h2>
+        <p class="muted">Cadastre novos colaboradores, matrícula, PIN e jornada.</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-stack">
+            {% for cat,msg in messages %}
+              <div class="flash {{cat}}">{{msg}}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <form method="post" class="grid-form employee-create-form">
+        <label>Nome<input name="name" required></label>
+        <label>CPF<input name="cpf"></label>
+        <label>Matrícula<input name="registration" required></label>
+        <label>Cargo<input name="role_name"></label>
+        <label>Telefone com DDD/55<input name="phone" placeholder="5531999999999"></label>
+        <label>Data de admissão<input type="date" name="admission_date"></label>
+        <label>PIN<input type="password" name="pin" required></label>
+
+        <label>Jornada padrão
+          <select name="schedule_id">
+            <option value="">Sem jornada padrão</option>
+            {% for s in schedules %}<option value="{{s.id}}">{{s.description}}</option>{% endfor %}
+          </select>
+        </label>
+
+        <label>Jornada de terça a sexta
+          <select name="schedule_tue_fri">
+            <option value="">Não definir</option>
+            {% for s in schedules %}<option value="{{s.id}}">{{s.description}}</option>{% endfor %}
+          </select>
+        </label>
+
+        <label>Jornada de sábado
+          <select name="schedule_sat">
+            <option value="">Não definir</option>
+            {% for s in schedules %}<option value="{{s.id}}">{{s.description}}</option>{% endfor %}
+          </select>
+        </label>
+
+        <button class="btn-main employee-submit">Salvar funcionário</button>
+      </form>
+    </section>
+
+    <section class="card-pro employee-list-card">
+      <div class="section-head employee-list-head">
+        <div>
+          <span class="eyebrow">Controle</span>
+          <h2>Funcionários Cadastrados</h2>
+          <p class="muted">Inative colaboradores desligados e exclua somente quem ainda não possui histórico de ponto.</p>
+        </div>
+
+        <div class="employee-mini-stats">
+          <div><strong>{{ active_count or 0 }}</strong><span>Ativos</span></div>
+          <div><strong>{{ inactive_count or 0 }}</strong><span>Inativos</span></div>
+        </div>
+      </div>
+
+      <form method="get" class="employee-filters">
+        <label>Pesquisar
+          <input name="q" value="{{ search_query or '' }}" placeholder="Nome, matrícula, cargo ou telefone">
+        </label>
+        <label>Status
+          <select name="status">
+            <option value="ativos" {% if selected_status == 'ativos' %}selected{% endif %}>Ativos</option>
+            <option value="inativos" {% if selected_status == 'inativos' %}selected{% endif %}>Inativos</option>
+            <option value="todos" {% if selected_status == 'todos' %}selected{% endif %}>Todos</option>
+          </select>
+        </label>
+        <button class="btn-secondary">Filtrar</button>
+        <a class="btn-mini" href="{{ url_for('employees') }}">Limpar</a>
+      </form>
+
+      <div class="table-responsive mobile-cards">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Matrícula</th>
+              <th>Telefone</th>
+              <th>Jornada</th>
+              <th>Pontos</th>
+              <th>Status</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in employees %}
+              <tr>
+                <td data-label="Nome">
+                  <strong>{{e.name}}</strong>
+                  {% if e.role_name %}<small class="employee-role">{{e.role_name}}</small>{% endif %}
+                </td>
+                <td data-label="Matrícula">{{e.registration}}</td>
+                <td data-label="Telefone">{{e.phone or '-'}}</td>
+                <td data-label="Jornada">{{e.schedule_description or '-'}}</td>
+                <td data-label="Pontos">{{e.record_count or 0}}</td>
+                <td data-label="Status">
+                  {% if e.active %}
+                    <span class="status-pill active">Ativo</span>
+                  {% else %}
+                    <span class="status-pill inactive">Inativo</span>
+                  {% endif %}
+                </td>
+                <td data-label="Ação" class="actions-cell employee-actions">
+                  <a class="btn-mini" href="{{ url_for('toggle_employee', employee_id=e.id) }}">{% if e.active %}Inativar{% else %}Ativar{% endif %}</a>
+                  {% if (e.record_count or 0) == 0 %}
+                    <form method="post" action="{{ url_for('delete_employee', employee_id=e.id) }}" onsubmit="return confirm('Deseja excluir este funcionário? Esta ação só é permitida porque ele não possui registros de ponto.');">
+                      <button class="btn-mini danger">Excluir</button>
+                    </form>
+                  {% else %}
+                    <button class="btn-mini danger disabled" type="button" title="Funcionário com histórico não pode ser excluído. Inative para preservar os pontos.">Protegido</button>
+                  {% endif %}
+                </td>
+              </tr>
+            {% else %}
+              <tr><td colspan="7">Nenhum funcionário encontrado.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
