@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 from database import query_db
 
 STATUS_AGENDA = [
+    "Aguardando aprovação",
     "Agendado",
     "Confirmado",
     "Em atendimento",
@@ -13,6 +14,7 @@ STATUS_AGENDA = [
     "Cancelado",
     "Faltou",
     "Reagendado",
+    "Recusado",
 ]
 SERVICOS_AGENDA = [
     "Banho",

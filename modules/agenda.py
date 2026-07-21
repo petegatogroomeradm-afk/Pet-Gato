@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
 
 from database import execute_db, insert_db, now_iso, query_db
 from services.agenda_service import (
@@ -402,3 +402,50 @@ def remover_espera(wait_id):
     )
     flash("Item removido da lista de espera.", "info")
     return redirect(request.referrer or url_for("agenda.agenda"))
+
+
+@agenda_bp.route("/agenda/solicitacoes-online")
+def solicitacoes_online():
+    solicitacoes = query_db(
+        """
+        SELECT a.*, c.nome AS cliente_nome, c.telefone, c.whatsapp, p.nome AS pet_nome
+        FROM appointments a
+        JOIN clients c ON c.id=a.client_id
+        JOIN pets p ON p.id=a.pet_id
+        WHERE COALESCE(a.requested_online,0)=1 AND a.status='Aguardando aprovação'
+        ORDER BY a.created_at ASC
+        """
+    )
+    return render_template("solicitacoes_online.html", solicitacoes=solicitacoes)
+
+
+@agenda_bp.route("/agenda/solicitacoes-online/<int:agendamento_id>/aprovar", methods=["POST"])
+def aprovar_solicitacao_online(agendamento_id):
+    item = query_db("SELECT * FROM appointments WHERE id=? AND status='Aguardando aprovação'", (agendamento_id,), one=True)
+    if not item:
+        flash("Solicitação não encontrada ou já analisada.", "warning")
+        return redirect(url_for("agenda.solicitacoes_online"))
+    duracao = item["duration_minutes"] or 60
+    if conflito_horario(item["data_agendamento"], item["horario"], duracao, item["employee_id"], agendamento_id):
+        flash("Este horário já está ocupado. Reagende antes de aprovar.", "danger")
+        return redirect(url_for("agenda.editar_agendamento", agendamento_id=agendamento_id))
+    execute_db(
+        "UPDATE appointments SET status='Agendado', approval_notes=?, approved_at=?, approved_by=?, updated_at=? WHERE id=?",
+        (request.form.get("approval_notes", "").strip() or "Horário aprovado pela Pet & Gatô.", now_iso(), session.get("user_name", "Sistema"), now_iso(), agendamento_id),
+    )
+    flash("Solicitação aprovada e adicionada à agenda.", "success")
+    return redirect(url_for("agenda.solicitacoes_online"))
+
+
+@agenda_bp.route("/agenda/solicitacoes-online/<int:agendamento_id>/recusar", methods=["POST"])
+def recusar_solicitacao_online(agendamento_id):
+    motivo = request.form.get("approval_notes", "").strip()
+    if not motivo:
+        flash("Informe o motivo da recusa.", "danger")
+        return redirect(url_for("agenda.solicitacoes_online"))
+    execute_db(
+        "UPDATE appointments SET status='Recusado', approval_notes=?, approved_at=?, approved_by=?, updated_at=? WHERE id=?",
+        (motivo, now_iso(), session.get("user_name", "Sistema"), now_iso(), agendamento_id),
+    )
+    flash("Solicitação recusada. O cliente verá o motivo no portal.", "success")
+    return redirect(url_for("agenda.solicitacoes_online"))

@@ -37,6 +37,7 @@
             {% if can_access('fidelidade') %}<a class="{{ 'active' if ep.startswith('fidelidade.') else '' }}" href="{{ url_for('fidelidade.dashboard') }}"><span class="menu-icon">🏆</span><span class="menu-label">Fidelização</span></a>{% endif %}
             {% if can_access('pets') %}<a class="{{ 'active' if ep.startswith('pets.') else '' }}" href="{{ url_for('pets.pets') }}"><span class="menu-icon">🐶</span><span class="menu-label">Pets</span></a>{% endif %}
             {% if can_access('agenda') %}<a class="{{ 'active' if ep.startswith('agenda.') else '' }}" href="{{ url_for('agenda.agenda') }}"><span class="menu-icon">📅</span><span class="menu-label">Agenda</span></a>{% endif %}
+            {% if can_access('agenda') %}<a class="{{ 'active' if ep == 'agenda.solicitacoes_online' else '' }}" href="{{ url_for('agenda.solicitacoes_online') }}"><span class="menu-icon">🌐</span><span class="menu-label">Solicitações Online</span></a>{% endif %}
             {% if can_access('banho_tosa') %}<a class="{{ 'active' if ep.startswith('banho_tosa.') else '' }}" href="{{ url_for('banho_tosa.banho_tosa') }}"><span class="menu-icon">🚿</span><span class="menu-label">Banho e Tosa</span></a>{% endif %}
 
             <div class="menu-title"><span>Equipe e RH</span></div>

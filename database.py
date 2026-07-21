@@ -130,6 +130,11 @@ def init_db():
             canal_preferido TEXT, consentimento_marketing INTEGER DEFAULT 0,
             ativo INTEGER DEFAULT 1, created_at TEXT
         )""",
+        f"""CREATE TABLE IF NOT EXISTS client_portal_accounts (
+            id {serial}, client_id INTEGER NOT NULL UNIQUE, email TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL, active INTEGER DEFAULT 1,
+            last_login_at TEXT, created_at TEXT, updated_at TEXT
+        )""",
         f"""CREATE TABLE IF NOT EXISTS pets (
             id {serial}, client_id INTEGER, nome TEXT NOT NULL, especie TEXT, raca TEXT,
             porte TEXT, idade TEXT, sexo TEXT, cor TEXT, peso REAL,
@@ -434,7 +439,7 @@ def init_db():
             ("alimentacao", "TEXT"), ("temperamento", "TEXT"),
             ("preferencia_tosa", "TEXT"), ("foto", "TEXT"), ("ativo", "INTEGER DEFAULT 1")
         ],
-        "appointments": [("employee_id", "INTEGER"), ("duration_minutes", "INTEGER DEFAULT 60"), ("transport_required", "INTEGER DEFAULT 0"), ("reminder_sent", "INTEGER DEFAULT 0"), ("updated_at", "TEXT")],
+        "appointments": [("employee_id", "INTEGER"), ("duration_minutes", "INTEGER DEFAULT 60"), ("transport_required", "INTEGER DEFAULT 0"), ("reminder_sent", "INTEGER DEFAULT 0"), ("updated_at", "TEXT"), ("requested_online", "INTEGER DEFAULT 0"), ("approval_notes", "TEXT"), ("approved_at", "TEXT"), ("approved_by", "TEXT")],
         "grooming_services": [("financeiro_lancado", "INTEGER DEFAULT 0"), ("estoque_baixado", "INTEGER DEFAULT 0"), ("payment_method", "TEXT DEFAULT 'A definir'"), ("started_at", "TEXT"), ("finished_at", "TEXT"), ("checked_in_at", "TEXT"), ("checked_out_at", "TEXT"), ("commission_lancada", "INTEGER DEFAULT 0"), ("updated_at", "TEXT")],
         "financial_transactions": [
             ("due_date", "TEXT"), ("status", "TEXT DEFAULT 'Pago'"),

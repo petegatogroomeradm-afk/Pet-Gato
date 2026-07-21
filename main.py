@@ -25,6 +25,7 @@ from modules.estoque import estoque_bp
 from modules.motorista import motorista_bp
 from modules.configuracoes import configuracoes_bp
 from modules.relatorios import relatorios_bp
+from modules.portal_cliente import portal_cliente_bp
 from services.dashboard_service import obter_dashboard
 from services.global_service import buscar_global, obter_notificacoes
 from services.event_subscribers import register_default_subscribers
@@ -72,6 +73,7 @@ app.register_blueprint(estoque_bp)
 app.register_blueprint(motorista_bp)
 app.register_blueprint(configuracoes_bp)
 app.register_blueprint(relatorios_bp)
+app.register_blueprint(portal_cliente_bp)
 
 
 PUBLIC_ENDPOINTS = {"login", "health", "readiness", "static", "alterar_senha_primeiro_acesso"}
@@ -81,7 +83,7 @@ PUBLIC_ENDPOINTS = {"login", "health", "readiness", "static", "alterar_senha_pri
 def proteger_rotas_globalmente():
     """Garante autenticação inclusive nos blueprints antigos."""
     endpoint = request.endpoint or ""
-    if endpoint in PUBLIC_ENDPOINTS or endpoint.startswith("static"):
+    if endpoint in PUBLIC_ENDPOINTS or endpoint.startswith("static") or endpoint.startswith("portal_cliente."):
         return None
     if not session.get("user_id"):
         if request.path.startswith("/api/"):
