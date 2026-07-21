@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Criar nova senha{% endblock %}
+{% block page_title %}Segurança da conta{% endblock %}
+{% block page_subtitle %}Defina uma nova senha para concluir seu primeiro acesso{% endblock %}
+{% block content %}
+<section class="card password-card"><h2>Crie sua nova senha</h2><p>Use no mínimo 8 caracteres.</p>
+<form method="post" class="form"><label>Nova senha<input type="password" name="password" minlength="8" required autofocus></label><label>Confirmar nova senha<input type="password" name="confirm_password" minlength="8" required></label><button type="submit">Salvar e entrar no sistema</button></form></section>
+{% endblock %}

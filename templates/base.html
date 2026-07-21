@@ -21,7 +21,7 @@
             <div class="brand-icon">🐾</div>
             <div class="brand-copy">
                 <strong>Pet & Gatô</strong>
-                <span>Business V5.2.2</span>
+                <span>Business V6.1</span>
             </div>
             <button class="sidebar-close" id="sidebar-close" type="button" aria-label="Fechar menu">×</button>
         </div>
@@ -29,29 +29,30 @@
         {% if session.get('user_id') %}
         {% set ep = request.endpoint or '' %}
         <nav class="menu" aria-label="Navegação principal">
-            <a class="{{ 'active' if ep == 'dashboard' else '' }}" href="{{ url_for('dashboard') }}"><span class="menu-icon">🏠</span><span class="menu-label">Dashboard</span></a>
+            {% if can_access('dashboard') %}<a class="{{ 'active' if ep == 'dashboard' else '' }}" href="{{ url_for('dashboard') }}"><span class="menu-icon">🏠</span><span class="menu-label">Dashboard</span></a>{% endif %}
 
             <div class="menu-title"><span>Pet Shop</span></div>
-            <a class="{{ 'active' if ep.startswith('clientes.') else '' }}" href="{{ url_for('clientes.clientes') }}"><span class="menu-icon">👥</span><span class="menu-label">Clientes</span></a>
-            <a class="{{ 'active' if ep.startswith('crm.') else '' }}" href="{{ url_for('crm.dashboard') }}"><span class="menu-icon">🎯</span><span class="menu-label">CRM Inteligente</span></a>
-            <a class="{{ 'active' if ep.startswith('fidelidade.') else '' }}" href="{{ url_for('fidelidade.dashboard') }}"><span class="menu-icon">🏆</span><span class="menu-label">Fidelização</span></a>
-            <a class="{{ 'active' if ep.startswith('pets.') else '' }}" href="{{ url_for('pets.pets') }}"><span class="menu-icon">🐶</span><span class="menu-label">Pets</span></a>
-            <a class="{{ 'active' if ep.startswith('agenda.') else '' }}" href="{{ url_for('agenda.agenda') }}"><span class="menu-icon">📅</span><span class="menu-label">Agenda</span></a>
-            <a class="{{ 'active' if ep.startswith('banho_tosa.') else '' }}" href="{{ url_for('banho_tosa.banho_tosa') }}"><span class="menu-icon">🚿</span><span class="menu-label">Banho e Tosa</span></a>
+            {% if can_access('clientes') %}<a class="{{ 'active' if ep.startswith('clientes.') else '' }}" href="{{ url_for('clientes.clientes') }}"><span class="menu-icon">👥</span><span class="menu-label">Clientes</span></a>{% endif %}
+            {% if can_access('crm') %}<a class="{{ 'active' if ep.startswith('crm.') else '' }}" href="{{ url_for('crm.dashboard') }}"><span class="menu-icon">🎯</span><span class="menu-label">CRM Inteligente</span></a>{% endif %}
+            {% if can_access('fidelidade') %}<a class="{{ 'active' if ep.startswith('fidelidade.') else '' }}" href="{{ url_for('fidelidade.dashboard') }}"><span class="menu-icon">🏆</span><span class="menu-label">Fidelização</span></a>{% endif %}
+            {% if can_access('pets') %}<a class="{{ 'active' if ep.startswith('pets.') else '' }}" href="{{ url_for('pets.pets') }}"><span class="menu-icon">🐶</span><span class="menu-label">Pets</span></a>{% endif %}
+            {% if can_access('agenda') %}<a class="{{ 'active' if ep.startswith('agenda.') else '' }}" href="{{ url_for('agenda.agenda') }}"><span class="menu-icon">📅</span><span class="menu-label">Agenda</span></a>{% endif %}
+            {% if can_access('banho_tosa') %}<a class="{{ 'active' if ep.startswith('banho_tosa.') else '' }}" href="{{ url_for('banho_tosa.banho_tosa') }}"><span class="menu-icon">🚿</span><span class="menu-label">Banho e Tosa</span></a>{% endif %}
 
             <div class="menu-title"><span>Equipe e RH</span></div>
-            <a class="{{ 'active' if ep.startswith('ponto.') else '' }}" href="{{ url_for('ponto.ponto') }}"><span class="menu-icon">🕒</span><span class="menu-label">Relógio de Ponto</span></a>
-            <a class="{{ 'active' if ep.startswith('funcionarios.') else '' }}" href="{{ url_for('funcionarios.funcionarios') }}"><span class="menu-icon">👔</span><span class="menu-label">Funcionários</span></a>
-            <a class="{{ 'active' if ep.startswith('jornadas.') else '' }}" href="{{ url_for('jornadas.jornadas') }}"><span class="menu-icon">📋</span><span class="menu-label">Jornadas</span></a>
-            <a class="{{ 'active' if ep.startswith('resumo_ponto.') else '' }}" href="{{ url_for('resumo_ponto.resumo_ponto') }}"><span class="menu-icon">🧮</span><span class="menu-label">Resumo de Ponto</span></a>
-            <a class="{{ 'active' if ep.startswith('rh.') else '' }}" href="{{ url_for('rh.gestao') }}"><span class="menu-icon">📊</span><span class="menu-label">Gestão de RH</span></a>
+            {% if can_access('ponto') %}<a class="{{ 'active' if ep.startswith('ponto.') else '' }}" href="{{ url_for('ponto.ponto') }}"><span class="menu-icon">🕒</span><span class="menu-label">Relógio de Ponto</span></a>{% endif %}
+            {% if can_access('rh') %}<a class="{{ 'active' if ep.startswith('funcionarios.') else '' }}" href="{{ url_for('funcionarios.funcionarios') }}"><span class="menu-icon">👔</span><span class="menu-label">Funcionários</span></a>{% endif %}
+            {% if can_access('rh') %}<a class="{{ 'active' if ep.startswith('jornadas.') else '' }}" href="{{ url_for('jornadas.jornadas') }}"><span class="menu-icon">📋</span><span class="menu-label">Jornadas</span></a>{% endif %}
+            {% if can_access('rh') %}<a class="{{ 'active' if ep.startswith('resumo_ponto.') else '' }}" href="{{ url_for('resumo_ponto.resumo_ponto') }}"><span class="menu-icon">🧮</span><span class="menu-label">Resumo de Ponto</span></a>{% endif %}
+            {% if can_access('rh') %}<a class="{{ 'active' if ep.startswith('rh.') else '' }}" href="{{ url_for('rh.gestao') }}"><span class="menu-icon">📊</span><span class="menu-label">Gestão de RH</span></a>{% endif %}
 
             <div class="menu-title"><span>Gestão</span></div>
-            <a class="{{ 'active' if ep.startswith('relatorios.') else '' }}" href="{{ url_for('relatorios.relatorios') }}"><span class="menu-icon">📈</span><span class="menu-label">Relatórios Gerais</span></a>
-            <a class="{{ 'active' if ep.startswith('financeiro.') else '' }}" href="{{ url_for('financeiro.financeiro') }}"><span class="menu-icon">💰</span><span class="menu-label">Financeiro</span></a>
-            <a class="{{ 'active' if ep.startswith('estoque.') else '' }}" href="{{ url_for('estoque.estoque') }}"><span class="menu-icon">📦</span><span class="menu-label">Estoque</span></a>
-            <a class="{{ 'active' if ep.startswith('motorista.') else '' }}" href="{{ url_for('motorista.motorista') }}"><span class="menu-icon">🚗</span><span class="menu-label">Motorista</span></a>
-            <a class="{{ 'active' if ep.startswith('configuracoes.') else '' }}" href="{{ url_for('configuracoes.configuracoes') }}"><span class="menu-icon">⚙️</span><span class="menu-label">Configurações</span></a>
+            {% if can_access('relatorios') %}<a class="{{ 'active' if ep.startswith('relatorios.') else '' }}" href="{{ url_for('relatorios.relatorios') }}"><span class="menu-icon">📈</span><span class="menu-label">Relatórios Gerais</span></a>{% endif %}
+            {% if can_access('financeiro') %}<a class="{{ 'active' if ep.startswith('financeiro.') else '' }}" href="{{ url_for('financeiro.financeiro') }}"><span class="menu-icon">💰</span><span class="menu-label">Financeiro</span></a>{% endif %}
+            {% if can_access('estoque') %}<a class="{{ 'active' if ep.startswith('estoque.') else '' }}" href="{{ url_for('estoque.estoque') }}"><span class="menu-icon">📦</span><span class="menu-label">Estoque</span></a>{% endif %}
+            {% if can_access('motorista') %}<a class="{{ 'active' if ep.startswith('motorista.') else '' }}" href="{{ url_for('motorista.motorista') }}"><span class="menu-icon">🚗</span><span class="menu-label">Motorista</span></a>{% endif %}
+            {% if can_access('configuracoes') %}<a class="{{ 'active' if ep.startswith('configuracoes.') else '' }}" href="{{ url_for('configuracoes.configuracoes') }}"><span class="menu-icon">⚙️</span><span class="menu-label">Configurações</span></a>{% endif %}
+            {% if can_access('configuracoes') %}<a class="{{ 'active' if ep == 'configuracoes.usuarios' else '' }}" href="{{ url_for('configuracoes.usuarios') }}"><span class="menu-icon">🔐</span><span class="menu-label">Usuários e Permissões</span></a>{% endif %}
         </nav>
 
         <div class="sidebar-footer">
@@ -97,7 +98,7 @@
 
                 <div class="user-box">
                     <span class="user-avatar">{{ (session.get('user_name') or 'U')[0]|upper }}</span>
-                    <div class="user-copy"><strong>{{ session.get('user_name') }}</strong><small>Usuário conectado</small></div>
+                    <div class="user-copy"><strong>{{ session.get('user_name') }}</strong><small>{{ session.get('role_label') or role_labels.get(session.get('role'), 'Usuário') }}</small></div>
                     <a href="{{ url_for('logout') }}" title="Sair">↪</a>
                 </div>
             </div>

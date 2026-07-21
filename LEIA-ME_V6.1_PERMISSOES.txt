@@ -1,0 +1,18 @@
+PET & GATÔ BUSINESS — V6.1 PERMISSÕES
+
+Entregas:
+- Controle de acesso no servidor por perfil.
+- Menus dinâmicos conforme o perfil conectado.
+- Tela administrativa /usuarios.
+- Criação, edição, troca de senha, ativação e desativação de usuários.
+- Perfis: Administrador, Recepção, Banho e Tosa, Motorista, Financeiro e Estoque.
+- Resposta 403 para acesso não autorizado.
+- APIs retornam JSON 403 quando bloqueadas.
+
+Instalação na branch develop:
+1. Extraia e substitua os arquivos do projeto local.
+2. Confirme que está na branch develop: git branch
+3. Execute localmente e teste cada perfil.
+4. Faça commit somente após os testes.
+
+O usuário admin permanece com acesso total e não pode ser desativado.

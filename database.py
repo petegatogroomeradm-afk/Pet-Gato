@@ -409,6 +409,10 @@ def init_db():
             id {serial}, user_name TEXT, action TEXT NOT NULL,
             entity_type TEXT, entity_id INTEGER, details TEXT, created_at TEXT
         )""",
+        f"""CREATE TABLE IF NOT EXISTS user_access_logs (
+            id {serial}, user_id INTEGER, username TEXT, success INTEGER DEFAULT 0,
+            ip_address TEXT, user_agent TEXT, details TEXT, created_at TEXT
+        )""",
     ]
 
     for statement in statements:
@@ -416,6 +420,12 @@ def init_db():
     conn.commit()
 
     migrations = {
+        "users": [("cpf", "TEXT"), ("phone", "TEXT"), ("email", "TEXT"),
+            ("job_title", "TEXT"), ("admission_date", "TEXT"), ("avatar_path", "TEXT"),
+            ("must_change_password", "INTEGER DEFAULT 0"), ("failed_attempts", "INTEGER DEFAULT 0"),
+            ("locked_until", "TEXT"), ("last_login_at", "TEXT"), ("last_login_ip", "TEXT"),
+            ("last_login_user_agent", "TEXT"), ("login_count", "INTEGER DEFAULT 0"),
+            ("updated_at", "TEXT"), ("created_by", "TEXT")],
         "clients": [("foto", "TEXT"), ("tags", "TEXT"), ("contato_emergencia", "TEXT"), ("data_nascimento", "TEXT"), ("origem_cadastro", "TEXT"), ("canal_preferido", "TEXT"), ("consentimento_marketing", "INTEGER DEFAULT 0"), ("ativo", "INTEGER DEFAULT 1")],
         "pets": [
             ("sexo", "TEXT"), ("cor", "TEXT"), ("peso", "REAL"),
