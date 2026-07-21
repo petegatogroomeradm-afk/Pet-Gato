@@ -1,0 +1,24 @@
+PET & GATÔ BUSINESS V3 — PACOTE 1
+Clientes + Pets
+
+Incluído:
+- CRM de clientes com cadastro, edição, arquivamento, foto, tags, emergência, documentos e anotações.
+- Ficha 360° do cliente com pets, indicadores e histórico.
+- Cadastro completo de pets com foto, saúde, preferências e identificação.
+- Ficha profissional do pet com vacinas, pesagens, histórico médico, fotos, documentos e anotações.
+- Upload real de imagens e documentos.
+- Exclusão lógica de clientes e pets para preservar histórico.
+- Migrações automáticas de colunas e criação das novas tabelas.
+- CSS responsivo para as novas telas.
+
+INSTALAÇÃO:
+1. Faça backup da pasta atual.
+2. Extraia este ZIP substituindo os arquivos existentes.
+3. No PowerShell, dentro da pasta do projeto:
+   py -m pip install -r requirements.txt
+   py main.py
+4. Acesse /clientes e /pets.
+
+Observação:
+- SaaS e Configurações não foram alterados neste pacote.
+- O código foi validado sintaticamente com compileall.

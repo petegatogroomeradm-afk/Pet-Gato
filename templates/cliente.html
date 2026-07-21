@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Clientes{% endblock %}
+{% block page_title %}Clientes{% endblock %}
+{% block page_subtitle %}Cadastro e CRM de Clientes{% endblock %}
+
+{% block content %}
+
+<div class="card">
+
+    <h2>Novo Cliente</h2>
+
+    <form method="POST" class="form">
+
+        <div class="grid-2">
+
+            <input
+                type="text"
+                name="nome"
+                placeholder="Nome completo"
+                required
+            >
+
+            <input
+                type="text"
+                name="cpf"
+                placeholder="CPF"
+            >
+
+            <input
+                type="text"
+                name="telefone"
+                placeholder="Telefone"
+            >
+
+            <input
+                type="text"
+                name="whatsapp"
+                placeholder="WhatsApp"
+            >
+
+            <input
+                type="email"
+                name="email"
+                placeholder="E-mail"
+            >
+
+            <input
+                type="text"
+                name="endereco"
+                placeholder="Endereço"
+            >
+
+        </div>
+
+        <textarea
+            name="observacoes"
+            rows="4"
+            placeholder="Observações"
+        ></textarea>
+
+        <br>
+
+        <button type="submit">
+            Salvar Cliente
+        </button>
+
+    </form>
+
+</div>
+
+<br>
+
+<div class="card">
+
+    <h2>Clientes Cadastrados</h2>
+
+    <form method="GET">
+
+        <input
+            type="text"
+            name="busca"
+            placeholder="Pesquisar cliente..."
+            value="{{ busca }}"
+        >
+
+    </form>
+
+    <br>
+
+    <table>
+
+        <thead>
+
+            <tr>
+
+                <th>Nome</th>
+                <th>Telefone</th>
+                <th>WhatsApp</th>
+                <th>Email</th>
+                <th>CPF</th>
+                <th>Ações</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+        {% for c in clientes %}
+
+            <tr>
+
+                <td>
+
+                    <a href="{{ url_for('clientes.visualizar_cliente', cliente_id=c.id) }}">
+                        <strong>{{ c.nome }}</strong>
+                    </a>
+
+                </td>
+
+                <td>{{ c.telefone or "-" }}</td>
+
+                <td>{{ c.whatsapp or "-" }}</td>
+
+                <td>{{ c.email or "-" }}</td>
+
+                <td>{{ c.cpf or "-" }}</td>
+
+                <td>
+
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+
+                        <a
+                            class="small-button"
+                            href="{{ url_for('clientes.visualizar_cliente', cliente_id=c.id) }}"
+                        >
+                            CRM
+                        </a>
+
+                        {% if c.whatsapp %}
+
+                        <a
+                            class="small-button"
+                            target="_blank"
+                            href="https://wa.me/55{{ c.whatsapp|replace('(','')|replace(')','')|replace('-','')|replace(' ','') }}"
+                        >
+                            WhatsApp
+                        </a>
+
+                        {% endif %}
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('clientes.excluir_cliente', cliente_id=c.id) }}"
+                            onsubmit="return confirm('Deseja realmente excluir este cliente?')"
+                        >
+
+                            <button
+                                class="small-button"
+                                type="submit"
+                            >
+                                Excluir
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </td>
+
+            </tr>
+
+        {% else %}
+
+            <tr>
+
+                <td colspan="6">
+
+                    Nenhum cliente cadastrado.
+
+                </td>
+
+            </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

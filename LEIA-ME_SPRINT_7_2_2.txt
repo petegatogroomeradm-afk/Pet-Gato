@@ -1,0 +1,31 @@
+SPRINT 7.2.2 - PRONTUÁRIO PREVENTIVO DO PET
+
+ALTERAÇÕES REAIS INCLUÍDAS:
+- Nova tabela pet_health_treatments, compatível com SQLite e PostgreSQL.
+- Cadastro e exclusão de controles de Vermífugo e Antipulgas.
+- Datas de aplicação e próxima aplicação.
+- Produto, veterinário/responsável e observações.
+- Alertas automáticos para controles vencidos ou próximos em até 30 dias.
+- Inclusão desses controles na linha do tempo do pet.
+- Novos eventos de auditoria PET_TRATAMENTO_CRIADO e PET_TRATAMENTO_REMOVIDO.
+- Galeria com categoria Durante, além de Perfil, Antes, Depois e Outros.
+- Histórico médico com categorias estruturadas: Consulta, Exame, Doença, Cirurgia, Restrição, Ocorrência e Outro.
+- Ajustes visuais responsivos na ficha do pet.
+
+ARQUIVOS ALTERADOS:
+- database.py
+- modules/pets.py
+- services/pet_service.py
+- templates/pet_detalhes.html
+- static/css/style.css
+
+TESTES REALIZADOS:
+- Compilação sintática dos arquivos Python alterados.
+- Validação de carregamento dos templates Jinja relacionados ao módulo Pets.
+
+APLICAÇÃO:
+1. Faça backup da pasta atual.
+2. Extraia este ZIP sobre D:\Relogio de ponto WEB\petegato_business_v3
+3. Remova os caches __pycache__.
+4. Execute py main.py.
+5. Abra a ficha de um pet e teste Vermífugo/Antipulgas.

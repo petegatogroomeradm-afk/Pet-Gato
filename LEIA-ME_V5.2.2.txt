@@ -1,0 +1,13 @@
+PET & GATÔ BUSINESS — V5.2.2 INTERFACE ENTERPRISE
+
+Implementações:
+- Menu lateral recolhível com estado salvo no navegador
+- Item ativo destacado automaticamente
+- Tema claro e escuro com preferência persistente
+- Menu adaptado para celular e tablet
+- Cabeçalho moderno e responsivo
+- Busca, notificações e usuário reorganizados
+- Padronização visual de cartões, tabelas, campos e alertas
+- Identificação da versão V5.2.2
+
+A atualização preserva módulos, banco de dados e registros existentes.

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Configurações{% endblock %}
+{% block page_title %}Configurações{% endblock %}
+{% block page_subtitle %}Dados gerais da empresa{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Dados da Empresa</h2>
+
+    <form method="post" class="form">
+        <input name="company_name" placeholder="Nome da empresa" value="{{ config.company_name if config else '' }}">
+        <input name="cnpj" placeholder="CNPJ" value="{{ config.cnpj if config else '' }}">
+        <input name="phone" placeholder="Telefone" value="{{ config.phone if config else '' }}">
+        <input name="whatsapp" placeholder="WhatsApp" value="{{ config.whatsapp if config else '' }}">
+        <input name="email" placeholder="E-mail" value="{{ config.email if config else '' }}">
+        <input name="address" placeholder="Endereço" value="{{ config.address if config else '' }}">
+        <input name="pix_key" placeholder="Chave PIX" value="{{ config.pix_key if config else '' }}">
+        <textarea name="notes" placeholder="Observações">{{ config.notes if config else '' }}</textarea>
+
+        <button>Salvar configurações</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block title %}Prontuário do Pet{% endblock %}
+{% block page_title %}Prontuário Premium{% endblock %}
+{% block page_subtitle %}Saúde, preventivos, evolução, documentos e histórico completo{% endblock %}
+
+{% block content %}
+<div class="profile-hero card pet-hero">
+  <div class="profile-main">
+    {% if pet.foto %}
+      <img class="profile-avatar" src="{{ url_for('static', filename='uploads/pets/' ~ pet.foto) }}" alt="Foto de {{ pet.nome }}">
+    {% else %}
+      <div class="profile-avatar avatar-placeholder">🐾</div>
+    {% endif %}
+    <div>
+      <div class="profile-title-row">
+        <h2>{{ pet.nome }}</h2>
+        <span class="status-chip success">Ativo</span>
+      </div>
+      <p>{{ pet.especie or '-' }} · {{ pet.raca or '-' }} · {{ pet.porte or '-' }} · {{ pet.sexo or '-' }}</p>
+      <p><b>Tutor:</b> {{ pet.cliente_nome or '-' }}</p>
+      <div class="actions no-print">
+        <a class="small-button" href="{{ url_for('pets.editar_pet', pet_id=pet.id) }}">Editar ficha</a>
+        {% if pet.whatsapp %}
+          <a class="secondary-button" target="_blank" href="https://wa.me/55{{ pet.whatsapp|replace('(','')|replace(')','')|replace('-','')|replace(' ','') }}">WhatsApp</a>
+        {% endif %}
+        <button type="button" class="secondary-button" onclick="window.print()">Imprimir prontuário</button>
+      </div>
+    </div>
+  </div>
+  <div class="profile-contact">
+    <p><b>Peso:</b> {{ peso_atual or pet.peso or '-' }} kg</p>
+    <p><b>Idade:</b> {{ idade_calculada if idade_calculada is not none else pet.idade or '-' }} anos</p>
+    <p><b>Castrado:</b> {{ 'Sim' if pet.castrado else 'Não' }}</p>
+    <p><b>Microchip:</b> {{ pet.microchip or '-' }}</p>
+  </div>
+</div>
+
+{% if alertas_saude %}
+<div class="smart-alerts pet-smart-alerts">
+  {% for alerta in alertas_saude %}
+  <div class="smart-alert health-{{ alerta.nivel }}">
+    <span>🩺</span>
+    <div><b>{{ alerta.titulo }}</b><small>{{ alerta.detalhe }}</small></div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="cards executive-cards">
+  <div class="card metric primary-metric"><span>Total gasto</span><strong>R$ {{ '%.2f'|format(financeiro.total_gasto or 0) }}</strong><small>{{ financeiro.total_atendimentos or 0 }} atendimentos</small></div>
+  <div class="card metric"><span>Banhos / Tosas</span><strong>{{ financeiro.total_banhos or 0 }} / {{ financeiro.total_tosas or 0 }}</strong><small>serviços realizados</small></div>
+  <div class="card metric"><span>Ticket médio</span><strong>R$ {{ '%.2f'|format(financeiro.ticket_medio or 0) }}</strong><small>por atendimento</small></div>
+  <div class="card metric"><span>Próximo agendamento</span><strong class="metric-date">{{ proximo_agendamento.data_agendamento if proximo_agendamento else '-' }}</strong><small>{{ proximo_agendamento.servico if proximo_agendamento else 'Sem agenda' }}</small></div>
+</div>
+
+<nav class="record-tabs no-print" aria-label="Seções do prontuário">
+  <button class="record-tab active" data-tab="resumo">Resumo</button>
+  <button class="record-tab" data-tab="saude">Saúde</button>
+  <button class="record-tab" data-tab="preventivos">Preventivos</button>
+  <button class="record-tab" data-tab="evolucao">Evolução</button>
+  <button class="record-tab" data-tab="galeria">Galeria</button>
+  <button class="record-tab" data-tab="documentos">Documentos</button>
+  <button class="record-tab" data-tab="timeline">Timeline</button>
+</nav>
+
+<section class="record-panel active" id="tab-resumo">
+  <div class="relationship-strip card pet-intelligence-strip">
+    <div><span>Peso atual</span><strong>{{ peso_atual or '-' }} kg</strong></div>
+    <div><span>Variação</span><strong>{{ ('%+.2f'|format(variacao_peso)) ~ ' kg' if variacao_peso is not none else '-' }}</strong></div>
+    <div><span>Retorno previsto</span><strong>{{ previsao_retorno or '-' }}</strong></div>
+    <div><span>Situação</span><strong class="return-status {{ status_retorno|lower }}">{{ status_retorno }}</strong></div>
+    <div><span>Vacinas</span><strong>{{ vacinas_vencidas }} vencida(s) · {{ vacinas_proximas }} próxima(s)</strong></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Resumo de saúde</h2>
+      <div class="health-grid">
+        <div><span>Alergias</span><strong>{{ pet.alergias or '-' }}</strong></div>
+        <div><span>Medicamentos</span><strong>{{ pet.medicamentos or '-' }}</strong></div>
+        <div><span>Alimentação</span><strong>{{ pet.alimentacao or '-' }}</strong></div>
+        <div><span>Temperamento</span><strong>{{ pet.temperamento or '-' }}</strong></div>
+        <div><span>Preferência de tosa</span><strong>{{ pet.preferencia_tosa or '-' }}</strong></div>
+        <div><span>Restrições</span><strong>{{ perfil_saude.restricoes if perfil_saude and perfil_saude.restricoes else '-' }}</strong></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Contato do tutor</h2>
+      <p><b>Nome:</b> {{ pet.cliente_nome or '-' }}</p>
+      <p><b>Telefone:</b> {{ pet.telefone or '-' }}</p>
+      <p><b>WhatsApp:</b> {{ pet.whatsapp or '-' }}</p>
+      <p><b>E-mail:</b> {{ pet.email or '-' }}</p>
+      <p><b>Endereço:</b> {{ pet.endereco or '-' }}</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Histórico de atendimentos</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Data</th><th>Serviço</th><th>Profissional</th><th>Valor</th><th>Status</th><th>Observações</th></tr></thead>
+      <tbody>
+      {% for h in historico %}
+        <tr><td>{{ h.data }}</td><td>{{ h.servico }}</td><td>{{ h.profissional_nome or '-' }}</td><td>R$ {{ '%.2f'|format(h.valor or 0) }}</td><td>{{ h.status }}</td><td>{{ h.observacoes or '-' }}</td></tr>
+      {% else %}<tr><td colspan="6">Nenhum atendimento.</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section class="record-panel" id="tab-saude">
+  <div class="grid">
+    <div class="card">
+      <div class="section-heading"><div><h2>Perfil clínico</h2><p>Dados permanentes de saúde e cuidados especiais.</p></div></div>
+      <form method="post" class="form no-print" action="{{ url_for('pets.atualizar_perfil_saude', pet_id=pet.id) }}">
+        <div class="form-grid-2">
+          <input type="number" step="0.1" min="0" name="altura_cm" placeholder="Altura em cm" value="{{ perfil_saude.altura_cm if perfil_saude else '' }}">
+          <input name="tipo_sanguineo" placeholder="Tipo sanguíneo" value="{{ perfil_saude.tipo_sanguineo if perfil_saude else '' }}">
+        </div>
+        <div class="form-grid-2">
+          <input name="plano_saude" placeholder="Plano ou convênio" value="{{ perfil_saude.plano_saude if perfil_saude else '' }}">
+          <input name="veterinario_nome" placeholder="Veterinário principal" value="{{ perfil_saude.veterinario_nome if perfil_saude else '' }}">
+        </div>
+        <input name="clinica_nome" placeholder="Clínica veterinária" value="{{ perfil_saude.clinica_nome if perfil_saude else '' }}">
+        <textarea name="doencas_cronicas" placeholder="Doenças e condições crônicas">{{ perfil_saude.doencas_cronicas if perfil_saude else '' }}</textarea>
+        <textarea name="cirurgias" placeholder="Cirurgias realizadas">{{ perfil_saude.cirurgias if perfil_saude else '' }}</textarea>
+        <textarea name="restricoes" placeholder="Restrições e contraindicações">{{ perfil_saude.restricoes if perfil_saude else '' }}</textarea>
+        <textarea name="medos" placeholder="Medos e gatilhos comportamentais">{{ perfil_saude.medos if perfil_saude else '' }}</textarea>
+        <textarea name="cuidados_especiais" placeholder="Cuidados especiais durante banho, tosa ou transporte">{{ perfil_saude.cuidados_especiais if perfil_saude else '' }}</textarea>
+        <button>Salvar perfil clínico</button>
+      </form>
+    </div>
+    <div class="card clinical-summary">
+      <h2>Resumo clínico</h2>
+      <div class="clinical-list">
+        <div><span>Altura</span><strong>{{ (perfil_saude.altura_cm ~ ' cm') if perfil_saude and perfil_saude.altura_cm else '-' }}</strong></div>
+        <div><span>Tipo sanguíneo</span><strong>{{ perfil_saude.tipo_sanguineo if perfil_saude and perfil_saude.tipo_sanguineo else '-' }}</strong></div>
+        <div><span>Plano de saúde</span><strong>{{ perfil_saude.plano_saude if perfil_saude and perfil_saude.plano_saude else '-' }}</strong></div>
+        <div><span>Veterinário</span><strong>{{ perfil_saude.veterinario_nome if perfil_saude and perfil_saude.veterinario_nome else '-' }}</strong></div>
+        <div><span>Clínica</span><strong>{{ perfil_saude.clinica_nome if perfil_saude and perfil_saude.clinica_nome else '-' }}</strong></div>
+        <div><span>Cuidados especiais</span><strong>{{ perfil_saude.cuidados_especiais if perfil_saude and perfil_saude.cuidados_especiais else '-' }}</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Histórico médico</h2>
+      <form method="post" class="form compact-form no-print" action="{{ url_for('pets.adicionar_historico_medico', pet_id=pet.id) }}">
+        <div class="form-grid-2"><input type="date" name="data"><select name="tipo"><option value="">Tipo do registro</option><option>Consulta</option><option>Exame</option><option>Doença</option><option>Cirurgia</option><option>Restrição</option><option>Ocorrência</option><option>Outro</option></select></div>
+        <input name="veterinario" placeholder="Veterinário"><textarea name="descricao" placeholder="Descrição" required></textarea><button>Adicionar registro</button>
+      </form>
+      <div class="timeline">{% for h in historico_medico %}<div><div class="timeline-head"><b>{{ h.tipo or 'Registro' }}</b><form class="no-print" method="post" action="{{ url_for('pets.excluir_historico_medico', pet_id=pet.id, item_id=h.id) }}"><button class="link-danger">Excluir</button></form></div><small>{{ h.data or h.created_at }}{% if h.veterinario %} · {{ h.veterinario }}{% endif %}</small><p>{{ h.descricao }}</p></div>{% else %}<p>Nenhum registro médico.</p>{% endfor %}</div>
+    </div>
+    <div class="card">
+      <h2>Anotações da equipe</h2>
+      <form method="post" class="form compact-form no-print" action="{{ url_for('pets.adicionar_anotacao', pet_id=pet.id) }}"><textarea name="observacao" placeholder="Nova anotação" required></textarea><button>Adicionar anotação</button></form>
+      <div class="timeline">{% for n in notas %}<div><div class="timeline-head"><b>{{ n.usuario or 'Sistema' }}</b><form class="no-print" method="post" action="{{ url_for('pets.excluir_anotacao_pet', pet_id=pet.id, item_id=n.id) }}"><button class="link-danger">Excluir</button></form></div><small>{{ n.created_at }}</small><p>{{ n.observacao }}</p></div>{% else %}<p>Nenhuma anotação.</p>{% endfor %}</div>
+    </div>
+  </div>
+</section>
+
+<section class="record-panel" id="tab-preventivos">
+  {% if alertas_vacina %}<div class="vaccine-alerts">{% for alerta in alertas_vacina %}<div class="vaccine-alert {{ 'expired' if alerta.status == 'Vencida' else 'soon' }}"><b>{{ alerta.vacina.vacina }}</b><span>{{ alerta.status }} · {{ alerta.vacina.proxima_dose }}</span></div>{% endfor %}</div>{% endif %}
+  <div class="grid">
+    <div class="card">
+      <div class="section-heading"><div><h2>Vacinas</h2><p>Aplicações e próximas doses.</p></div><div class="health-summary-chips"><span class="status-chip danger">{{ vacinas_vencidas }} vencida(s)</span><span class="status-chip warning">{{ vacinas_proximas }} próxima(s)</span></div></div>
+      <form method="post" class="form compact-form no-print" action="{{ url_for('pets.adicionar_vacina', pet_id=pet.id) }}"><input name="vacina" placeholder="Vacina" required><div class="form-grid-2"><input type="date" name="data_aplicacao"><input type="date" name="proxima_dose"></div><input name="veterinario" placeholder="Veterinário"><textarea name="observacoes" placeholder="Observações"></textarea><button>Adicionar vacina</button></form>
+      <div class="table-wrap"><table><thead><tr><th>Vacina</th><th>Aplicação</th><th>Próxima</th><th>Veterinário</th><th></th></tr></thead><tbody>{% for v in vacinas %}<tr><td>{{ v.vacina }}</td><td>{{ v.data_aplicacao or '-' }}</td><td>{{ v.proxima_dose or '-' }}</td><td>{{ v.veterinario or '-' }}</td><td><form class="no-print" method="post" action="{{ url_for('pets.excluir_vacina', pet_id=pet.id, item_id=v.id) }}"><button class="link-danger">Excluir</button></form></td></tr>{% else %}<tr><td colspan="5">Nenhuma vacina.</td></tr>{% endfor %}</tbody></table></div>
+    </div>
+    <div class="card pet-treatment-card">
+      <div class="section-heading"><div><h2>Vermífugo e antipulgas</h2><p>Controle preventivo e vencimentos.</p></div><div class="health-summary-chips"><span class="status-chip danger">{{ tratamentos_vencidos }} vencido(s)</span><span class="status-chip warning">{{ tratamentos_proximos }} próximo(s)</span></div></div>
+      <form method="post" class="form compact-form no-print" action="{{ url_for('pets.adicionar_tratamento', pet_id=pet.id) }}"><div class="form-grid-2"><select name="treatment_type" required><option value="">Tipo</option><option>Vermífugo</option><option>Antipulgas</option></select><input name="product_name" placeholder="Produto utilizado"></div><div class="form-grid-2"><input type="date" name="application_date"><input type="date" name="next_date"></div><input name="veterinarian" placeholder="Veterinário ou responsável"><textarea name="observations" placeholder="Observações"></textarea><button>Adicionar controle</button></form>
+      <div class="table-wrap"><table><thead><tr><th>Tipo</th><th>Produto</th><th>Aplicação</th><th>Próxima</th><th></th></tr></thead><tbody>{% for t in tratamentos %}<tr><td>{{ t.treatment_type }}</td><td>{{ t.product_name or '-' }}</td><td>{{ t.application_date or '-' }}</td><td>{{ t.next_date or '-' }}</td><td><form class="no-print" method="post" action="{{ url_for('pets.excluir_tratamento', pet_id=pet.id, item_id=t.id) }}"><button class="link-danger">Excluir</button></form></td></tr>{% else %}<tr><td colspan="5">Nenhum controle.</td></tr>{% endfor %}</tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<section class="record-panel" id="tab-evolucao">
+  <div class="grid">
+    <div class="card">
+      <h2>Evolução do peso</h2>
+      <form method="post" class="form compact-form no-print" action="{{ url_for('pets.adicionar_pesagem', pet_id=pet.id) }}"><div class="form-grid-2"><input name="peso" placeholder="Peso em kg" required><input type="date" name="data"></div><button>Adicionar pesagem</button></form>
+      {% if peso_chart %}<div class="weight-chart large"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="{% for p in peso_chart %}{{ p.x }},{{ p.y }} {% endfor %}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"/>{% for p in peso_chart %}<circle cx="{{ p.x }}" cy="{{ p.y }}" r="2.2"><title>{{ p.peso }} kg · {{ p.data }}</title></circle>{% endfor %}</svg></div>{% endif %}
+      <div class="weight-list">{% for p in pesos %}<div><div class="timeline-head"><strong>{{ p.peso }} kg</strong><form class="no-print" method="post" action="{{ url_for('pets.excluir_pesagem', pet_id=pet.id, item_id=p.id) }}"><button class="link-danger">×</button></form></div><small>{{ p.data or p.created_at }}</small></div>{% else %}<p>Nenhuma pesagem.</p>{% endfor %}</div>
+    </div>
+    <div class="card">
+      <h2>Indicadores de retorno</h2>
+      <div class="clinical-list"><div><span>Intervalo médio</span><strong>{{ intervalo_medio ~ ' dias' if intervalo_medio else '-' }}</strong></div><div><span>Próximo retorno sugerido</span><strong>{{ previsao_retorno or '-' }}</strong></div><div><span>Status</span><strong>{{ status_retorno }}</strong></div><div><span>Último atendimento</span><strong>{{ financeiro.ultimo_atendimento or '-' }}</strong></div></div>
+      <h2 class="section-spacer">Transportes</h2>
+      <div class="table-wrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Status</th></tr></thead><tbody>{% for t in transportes %}<tr><td>{{ t.pickup_date or '-' }}</td><td>{{ t.service_type or '-' }}</td><td>{{ t.status or '-' }}</td></tr>{% else %}<tr><td colspan="3">Nenhum transporte.</td></tr>{% endfor %}</tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<section class="record-panel" id="tab-galeria">
+  <div class="card">
+    <div class="section-heading"><div><h2>Galeria do pet</h2><p>Fotos de perfil, antes, durante e depois.</p></div></div>
+    <form method="post" enctype="multipart/form-data" class="form compact-form no-print" action="{{ url_for('pets.adicionar_foto', pet_id=pet.id) }}"><div class="form-grid-2"><select name="categoria"><option>Perfil</option><option>Antes</option><option>Durante</option><option>Depois</option><option>Outros</option></select><input type="file" name="arquivo" accept="image/*" required></div><input name="descricao" placeholder="Descrição"><button>Enviar foto</button></form>
+    {% for categoria in ['Perfil','Antes','Durante','Depois','Outros'] %}
+      {% set grupo = fotos|selectattr('categoria', 'equalto', categoria)|list %}
+      {% if grupo %}<h3 class="gallery-heading">{{ categoria }}</h3><div class="gallery premium-gallery">{% for f in grupo %}<div class="gallery-item"><a target="_blank" href="{{ url_for('static', filename='uploads/pets/' ~ f.arquivo) }}"><img src="{{ url_for('static', filename='uploads/pets/' ~ f.arquivo) }}" alt="{{ f.descricao or categoria }}"><small>{{ f.descricao or categoria }}</small></a><form class="no-print" method="post" action="{{ url_for('pets.excluir_foto', pet_id=pet.id, item_id=f.id) }}"><button class="link-danger">Excluir</button></form></div>{% endfor %}</div>{% endif %}
+    {% endfor %}
+    {% if not fotos %}<div class="empty-state">Nenhuma foto cadastrada.</div>{% endif %}
+  </div>
+</section>
+
+<section class="record-panel" id="tab-documentos">
+  <div class="card">
+    <div class="section-heading"><div><h2>Documentos</h2><p>Carteira de vacinação, exames, receitas, autorizações e contratos.</p></div></div>
+    <form method="post" enctype="multipart/form-data" class="form compact-form no-print" action="{{ url_for('pets.adicionar_documento', pet_id=pet.id) }}"><div class="form-grid-2"><input name="nome" placeholder="Nome do documento"><select name="tipo"><option value="">Tipo</option><option>Carteira de vacinação</option><option>Receita</option><option>Exame</option><option>Autorização</option><option>Contrato</option><option>Outro</option></select></div><input type="file" name="arquivo" required><button>Enviar documento</button></form>
+    <ul class="file-list premium-files">{% for d in documentos %}<li><div><span class="file-icon">📄</span><div><a target="_blank" href="{{ url_for('static', filename='uploads/documentos/' ~ d.arquivo) }}">{{ d.nome or d.arquivo }}</a><small>{{ d.tipo or 'Documento' }} · {{ d.created_at }}</small></div></div><form class="no-print" method="post" action="{{ url_for('pets.excluir_documento_pet', pet_id=pet.id, item_id=d.id) }}"><button class="link-danger">Excluir</button></form></li>{% else %}<li>Nenhum documento.</li>{% endfor %}</ul>
+  </div>
+</section>
+
+<section class="record-panel" id="tab-timeline">
+  <div class="dashboard-grid">
+    <div class="card"><h2>Linha do tempo completa</h2><div class="crm-timeline">{% for item in timeline %}<div class="crm-event"><span class="event-icon">{{ item.icone }}</span><div><b>{{ item.titulo }}</b><small>{{ item.data }} · {{ item.tipo }}</small><p>{{ item.detalhe }}</p></div></div>{% else %}<div class="empty-state">Nenhum evento registrado.</div>{% endfor %}</div></div>
+    <div class="card"><h2>Resumo operacional</h2><div class="clinical-list"><div><span>Atendimentos</span><strong>{{ financeiro.total_atendimentos or 0 }}</strong></div><div><span>Banhos</span><strong>{{ financeiro.total_banhos or 0 }}</strong></div><div><span>Tosas</span><strong>{{ financeiro.total_tosas or 0 }}</strong></div><div><span>Transportes</span><strong>{{ transportes|length }}</strong></div><div><span>Documentos</span><strong>{{ documentos|length }}</strong></div><div><span>Fotos</span><strong>{{ fotos|length }}</strong></div></div></div>
+  </div>
+</section>
+
+<script>
+(function () {
+  const tabs = document.querySelectorAll('.record-tab');
+  const panels = document.querySelectorAll('.record-panel');
+  function activate(name) {
+    tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.tab === name));
+    panels.forEach(panel => panel.classList.toggle('active', panel.id === 'tab-' + name));
+    if (history.replaceState) history.replaceState(null, '', '#' + name);
+  }
+  tabs.forEach(tab => tab.addEventListener('click', () => activate(tab.dataset.tab)));
+  const initial = location.hash ? location.hash.substring(1) : 'resumo';
+  if ([...tabs].some(tab => tab.dataset.tab === initial)) activate(initial);
+})();
+</script>
+{% endblock %}

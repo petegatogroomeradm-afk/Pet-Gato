@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Pets{% endblock %}
+{% block page_title %}Pets{% endblock %}
+{% block page_subtitle %}Cadastro completo e prontuário dos animais{% endblock %}
+{% block content %}
+<div class="grid">
+  <div class="card">
+    <h2>Novo pet</h2>
+    <form method="post" enctype="multipart/form-data" class="form">
+      <select name="client_id" required><option value="">Selecione o tutor</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nome }}</option>{% endfor %}</select>
+      <div class="form-grid-2"><input name="nome" placeholder="Nome do pet" required><input name="especie" placeholder="Espécie"><input name="raca" placeholder="Raça"><select name="porte"><option value="">Porte</option><option>Pequeno</option><option>Médio</option><option>Grande</option></select><input name="idade" placeholder="Idade"><select name="sexo"><option value="">Sexo</option><option>Macho</option><option>Fêmea</option></select><input name="cor" placeholder="Cor"><input name="peso" placeholder="Peso (kg)"><input type="date" name="data_nascimento"><input name="microchip" placeholder="Microchip"></div>
+      <label class="check-inline"><input type="checkbox" name="castrado" value="1"> Castrado</label>
+      <label class="file-field">Foto do pet<input type="file" name="foto" accept="image/*"></label>
+      <textarea name="alergias" placeholder="Alergias"></textarea><textarea name="medicamentos" placeholder="Medicamentos"></textarea><textarea name="alimentacao" placeholder="Alimentação"></textarea><textarea name="temperamento" placeholder="Temperamento"></textarea><textarea name="preferencia_tosa" placeholder="Preferência de tosa"></textarea><textarea name="observacoes" placeholder="Observações gerais"></textarea>
+      <button>Cadastrar pet</button>
+    </form>
+  </div>
+  <div class="card">
+    <div class="section-head"><h2>Pets cadastrados</h2><span class="pill">{{ pets|length }}</span></div>
+    <form method="get" class="search"><input name="busca" value="{{ busca }}" placeholder="Pet, tutor, raça ou espécie"><button>Buscar</button></form>
+    <div class="pet-list">{% for p in pets %}<div class="pet-row"><a class="entity-link" href="{{ url_for('pets.visualizar_pet', pet_id=p.id) }}">{% if p.foto %}<img class="avatar-sm" src="{{ url_for('static', filename='uploads/pets/' ~ p.foto) }}">{% else %}<span class="avatar-sm avatar-placeholder">🐾</span>{% endif %}<span><strong>{{ p.nome }}</strong><small>{{ p.cliente_nome }} · {{ p.raca or p.especie or '-' }}</small></span></a><div class="actions"><a class="small-button" href="{{ url_for('pets.visualizar_pet', pet_id=p.id) }}">Ficha</a><a class="secondary-button" href="{{ url_for('pets.editar_pet', pet_id=p.id) }}">Editar</a></div></div>{% else %}<p>Nenhum pet cadastrado.</p>{% endfor %}</div>
+  </div>
+</div>
+{% endblock %}

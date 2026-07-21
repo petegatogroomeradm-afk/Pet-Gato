@@ -1,0 +1,19 @@
+PET & GATÔ BUSINESS — V4.3 PRONTUÁRIO PREMIUM
+
+Arquivos alterados:
+- database.py
+- modules/pets.py
+- services/pet_service.py
+- templates/pet_detalhes.html
+- static/css/style.css
+
+Principais melhorias:
+- Prontuário organizado por abas
+- Perfil clínico estruturado
+- Altura, tipo sanguíneo, plano de saúde, veterinário e clínica
+- Doenças crônicas, cirurgias, restrições, medos e cuidados especiais
+- Alertas clínicos integrados
+- Preventivos, evolução de peso, galeria e documentos organizados
+- Timeline e impressão completa
+
+A tabela pet_health_profiles é criada automaticamente ao iniciar o sistema.

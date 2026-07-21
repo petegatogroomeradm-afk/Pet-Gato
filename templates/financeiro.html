@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Financeiro Enterprise{% endblock %}
+{% block page_title %}Financeiro Enterprise{% endblock %}
+{% block page_subtitle %}Fluxo de caixa, DRE, metas, recorrências e fechamento diário{% endblock %}
+{% block content %}
+
+<section class="finance-kpis">
+  <article><span>Entradas realizadas</span><strong>R$ {{ '%.2f'|format(entradas) }}</strong><small>{{ totais.total_transactions }} lançamentos filtrados</small></article>
+  <article><span>Saídas realizadas</span><strong>R$ {{ '%.2f'|format(saidas) }}</strong><small>Despesas pagas no período</small></article>
+  <article class="{{ 'positive' if saldo >= 0 else 'negative' }}"><span>Saldo realizado</span><strong>R$ {{ '%.2f'|format(saldo) }}</strong><small>Entradas menos saídas</small></article>
+  <article><span>A receber</span><strong>R$ {{ '%.2f'|format(receber) }}</strong><small>Pendências de clientes</small></article>
+  <article><span>A pagar</span><strong>R$ {{ '%.2f'|format(pagar) }}</strong><small>Compromissos futuros</small></article>
+  <article class="{{ 'negative' if vencido > 0 else 'positive' }}"><span>Vencido</span><strong>R$ {{ '%.2f'|format(vencido) }}</strong><small>Inadimplência e contas atrasadas</small></article>
+</section>
+
+<section class="finance-grid finance-overview">
+  <article class="card finance-chart-card">
+    <header class="section-header"><div><h2>Fluxo de caixa diário</h2><p>Entradas, saídas e resultado do mês</p></div><span class="badge info">{{ mes }}</span></header>
+    <canvas id="cash-flow-chart" height="120"></canvas>
+  </article>
+
+  <article class="card dre-card">
+    <header class="section-header"><div><h2>DRE simplificada</h2><p>Resultado realizado do mês</p></div></header>
+    <div class="dre-row"><span>Receita</span><strong>R$ {{ '%.2f'|format(dre.revenue) }}</strong></div>
+    <div class="dre-row"><span>Despesas</span><strong>R$ {{ '%.2f'|format(dre.expenses) }}</strong></div>
+    <div class="dre-row total"><span>Resultado</span><strong>R$ {{ '%.2f'|format(dre.profit) }}</strong></div>
+    <div class="dre-row"><span>Margem</span><strong>{{ '%.1f'|format(dre.margin) }}%</strong></div>
+
+    <hr>
+    <h3>Meta mensal</h3>
+    <div class="goal-value"><strong>R$ {{ '%.2f'|format(meta.revenue_goal or 0) }}</strong><span>{{ '%.1f'|format(meta_percentual) }}%</span></div>
+    <div class="goal-bar"><span style="width:{{ meta_percentual }}%"></span></div>
+    <form method="post" action="{{ url_for('financeiro.salvar_meta') }}" class="compact-form">
+      <input type="hidden" name="reference_month" value="{{ mes }}">
+      <input name="revenue_goal" placeholder="Meta de receita" value="{{ meta.revenue_goal or '' }}">
+      <input name="expense_limit" placeholder="Limite de despesas" value="{{ meta.expense_limit or '' }}">
+      <button>Salvar meta</button>
+    </form>
+  </article>
+</section>
+
+<section class="finance-grid">
+  <article class="card">
+    <h2>Novo lançamento</h2>
+    <form method="post" class="form">
+      <div class="form-row">
+        <select name="type" required><option value="">Tipo</option><option>Entrada</option><option>Saída</option></select>
+        <input name="category" placeholder="Categoria">
+      </div>
+      <input name="description" placeholder="Descrição" required>
+      <div class="form-row">
+        <input name="amount" placeholder="Valor total" required>
+        <input type="number" min="1" max="60" name="total_installments" value="1" placeholder="Parcelas">
+      </div>
+      <div class="form-row"><input type="date" name="transaction_date" required><input type="date" name="due_date"></div>
+      <div class="form-row">
+        <select name="status">{% for s in status_opcoes %}<option>{{ s }}</option>{% endfor %}</select>
+        <select name="payment_method"><option value="">Forma de pagamento</option>{% for f in formas_pagamento %}<option>{{ f }}</option>{% endfor %}</select>
+      </div>
+      <div class="form-row"><input name="account" value="Caixa" placeholder="Conta/Caixa"><input name="cost_center" placeholder="Centro de custo"></div>
+      <input name="reference" placeholder="Referência / documento">
+      <textarea name="notes" placeholder="Observações"></textarea>
+      <button>Salvar lançamento</button>
+    </form>
+  </article>
+
+  <article class="card">
+    <h2>Filtros</h2>
+    <form method="get" class="form">
+      <div class="form-row"><input type="month" name="mes" value="{{ mes }}"><select name="tipo"><option value="">Todos os tipos</option><option {{ 'selected' if tipo=='Entrada' }}>Entrada</option><option {{ 'selected' if tipo=='Saída' }}>Saída</option></select></div>
+      <div class="form-row"><select name="status"><option value="">Todos os status</option>{% for s in status_opcoes %}<option {{ 'selected' if status==s }}>{{ s }}</option>{% endfor %}</select><select name="categoria"><option value="">Todas as categorias</option>{% for c in categorias %}<option value="{{ c.category }}" {{ 'selected' if categoria==c.category }}>{{ c.category }}</option>{% endfor %}</select></div>
+      <select name="conta"><option value="">Todas as contas</option>{% for c in contas %}<option value="{{ c.account }}" {{ 'selected' if conta==c.account }}>{{ c.account }}</option>{% endfor %}</select>
+      <input name="busca" value="{{ busca }}" placeholder="Descrição, referência, centro de custo...">
+      <div class="actions-row"><button>Filtrar</button><a class="small-button" href="{{ url_for('financeiro.financeiro') }}">Limpar</a><a class="small-button" href="{{ url_for('financeiro.exportar_csv', mes=mes, tipo=tipo, status=status, categoria=categoria, conta=conta, busca=busca) }}">Exportar CSV</a></div>
+    </form>
+
+    <h3>Por forma de pagamento</h3>
+    <div class="summary-list">{% for i in por_forma %}<p><span>{{ i.name }}</span><strong>R$ {{ '%.2f'|format(i.total or 0) }}</strong></p>{% else %}<p>Sem movimentação paga.</p>{% endfor %}</div>
+  </article>
+</section>
+
+<section class="finance-grid">
+  <article class="card">
+    <h2>Conta recorrente</h2>
+    <form method="post" action="{{ url_for('financeiro.adicionar_recorrencia') }}" class="form">
+      <div class="form-row"><select name="transaction_type" required><option value="">Tipo</option><option>Entrada</option><option>Saída</option></select><input name="category" placeholder="Categoria"></div>
+      <input name="description" placeholder="Descrição" required>
+      <div class="form-row"><input name="amount" placeholder="Valor" required><select name="frequency"><option>Semanal</option><option>Quinzenal</option><option selected>Mensal</option><option>Bimestral</option><option>Trimestral</option><option>Semestral</option><option>Anual</option></select></div>
+      <div class="form-row"><input type="date" name="start_date" required><input type="date" name="end_date"></div>
+      <div class="form-row"><select name="payment_method"><option value="">Pagamento</option>{% for f in formas_pagamento %}<option>{{ f }}</option>{% endfor %}</select><input name="account" value="Caixa" placeholder="Conta"></div>
+      <input name="cost_center" placeholder="Centro de custo">
+      <textarea name="notes" placeholder="Observações"></textarea>
+      <button>Cadastrar recorrência</button>
+    </form>
+    <div class="recurrence-list">
+      {% for r in recorrencias %}
+      <div><span><strong>{{ r.description }}</strong><small>{{ r.frequency }} · Próx. {{ r.next_due_date }}</small></span><span>R$ {{ '%.2f'|format(r.amount or 0) }}<form method="post" action="{{ url_for('financeiro.alternar_recorrencia', recurrence_id=r.id) }}"><button class="tiny-button">{{ 'Pausar' if r.active else 'Ativar' }}</button></form></span></div>
+      {% else %}<p>Nenhuma conta recorrente.</p>{% endfor %}
+    </div>
+  </article>
+
+  <article class="card">
+    <h2>Fechamento diário do caixa</h2>
+    <form method="post" action="{{ url_for('financeiro.fechar_caixa') }}" class="form">
+      <input type="date" name="closing_date" required>
+      <div class="form-row"><input name="opening_balance" placeholder="Saldo inicial"><input name="counted_balance" placeholder="Saldo contado" required></div>
+      <textarea name="notes" placeholder="Observações do fechamento"></textarea>
+      <button>Registrar fechamento</button>
+    </form>
+    <div class="closing-list">
+      {% for f in fechamentos %}
+      <div><span><strong>{{ f.closing_date }}</strong><small>Esperado R$ {{ '%.2f'|format(f.expected_balance or 0) }}</small></span><span class="{{ 'positive-text' if (f.difference or 0)==0 else 'negative-text' }}">Dif. R$ {{ '%.2f'|format(f.difference or 0) }}</span></div>
+      {% else %}<p>Nenhum fechamento registrado.</p>{% endfor %}
+    </div>
+  </article>
+</section>
+
+<article class="card table-card">
+  <header class="section-header"><div><h2>Lançamentos</h2><p>Contas a pagar, receber e movimentações realizadas</p></div></header>
+  <div class="table-responsive"><table><thead><tr><th>Data</th><th>Tipo</th><th>Status</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th>Conta</th><th>Parcela</th><th>Ações</th></tr></thead><tbody>
+  {% for l in lancamentos %}<tr>
+    <td>{{ l.transaction_date or '-' }}{% if l.due_date %}<small class="block">Venc.: {{ l.due_date }}</small>{% endif %}</td>
+    <td><span class="badge {{ 'success' if l.type=='Entrada' else 'danger' }}">{{ l.type }}</span></td>
+    <td><span class="badge status-{{ (l.status or 'pendente')|lower }}">{{ l.status or 'Pendente' }}</span></td>
+    <td>{{ l.category or '-' }}{% if l.cost_center %}<small class="block">{{ l.cost_center }}</small>{% endif %}</td>
+    <td>{{ l.description }}{% if l.reference %}<small class="block">{{ l.reference }}</small>{% endif %}</td>
+    <td><strong>R$ {{ '%.2f'|format(l.amount or 0) }}</strong><small class="block">{{ l.payment_method or '-' }}</small></td>
+    <td>{{ l.account or 'Caixa' }}<small class="block">{{ l.source_type or 'Manual' }}</small></td>
+    <td>{{ l.installment_number or 1 }}/{{ l.total_installments or 1 }}</td>
+    <td><div class="actions-row"><a class="small-button" href="{{ url_for('financeiro.editar_lancamento', lancamento_id=l.id) }}">Editar</a>
+      <form method="post" action="{{ url_for('financeiro.alterar_status', lancamento_id=l.id) }}"><select name="status" onchange="this.form.submit()">{% for s in status_opcoes %}<option {{ 'selected' if l.status==s }}>{{ s }}</option>{% endfor %}</select></form>
+      <form method="post" action="{{ url_for('financeiro.excluir_lancamento', lancamento_id=l.id) }}" onsubmit="return confirm('Excluir lançamento?')"><button class="danger-btn">Excluir</button></form></div></td>
+  </tr>{% else %}<tr><td colspan="9">Nenhum lançamento encontrado.</td></tr>{% endfor %}</tbody></table></div>
+</article>
+
+<script id="finance-flow-data" type="application/json">{{ fluxo_json|safe }}</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/financeiro.js') }}"></script>
+{% endblock %}

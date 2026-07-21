@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Relatórios Gerais{% endblock %}
+{% block page_title %}Relatórios Gerais{% endblock %}
+{% block page_subtitle %}Indicadores consolidados para gestão e impressão{% endblock %}
+
+{% block content %}
+
+<div class="card no-print">
+    <form method="get" class="report-filter">
+        <label>Data inicial<input type="date" name="inicio" value="{{ inicio }}"></label>
+        <label>Data final<input type="date" name="fim" value="{{ fim }}"></label>
+        <button type="submit">Atualizar relatório</button>
+        <button type="button" class="secondary-button" onclick="window.print()">Imprimir</button>
+    </form>
+</div>
+
+<div class="report-title print-only">
+    <h1>Pet & Gatô Business</h1>
+    <p>Relatório geral de {{ inicio }} até {{ fim }}</p>
+</div>
+
+<div class="cards">
+    <div class="card metric"><span>Entradas</span><strong>R$ {{ "%.2f"|format(financeiro.entradas or 0) }}</strong></div>
+    <div class="card metric"><span>Saídas</span><strong>R$ {{ "%.2f"|format(financeiro.saidas or 0) }}</strong></div>
+    <div class="card metric"><span>Saldo</span><strong>R$ {{ "%.2f"|format((financeiro.entradas or 0) - (financeiro.saidas or 0)) }}</strong></div>
+    <div class="card metric"><span>A receber</span><strong>R$ {{ "%.2f"|format(financeiro.receber or 0) }}</strong></div>
+    <div class="card metric"><span>A pagar</span><strong>R$ {{ "%.2f"|format(financeiro.pagar or 0) }}</strong></div>
+</div>
+
+<div class="cards">
+    <div class="card metric"><span>Atendimentos</span><strong>{{ operacao.total or 0 }}</strong></div>
+    <div class="card metric"><span>Valor dos serviços</span><strong>R$ {{ "%.2f"|format(operacao.valor or 0) }}</strong></div>
+    <div class="card metric"><span>Ticket dos serviços</span><strong>R$ {{ "%.2f"|format(operacao.ticket or 0) }}</strong></div>
+    <div class="card metric"><span>Clientes novos</span><strong>{{ clientes_novos }}</strong></div>
+    <div class="card metric"><span>Pets novos</span><strong>{{ pets_novos }}</strong></div>
+</div>
+
+<div class="report-actions no-print">
+    <a class="small-button" href="{{ url_for('relatorios.exportar_financeiro', inicio=inicio, fim=fim) }}">Exportar financeiro CSV</a>
+    <a class="small-button" href="{{ url_for('relatorios.exportar_atendimentos', inicio=inicio, fim=fim) }}">Exportar atendimentos CSV</a>
+</div>
+
+<div class="grid">
+    <div class="card">
+        <h2>Serviços realizados</h2>
+        <div class="table-responsive">
+            <table>
+                <thead><tr><th>Serviço</th><th>Quantidade</th><th>Valor</th></tr></thead>
+                <tbody>
+                {% for item in servicos %}
+                    <tr>
+                        <td>{{ item.servico or 'Não informado' }}</td>
+                        <td>{{ item.total }}</td>
+                        <td>R$ {{ "%.2f"|format(item.valor or 0) }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="3">Nenhum serviço no período.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Estoque abaixo do mínimo</h2>
+        <div class="table-responsive">
+            <table>
+                <thead><tr><th>Produto</th><th>Atual</th><th>Mínimo</th></tr></thead>
+                <tbody>
+                {% for item in estoque_baixo %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.quantity or 0 }} {{ item.unit or '' }}</td>
+                        <td>{{ item.min_quantity or 0 }} {{ item.unit or '' }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="3">Nenhum produto crítico.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Equipe e marcações de ponto</h2>
+    <div class="table-responsive">
+        <table>
+            <thead><tr><th>Funcionário</th><th>Marcações no período</th></tr></thead>
+            <tbody>
+            {% for item in funcionarios %}
+                <tr><td>{{ item.name }}</td><td>{{ item.marcacoes }}</td></tr>
+            {% else %}
+                <tr><td colspan="2">Nenhum funcionário ativo.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

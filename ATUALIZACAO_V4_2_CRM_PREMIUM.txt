@@ -1,0 +1,21 @@
+V4.2 CRM PREMIUM
+
+Arquivos incluídos:
+- database.py
+- modules/clientes.py
+- services/cliente_service.py
+- templates/clientes.html
+- templates/cliente_editar.html
+- templates/cliente_detalhes.html
+- static/css/style.css
+
+Novidades:
+- Data de nascimento e alerta de aniversário
+- Origem do cliente e canal preferido
+- Consentimento de marketing
+- Score de relacionamento
+- Taxa de comparecimento e cancelamentos
+- Galeria real de fotos do cliente
+- Fotos incluídas na timeline
+
+Extraia sobre a pasta do projeto e execute py main.py.

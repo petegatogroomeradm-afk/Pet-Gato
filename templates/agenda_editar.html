@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Editar Agendamento{% endblock %}
+{% block page_title %}Editar Agendamento{% endblock %}
+{% block page_subtitle %}Atualize horário, serviço, profissional e status{% endblock %}
+{% block content %}
+<div class="card narrow-card"><h2>Agendamento #{{ agendamento.id }}</h2><form method="post" class="form">
+<select name="client_id" required>{% for c in clientes %}<option value="{{ c.id }}" {% if agendamento.client_id==c.id %}selected{% endif %}>{{ c.nome }}</option>{% endfor %}</select>
+<select name="pet_id" required>{% for p in pets %}<option value="{{ p.id }}" {% if agendamento.pet_id==p.id %}selected{% endif %}>{{ p.nome }}</option>{% endfor %}</select>
+<div class="form-grid-2"><input type="date" name="data" value="{{ agendamento.data_agendamento }}" required><input type="time" name="hora" value="{{ agendamento.horario }}" required></div>
+<div class="form-grid-2"><select name="servico">{% for s in servicos %}<option {% if agendamento.servico==s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select><input type="number" name="duration_minutes" value="{{ agendamento.duration_minutes or 60 }}"></div>
+<select name="employee_id"><option value="">Profissional não definido</option>{% for e in funcionarios %}<option value="{{ e.id }}" {% if agendamento.employee_id==e.id %}selected{% endif %}>{{ e.name }}</option>{% endfor %}</select>
+<div class="form-grid-2"><input name="valor" value="{{ agendamento.valor or 0 }}"><select name="status">{% for s in status_lista %}<option {% if agendamento.status==s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
+<label class="check-inline"><input type="checkbox" name="transport_required" {% if agendamento.transport_required %}checked{% endif %}> Necessita Táxi Dog</label>
+<textarea name="observacoes">{{ agendamento.observacoes or '' }}</textarea><div class="actions"><button>Salvar alterações</button><a class="secondary-button" href="{{ url_for('agenda.agenda', referencia=agendamento.data_agendamento) }}">Voltar</a></div></form></div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}CRM Inteligente{% endblock %}
+{% block page_title %}CRM Inteligente{% endblock %}
+{% block page_subtitle %}Relacionamento, retornos, aniversários e campanhas{% endblock %}
+{% block content %}
+<form method="get" class="crm-filter"><label>Inativo após <input type="number" name="dias_inativos" value="{{ inactive_days }}" min="1"> dias</label><button>Atualizar</button></form>
+<section class="crm-metrics">
+<article><span>Clientes ativos</span><strong>{{ metrics.active_clients }}</strong></article>
+<article><span>Pets ativos</span><strong>{{ metrics.active_pets }}</strong></article>
+<article><span>Sem retorno</span><strong>{{ metrics.inactive_clients }}</strong></article>
+<article><span>Clientes VIP</span><strong>{{ metrics.vip_clients }}</strong></article>
+<article><span>Aniversários</span><strong>{{ metrics.birthdays }}</strong></article>
+<article><span>Vacinas em alerta</span><strong>{{ metrics.vaccine_alerts }}</strong></article>
+<article><span>Tarefas pendentes</span><strong>{{ metrics.pending_tasks }}</strong></article>
+</section>
+
+<div class="crm-grid">
+<section class="card"><h2>Nova tarefa</h2><form method="post" action="{{ url_for('crm.add_task') }}" class="form">
+<div class="form-grid-2"><select name="client_id"><option value="">Cliente</option>{% for c in clients %}<option value="{{ c.id }}">{{ c.nome }}</option>{% endfor %}</select>
+<select name="pet_id"><option value="">Pet</option>{% for p in pets %}<option value="{{ p.id }}">{{ p.nome }} · {{ p.client_name or 'Sem tutor' }}</option>{% endfor %}</select></div>
+<div class="form-grid-2"><select name="task_type"><option>Retorno</option><option>Campanha</option><option>Aniversário</option><option>Vacina</option><option>Pós-atendimento</option><option>Contato</option></select>
+<select name="priority"><option>Baixa</option><option selected>Média</option><option>Alta</option><option>Urgente</option></select></div>
+<input name="title" placeholder="Título" required><textarea name="message" placeholder="Mensagem ou observação"></textarea>
+<div class="form-grid-2"><input type="date" name="due_date" value="{{ today }}"><select name="contact_channel"><option>WhatsApp</option><option>Ligação</option><option>E-mail</option><option>Presencial</option></select></div>
+<button>Criar tarefa</button></form></section>
+
+<section class="card"><h2>Registrar contato</h2><form method="post" action="{{ url_for('crm.register_contact') }}" class="form">
+<div class="form-grid-2"><select name="client_id"><option value="">Cliente</option>{% for c in clients %}<option value="{{ c.id }}">{{ c.nome }}</option>{% endfor %}</select>
+<select name="pet_id"><option value="">Pet</option>{% for p in pets %}<option value="{{ p.id }}">{{ p.nome }} · {{ p.client_name or 'Sem tutor' }}</option>{% endfor %}</select></div>
+<div class="form-grid-2"><select name="channel"><option>WhatsApp</option><option>Ligação</option><option>E-mail</option><option>Presencial</option></select><input name="subject" placeholder="Assunto" required></div>
+<textarea name="message" placeholder="Mensagem enviada"></textarea><input name="result" placeholder="Resultado"><button>Registrar histórico</button></form></section>
+</div>
+
+<section class="card crm-section"><div class="section-head"><div><h2>Clientes sem retorno</h2><small>Sem atendimento há {{ inactive_days }} dias ou nunca atendidos.</small></div><span class="pill">{{ inactive_clients|length }}</span></div>
+<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Último atendimento</th><th>Tempo</th><th>Histórico</th><th>Ação</th></tr></thead><tbody>
+{% for i in inactive_clients %}<tr><td><a href="{{ url_for('clientes.visualizar_cliente', cliente_id=i.id) }}"><strong>{{ i.name }}</strong></a><br><small>{{ i.phone or 'Sem contato' }}</small></td>
+<td>{{ i.last_service or 'Nunca atendido' }}</td><td>{{ i.days_without_return ~ ' dias' if i.days_without_return is not none else 'Sem atendimento' }}</td>
+<td>{{ i.services_count }} serviços · R$ {{ '%.2f'|format(i.total_spent) }}</td><td>{% if i.whatsapp_url %}<a class="small-button" target="_blank" href="{{ i.whatsapp_url }}">WhatsApp</a>{% else %}Sem número{% endif %}</td></tr>
+{% else %}<tr><td colspan="5">Nenhum cliente nessa condição.</td></tr>{% endfor %}</tbody></table></div></section>
+
+<div class="crm-grid">
+<section class="card"><div class="section-head"><h2>Clientes VIP</h2><span class="pill">{{ vip_clients|length }}</span></div><div class="crm-list">
+{% for i in vip_clients %}<article><div><a href="{{ url_for('clientes.visualizar_cliente', cliente_id=i.id) }}"><strong>{{ i.name }}</strong></a><small>{{ i.services_count }} atendimentos · Ticket R$ {{ '%.2f'|format(i.average_ticket) }}</small></div><span>R$ {{ '%.2f'|format(i.total_spent) }}</span></article>{% else %}<p>Nenhum VIP identificado.</p>{% endfor %}</div></section>
+<section class="card"><div class="section-head"><h2>Aniversários de tutores</h2><span class="pill">{{ birthdays|length }}</span></div><div class="crm-list">
+{% for i in birthdays %}<article><div><strong>{{ i.name }}</strong><small>{{ i.next_date }} · em {{ i.days }} dia(s)</small></div>{% if i.whatsapp_url %}<a class="small-button" target="_blank" href="{{ i.whatsapp_url }}">Parabenizar</a>{% endif %}</article>{% else %}<p>Nenhum nos próximos 30 dias.</p>{% endfor %}</div></section>
+<section class="card"><div class="section-head"><h2>Aniversários dos pets</h2><span class="pill">{{ pet_birthdays|length }}</span></div><div class="crm-list">
+{% for i in pet_birthdays %}<article><div><a href="{{ url_for('pets.visualizar_pet', pet_id=i.pet_id) }}"><strong>{{ i.pet_name }}</strong></a><small>{{ i.client_name }} · {{ i.next_date }}</small></div>{% if i.whatsapp_url %}<a class="small-button" target="_blank" href="{{ i.whatsapp_url }}">Parabenizar</a>{% endif %}</article>{% else %}<p>Nenhum nos próximos 30 dias.</p>{% endfor %}</div></section>
+<section class="card"><div class="section-head"><h2>Alertas de vacina</h2><span class="pill">{{ vaccine_alerts|length }}</span></div><div class="crm-list">
+{% for i in vaccine_alerts %}<article><div><a href="{{ url_for('pets.visualizar_pet', pet_id=i.pet_id) }}"><strong>{{ i.pet_name }} · {{ i.vaccine }}</strong></a><small>{{ i.status }} · {{ i.due_date }}</small></div>{% if i.whatsapp_url %}<a class="small-button" target="_blank" href="{{ i.whatsapp_url }}">Avisar</a>{% endif %}</article>{% else %}<p>Nenhuma vacina em alerta.</p>{% endfor %}</div></section>
+</div>
+
+<section class="card crm-section"><div class="section-head"><h2>Tarefas CRM</h2><span class="pill">{{ tasks|length }}</span></div><div class="table-wrap"><table>
+<thead><tr><th>Status</th><th>Prazo</th><th>Tarefa</th><th>Cliente/Pet</th><th>Canal</th><th>Ação</th></tr></thead><tbody>
+{% for t in tasks %}<tr><td><span class="crm-status">{{ t.status }}</span></td><td>{{ t.due_date or '-' }}</td><td><strong>{{ t.title }}</strong><br><small>{{ t.task_type }} · {{ t.priority }}</small></td>
+<td>{{ t.client_name or '-' }}{% if t.pet_name %}<br><small>{{ t.pet_name }}</small>{% endif %}</td><td>{{ t.contact_channel }}</td><td>
+{% if t.status == 'Pendente' %}<form method="post" action="{{ url_for('crm.complete_task', task_id=t.id) }}" class="crm-complete"><input name="result" value="Contato realizado"><button class="small-button">Concluir</button></form>{% else %}<small>{{ t.completed_by or 'Sistema' }}<br>{{ t.completed_at or '' }}</small>{% endif %}</td></tr>
+{% else %}<tr><td colspan="6">Nenhuma tarefa.</td></tr>{% endfor %}</tbody></table></div></section>
+
+<section class="card crm-section"><div class="section-head"><h2>Histórico de contatos</h2><span class="pill">{{ contacts|length }}</span></div><div class="table-wrap"><table>
+<thead><tr><th>Data</th><th>Cliente/Pet</th><th>Canal</th><th>Assunto</th><th>Resultado</th><th>Usuário</th></tr></thead><tbody>
+{% for i in contacts %}<tr><td>{{ i.created_at }}</td><td>{{ i.client_name or '-' }}{% if i.pet_name %}<br><small>{{ i.pet_name }}</small>{% endif %}</td><td>{{ i.channel or '-' }}</td><td>{{ i.subject }}</td><td>{{ i.result or '-' }}</td><td>{{ i.user_name or '-' }}</td></tr>
+{% else %}<tr><td colspan="6">Nenhum contato registrado.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

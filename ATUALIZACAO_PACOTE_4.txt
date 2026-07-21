@@ -1,0 +1,24 @@
+PET & GATÔ BUSINESS V3 — PACOTE 4
+
+Módulos atualizados:
+- Estoque profissional: produtos, filtros, alertas, movimentações, custos, preço de venda, edição, arquivamento e CSV.
+- RH profissional: funcionários completos, cargos, salários, comissão, jornadas, ativação/inativação.
+- Jornadas: cadastro, edição, vínculo com equipe e proteção contra exclusão em uso.
+- Relógio de ponto: marcação manual, filtros, edição, exclusão, origem e observações.
+- Resumo do ponto: horas trabalhadas, saldo diário e ocorrências (falta, atestado, folga e férias).
+- Banco: novas tabelas e migrações automáticas para estoque e RH.
+- Correção do módulo Motorista incluída.
+
+Instalação:
+1. Faça backup da pasta atual.
+2. Extraia este pacote sobre D:\Relogio de ponto WEB\petegato_business_v3
+3. Rode: py -m pip install -r requirements.txt
+4. Rode: py main.py
+
+Testes sugeridos:
+/estoque
+/funcionarios
+/jornadas
+/ponto
+/rh/resumo-ponto
+/motorista

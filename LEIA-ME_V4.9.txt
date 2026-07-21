@@ -1,0 +1,24 @@
+PET & GATÔ BUSINESS V4.9 — RH ENTERPRISE
+
+RECURSOS:
+- Dashboard de RH
+- Apuração mensal de horas
+- Banco de horas
+- Férias e período aquisitivo
+- Adiantamentos, bônus, vales e descontos
+- Comissões mensais
+- Integração com faltas e atestados
+- Fechamento mensal por funcionário
+
+INSTALAÇÃO:
+1. Faça backup.
+2. Extraia sobre petegato_business_v3.
+3. Remova __pycache__.
+4. Execute: py main.py
+5. Acesse RH > Gestão de RH.
+
+
+CORREÇÃO DE COMPATIBILIDADE:
+- O projeto já possui modules/rh/ como pacote Python.
+- O blueprint rh_bp agora está em modules/rh/__init__.py.
+- O arquivo conflitante modules/rh.py não é utilizado.

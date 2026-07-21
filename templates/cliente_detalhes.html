@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}CRM do Cliente{% endblock %}
+{% block page_title %}CRM do Cliente{% endblock %}
+{% block page_subtitle %}Visão 360° do tutor{% endblock %}
+{% block content %}
+<div class="profile-hero card crm-hero">
+  <div class="profile-main">
+    {% if cliente.foto %}<img class="profile-avatar" src="{{ url_for('static', filename='uploads/clientes/' ~ cliente.foto) }}">{% else %}<div class="profile-avatar avatar-placeholder">👤</div>{% endif %}
+    <div>
+      <div class="title-row"><h2>{{ cliente.nome }}</h2>{% if cliente_vip %}<span class="badge vip-badge">VIP</span>{% endif %}</div>
+      <p>{{ cliente.tags or 'Cliente' }}</p>
+      <div class="actions no-print">
+        <a class="small-button" href="{{ url_for('clientes.editar_cliente', cliente_id=cliente.id) }}">Editar</a>
+        {% if cliente.whatsapp %}<a class="secondary-button" target="_blank" href="https://wa.me/55{{ cliente.whatsapp|replace('(','')|replace(')','')|replace('-','')|replace(' ','') }}">WhatsApp</a>{% endif %}
+        <button type="button" class="secondary-button" onclick="window.print()">Imprimir CRM</button>
+      </div>
+    </div>
+  </div>
+  <div class="profile-contact">
+    <p><b>Telefone:</b> {{ cliente.telefone or '-' }}</p><p><b>E-mail:</b> {{ cliente.email or '-' }}</p>
+    <p><b>Endereço:</b> {{ cliente.endereco or '-' }}</p><p><b>Emergência:</b> {{ cliente.contato_emergencia or '-' }}</p><p><b>Nascimento:</b> {{ cliente.data_nascimento or '-' }}{% if idade_cliente is not none %} · {{ idade_cliente }} anos{% endif %}</p><p><b>Origem:</b> {{ cliente.origem_cadastro or '-' }} · <b>Preferência:</b> {{ cliente.canal_preferido or '-' }}</p>
+  </div>
+</div>
+
+<div class="cards executive-cards crm-kpis">
+  <div class="card metric primary-metric"><span>Total gasto</span><strong>R$ {{ '%.2f'|format(financeiro.total_gasto or 0) }}</strong><small>{{ financeiro.total_atendimentos or 0 }} atendimentos</small></div>
+  <div class="card metric"><span>Ticket médio</span><strong>R$ {{ '%.2f'|format(financeiro.ticket_medio or 0) }}</strong><small>média por atendimento</small></div>
+  <div class="card metric"><span>Banhos / Tosas</span><strong>{{ financeiro.total_banhos or 0 }} / {{ financeiro.total_tosas or 0 }}</strong><small>serviços realizados</small></div>
+  <div class="card metric"><span>Dias sem retornar</span><strong>{{ dias_sem_retornar if dias_sem_retornar is not none else '-' }}</strong><small>último: {{ financeiro.ultimo_atendimento or '-' }}</small></div>
+</div>
+
+{% if alertas_crm %}<div class="smart-alerts">{% for alerta in alertas_crm %}<div class="smart-alert {{ alerta.tipo }}"><span>⚠️</span><div><b>{{ alerta.titulo }}</b><small>{{ alerta.detalhe }}</small></div></div>{% endfor %}</div>{% endif %}
+
+<div class="relationship-strip card">
+  <div><span>Nível de relacionamento</span><strong>{{ nivel_relacionamento }}</strong></div>
+  <div><span>Frequência média</span><strong>{{ frequencia_media ~ ' dias' if frequencia_media else '-' }}</strong></div>
+  <div><span>Previsão de retorno</span><strong>{{ previsao_retorno or '-' }}</strong></div>
+  <div><span>Situação</span><strong class="return-status {{ status_retorno|lower|replace(' ', '-') }}">{{ status_retorno }}</strong></div>
+</div>
+
+<div class="cards compact-kpis crm-quality-kpis"><div class="card mini-kpi"><span>Score de relacionamento</span><strong>{{ score_relacionamento }}/100</strong></div><div class="card mini-kpi"><span>Comparecimento</span><strong>{{ taxa_comparecimento }}%</strong></div><div class="card mini-kpi"><span>Cancelamentos</span><strong>{{ cancelamentos }}</strong></div><div class="card mini-kpi"><span>Marketing</span><strong>{{ 'Autorizado' if cliente.consentimento_marketing else 'Não autorizado' }}</strong></div></div>
+
+<div class="cards compact-kpis">
+  <div class="card mini-kpi"><span>Pets ativos</span><strong>{{ pets|length }}</strong></div>
+  <div class="card mini-kpi"><span>Táxi Dog</span><strong>{{ transportes|length }}</strong></div>
+  <div class="card mini-kpi"><span>Pendências</span><strong>R$ {{ '%.2f'|format(pendencias.valor or 0) }}</strong></div>
+  <div class="card mini-kpi"><span>Próximo agendamento</span><strong class="mini-date">{{ proximo_agendamento.data_agendamento if proximo_agendamento else '-' }}</strong></div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <div class="section-head"><h2>Pets vinculados</h2><a class="secondary-button no-print" href="{{ url_for('pets.pets') }}">Novo pet</a></div>
+    <div class="pet-grid">{% for p in pets %}<a class="pet-tile" href="{{ url_for('pets.visualizar_pet', pet_id=p.id) }}">{% if p.foto %}<img src="{{ url_for('static', filename='uploads/pets/' ~ p.foto) }}">{% else %}<span>🐾</span>{% endif %}<strong>{{ p.nome }}</strong><small>{{ p.raca or p.especie or '-' }}</small></a>{% else %}<p>Nenhum pet vinculado.</p>{% endfor %}</div>
+  </div>
+  <div class="card">
+    <h2>Próximo compromisso</h2>
+    {% if proximo_agendamento %}<div class="next-appointment"><strong>{{ proximo_agendamento.data_agendamento }} às {{ proximo_agendamento.horario }}</strong><span>{{ proximo_agendamento.pet_nome }} · {{ proximo_agendamento.servico }}</span><span class="status-badge">{{ proximo_agendamento.status }}</span></div>{% else %}<div class="empty-state">Nenhum agendamento futuro.</div>{% endif %}
+    <h2 style="margin-top:22px">Dados do cliente</h2><p><b>CPF/CNPJ:</b> {{ cliente.cpf or '-' }}</p><p><b>WhatsApp:</b> {{ cliente.whatsapp or '-' }}</p><p><b>Observações:</b> {{ cliente.observacoes or '-' }}</p>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Anotações</h2>
+    <form method="post" class="form compact-form no-print" action="{{ url_for('clientes.adicionar_anotacao', cliente_id=cliente.id) }}"><textarea name="observacao" placeholder="Nova anotação" required></textarea><button>Adicionar</button></form>
+    <div class="timeline">{% for n in notas %}<div><div class="timeline-head"><b>{{ n.usuario or 'Sistema' }}</b><form class="no-print" method="post" action="{{ url_for('clientes.excluir_anotacao', cliente_id=cliente.id, item_id=n.id) }}"><button class="link-danger">Excluir</button></form></div><small>{{ n.created_at }}</small><p>{{ n.observacao }}</p></div>{% else %}<p>Nenhuma anotação.</p>{% endfor %}</div>
+  </div>
+  <div class="card">
+    <h2>Documentos</h2>
+    <form method="post" enctype="multipart/form-data" class="form compact-form no-print" action="{{ url_for('clientes.adicionar_documento', cliente_id=cliente.id) }}"><input name="nome" placeholder="Nome"><input name="tipo" placeholder="Tipo"><input type="file" name="arquivo" required><button>Enviar</button></form>
+    <ul class="file-list">{% for d in documentos %}<li><div><a target="_blank" href="{{ url_for('static', filename='uploads/documentos/' ~ d.arquivo) }}">{{ d.nome or d.arquivo }}</a><small>{{ d.tipo or '' }}</small></div><form class="no-print" method="post" action="{{ url_for('clientes.excluir_documento', cliente_id=cliente.id, item_id=d.id) }}"><button class="link-danger">Excluir</button></form></li>{% else %}<li>Nenhum documento.</li>{% endfor %}</ul>
+  </div>
+</div>
+
+<div class="card client-gallery-card">
+  <div class="section-head"><h2>Galeria do cliente</h2><span class="pill">{{ fotos|length }}</span></div>
+  <form method="post" enctype="multipart/form-data" class="form compact-form no-print" action="{{ url_for('clientes.adicionar_foto', cliente_id=cliente.id) }}"><div class="form-grid-2"><select name="categoria"><option>Geral</option><option>Perfil</option><option>Família</option><option>Documentação</option><option>Outros</option></select><input name="descricao" placeholder="Descrição"></div><input type="file" name="arquivo" accept="image/*" required><button>Adicionar foto</button></form>
+  <div class="client-gallery">{% for foto in fotos %}<figure><a target="_blank" href="{{ url_for('static', filename='uploads/clientes/galeria/' ~ foto.arquivo) }}"><img src="{{ url_for('static', filename='uploads/clientes/galeria/' ~ foto.arquivo) }}"></a><figcaption><b>{{ foto.categoria or 'Geral' }}</b><small>{{ foto.descricao or '' }}</small><form class="no-print" method="post" action="{{ url_for('clientes.excluir_foto', cliente_id=cliente.id, item_id=foto.id) }}"><button class="link-danger">Excluir</button></form></figcaption></figure>{% else %}<div class="empty-state">Nenhuma foto na galeria.</div>{% endfor %}</div>
+</div>
+
+<div class="dashboard-grid crm-intelligence">
+  <div class="card">
+    <h2>Serviços preferidos</h2>
+    <div class="ranking-list">{% for item in ranking_servicos %}<div><span>{{ item.nome }}</span><strong>{{ item.quantidade }}</strong></div>{% else %}<div class="empty-state">Sem histórico suficiente.</div>{% endfor %}</div>
+  </div>
+  <div class="card">
+    <h2>Evolução de gastos</h2>
+    <div class="spend-bars">{% for item in gastos_mensais %}<div class="spend-row"><span>{{ item.mes }}</span><div><i style="width:{{ item.percentual }}%"></i></div><strong>R$ {{ '%.2f'|format(item.valor) }}</strong></div>{% else %}<div class="empty-state">Sem movimentação.</div>{% endfor %}</div>
+  </div>
+</div>
+
+<div class="dashboard-grid">
+  <div class="card">
+    <h2>Linha do tempo</h2>
+    <div class="crm-timeline">{% for item in timeline %}<div class="crm-event"><span class="event-icon">{{ item.icone }}</span><div><b>{{ item.titulo }}</b><small>{{ item.data }} · {{ item.tipo }}</small><p>{{ item.detalhe }}</p></div></div>{% else %}<div class="empty-state">Nenhum evento registrado.</div>{% endfor %}</div>
+  </div>
+  <div class="card">
+    <h2>Pendências financeiras</h2>
+    <div class="finance-summary"><strong>R$ {{ '%.2f'|format(pendencias.valor or 0) }}</strong><small>{{ pendencias.quantidade or 0 }} lançamento(s)</small></div>
+    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Descrição</th><th>Status</th><th>Valor</th></tr></thead><tbody>{% for t in transacoes %}<tr><td>{{ t.transaction_date or '-' }}</td><td>{{ t.description or '-' }}</td><td>{{ t.status or '-' }}</td><td>R$ {{ '%.2f'|format(t.amount or 0) }}</td></tr>{% else %}<tr><td colspan="4">Sem lançamentos vinculados.</td></tr>{% endfor %}</tbody></table></div>
+  </div>
+</div>
+
+<div class="card"><h2>Histórico de atendimentos</h2><div class="table-wrap"><table><thead><tr><th>Data</th><th>Pet</th><th>Serviço</th><th>Profissional</th><th>Valor</th><th>Status</th></tr></thead><tbody>{% for h in historico %}<tr><td>{{ h.data }}</td><td>{{ h.pet_nome }}</td><td>{{ h.servico }}</td><td>{{ h.profissional_nome or '-' }}</td><td>R$ {{ '%.2f'|format(h.valor or 0) }}</td><td>{{ h.status }}</td></tr>{% else %}<tr><td colspan="6">Sem atendimentos.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

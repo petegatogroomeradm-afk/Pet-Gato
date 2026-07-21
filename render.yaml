@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: petegato-business
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:app --workers 2 --threads 4 --timeout 120 --access-logfile - --error-logfile -
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: petegato-postgres
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: 3.13.5
+    disk:
+      name: petegato-uploads
+      mountPath: /opt/render/project/src/static/uploads
+      sizeGB: 1
+
+databases:
+  - name: petegato-postgres
+    plan: basic-256mb
+    databaseName: petegato
+    user: petegato

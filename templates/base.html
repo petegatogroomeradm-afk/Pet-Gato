@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#5b21b6">
+<title>{% block title %}Pet & Gatô Business{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/rh.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/crm.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/fidelidade.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/enterprise.css') }}">
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<div class="mobile-overlay" id="mobile-overlay" hidden></div>
+<div class="layout" id="app-layout">
+    <aside class="sidebar" id="app-sidebar">
+        <div class="brand">
+            <div class="brand-icon">🐾</div>
+            <div class="brand-copy">
+                <strong>Pet & Gatô</strong>
+                <span>Business V5.2.2</span>
+            </div>
+            <button class="sidebar-close" id="sidebar-close" type="button" aria-label="Fechar menu">×</button>
+        </div>
+
+        {% if session.get('user_id') %}
+        {% set ep = request.endpoint or '' %}
+        <nav class="menu" aria-label="Navegação principal">
+            <a class="{{ 'active' if ep == 'dashboard' else '' }}" href="{{ url_for('dashboard') }}"><span class="menu-icon">🏠</span><span class="menu-label">Dashboard</span></a>
+
+            <div class="menu-title"><span>Pet Shop</span></div>
+            <a class="{{ 'active' if ep.startswith('clientes.') else '' }}" href="{{ url_for('clientes.clientes') }}"><span class="menu-icon">👥</span><span class="menu-label">Clientes</span></a>
+            <a class="{{ 'active' if ep.startswith('crm.') else '' }}" href="{{ url_for('crm.dashboard') }}"><span class="menu-icon">🎯</span><span class="menu-label">CRM Inteligente</span></a>
+            <a class="{{ 'active' if ep.startswith('fidelidade.') else '' }}" href="{{ url_for('fidelidade.dashboard') }}"><span class="menu-icon">🏆</span><span class="menu-label">Fidelização</span></a>
+            <a class="{{ 'active' if ep.startswith('pets.') else '' }}" href="{{ url_for('pets.pets') }}"><span class="menu-icon">🐶</span><span class="menu-label">Pets</span></a>
+            <a class="{{ 'active' if ep.startswith('agenda.') else '' }}" href="{{ url_for('agenda.agenda') }}"><span class="menu-icon">📅</span><span class="menu-label">Agenda</span></a>
+            <a class="{{ 'active' if ep.startswith('banho_tosa.') else '' }}" href="{{ url_for('banho_tosa.banho_tosa') }}"><span class="menu-icon">🚿</span><span class="menu-label">Banho e Tosa</span></a>
+
+            <div class="menu-title"><span>Equipe e RH</span></div>
+            <a class="{{ 'active' if ep.startswith('ponto.') else '' }}" href="{{ url_for('ponto.ponto') }}"><span class="menu-icon">🕒</span><span class="menu-label">Relógio de Ponto</span></a>
+            <a class="{{ 'active' if ep.startswith('funcionarios.') else '' }}" href="{{ url_for('funcionarios.funcionarios') }}"><span class="menu-icon">👔</span><span class="menu-label">Funcionários</span></a>
+            <a class="{{ 'active' if ep.startswith('jornadas.') else '' }}" href="{{ url_for('jornadas.jornadas') }}"><span class="menu-icon">📋</span><span class="menu-label">Jornadas</span></a>
+            <a class="{{ 'active' if ep.startswith('resumo_ponto.') else '' }}" href="{{ url_for('resumo_ponto.resumo_ponto') }}"><span class="menu-icon">🧮</span><span class="menu-label">Resumo de Ponto</span></a>
+            <a class="{{ 'active' if ep.startswith('rh.') else '' }}" href="{{ url_for('rh.gestao') }}"><span class="menu-icon">📊</span><span class="menu-label">Gestão de RH</span></a>
+
+            <div class="menu-title"><span>Gestão</span></div>
+            <a class="{{ 'active' if ep.startswith('relatorios.') else '' }}" href="{{ url_for('relatorios.relatorios') }}"><span class="menu-icon">📈</span><span class="menu-label">Relatórios Gerais</span></a>
+            <a class="{{ 'active' if ep.startswith('financeiro.') else '' }}" href="{{ url_for('financeiro.financeiro') }}"><span class="menu-icon">💰</span><span class="menu-label">Financeiro</span></a>
+            <a class="{{ 'active' if ep.startswith('estoque.') else '' }}" href="{{ url_for('estoque.estoque') }}"><span class="menu-icon">📦</span><span class="menu-label">Estoque</span></a>
+            <a class="{{ 'active' if ep.startswith('motorista.') else '' }}" href="{{ url_for('motorista.motorista') }}"><span class="menu-icon">🚗</span><span class="menu-label">Motorista</span></a>
+            <a class="{{ 'active' if ep.startswith('configuracoes.') else '' }}" href="{{ url_for('configuracoes.configuracoes') }}"><span class="menu-icon">⚙️</span><span class="menu-label">Configurações</span></a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="sidebar-collapse" id="sidebar-collapse" type="button" aria-label="Recolher menu">
+                <span class="collapse-icon">‹</span><span class="menu-label">Recolher menu</span>
+            </button>
+        </div>
+        {% endif %}
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <div class="topbar-heading">
+                <button class="mobile-menu-trigger" id="mobile-menu-trigger" type="button" aria-label="Abrir menu">☰</button>
+                <div>
+                    <h1>{% block page_title %}Pet & Gatô Business{% endblock %}</h1>
+                    <p>{% block page_subtitle %}Gestão completa em uma única plataforma{% endblock %}</p>
+                </div>
+            </div>
+
+            {% if session.get('user_id') %}
+            <div class="topbar-actions">
+                <button class="global-search-trigger" id="global-search-trigger" type="button">
+                    <span>🔎</span><span class="search-label">Buscar no sistema</span><kbd>Ctrl K</kbd>
+                </button>
+
+                <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Alternar tema">
+                    <span class="theme-icon">🌙</span>
+                </button>
+
+                <div class="notification-shell">
+                    <button class="notification-trigger" id="notification-trigger" type="button" aria-label="Abrir notificações">
+                        🔔<span id="notification-count" hidden>0</span>
+                    </button>
+                    <aside class="notification-panel" id="notification-panel" hidden>
+                        <header>
+                            <div><strong>Central de notificações</strong><small>Itens que precisam de atenção</small></div>
+                            <button type="button" id="notification-close">×</button>
+                        </header>
+                        <div class="notification-list" id="notification-list"><p class="empty-state">Carregando notificações...</p></div>
+                    </aside>
+                </div>
+
+                <div class="user-box">
+                    <span class="user-avatar">{{ (session.get('user_name') or 'U')[0]|upper }}</span>
+                    <div class="user-copy"><strong>{{ session.get('user_name') }}</strong><small>Usuário conectado</small></div>
+                    <a href="{{ url_for('logout') }}" title="Sair">↪</a>
+                </div>
+            </div>
+            {% endif %}
+        </header>
+
+        <section class="content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-stack">
+                    {% for cat,msg in messages %}<div class="alert {{ cat }}">{{ msg }}</div>{% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </section>
+    </main>
+</div>
+
+{% if session.get('user_id') %}
+<div class="global-search-modal" id="global-search-modal" hidden>
+    <div class="global-search-backdrop" data-close-global-search></div>
+    <section class="global-search-dialog" role="dialog" aria-modal="true" aria-label="Busca global">
+        <header><span>🔎</span><input id="global-search-input" type="search" placeholder="Pesquise cliente, pet, funcionário, produto ou agenda..." autocomplete="off"><kbd>Esc</kbd></header>
+        <div id="global-search-results" class="global-search-results"><p class="empty-state">Digite pelo menos duas letras para pesquisar.</p></div>
+    </section>
+</div>
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/global_ui.js') }}"></script>
+<script src="{{ url_for('static', filename='js/enterprise_ui.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

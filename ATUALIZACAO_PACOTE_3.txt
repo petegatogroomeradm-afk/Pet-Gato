@@ -1,0 +1,32 @@
+PET & GATÔ BUSINESS V3 — PACOTE 3
+MOTORISTA + FINANCEIRO
+
+MOTORISTA
+- Dashboard diário de coletas, entregas, andamento e finalizadas
+- Cadastro com motorista, telefones, endereços, horários, valor e distância
+- Filtros por data, status, motorista e busca
+- Fluxos próprios para coleta, entrega e coleta/entrega
+- Botão avançar status
+- Edição e exclusão
+- Links para WhatsApp e Google Maps
+- Integração com agendamentos que exigem transporte
+- Receita de Táxi Dog gerada ao finalizar/entregar, sem duplicidade
+
+FINANCEIRO
+- Entradas, saídas, contas a pagar e receber
+- Status Pago, Pendente, Vencido e Cancelado
+- Data do lançamento e vencimento
+- Formas de pagamento, conta, referência e observações
+- Filtros por mês, tipo, status, categoria e busca
+- Resumo de entradas, saídas, saldo, a receber e a pagar
+- Edição, alteração rápida de status e exclusão
+- Exportação CSV
+- Origem automática de Banho e Tosa e Transporte
+- Controle anti-duplicidade por origem
+
+INSTALAÇÃO
+1. Faça backup da pasta atual.
+2. Extraia este ZIP sobre petegato_business_v3.
+3. Rode: py -m pip install -r requirements.txt
+4. Rode: py main.py
+5. Teste /motorista e /financeiro.

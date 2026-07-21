@@ -1,0 +1,5 @@
+PET & GATÔ BUSINESS V5.0.1 — CRM INTELIGENTE
+
+Inclui clientes sem retorno, clientes VIP, aniversários, alertas de vacina, tarefas CRM, histórico de contatos e mensagens prontas para WhatsApp.
+
+Instalação: faça backup, extraia o ZIP completo como petegato_business_v3, remova __pycache__ e execute py main.py.

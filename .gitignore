@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.sqlite
+*.db-journal
+
+# Ambiente virtual
+.venv/
+venv/
+env/
+
+# Variáveis de ambiente
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Uploads (se desejar manter fora do Git)
+static/uploads/
+
+# Backups
+backup/
+backups/
+
+# Sistema
+Thumbs.db
+Desktop.ini
+.DS_Store

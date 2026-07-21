@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% block title %}Agenda Enterprise{% endblock %}
+{% block page_title %}Agenda Enterprise{% endblock %}
+{% block page_subtitle %}Calendário operacional, bloqueios, ocupação e lista de espera{% endblock %}
+{% block content %}
+
+<div class="cards agenda-enterprise-kpis">
+  <div class="card metric"><span>Agendamentos</span><strong>{{ resumo.total or 0 }}</strong></div>
+  <div class="card metric"><span>Confirmados</span><strong>{{ resumo.confirmados or 0 }}</strong></div>
+  <div class="card metric"><span>Em atendimento</span><strong>{{ resumo.em_atendimento or 0 }}</strong></div>
+  <div class="card metric"><span>Valor previsto</span><strong>R$ {{ '%.2f'|format(resumo.valor_previsto or 0) }}</strong></div>
+</div>
+
+<div class="card agenda-enterprise-toolbar">
+  <div class="agenda-nav">
+    <a class="icon-button" href="{{ url_for('agenda.agenda', modo=modo, referencia=anterior, status=status_filtro, employee_id=funcionario_filtro, busca=busca) }}" aria-label="Anterior">‹</a>
+    <a class="secondary-button" href="{{ url_for('agenda.agenda', modo=modo) }}">Hoje</a>
+    <a class="icon-button" href="{{ url_for('agenda.agenda', modo=modo, referencia=proximo, status=status_filtro, employee_id=funcionario_filtro, busca=busca) }}" aria-label="Próximo">›</a>
+    <div>
+      <strong class="agenda-period-title">
+        {% if modo == 'dia' %}{{ inicio.strftime('%d/%m/%Y') }}
+        {% elif modo == 'semana' %}{{ inicio.strftime('%d/%m') }} — {{ fim.strftime('%d/%m/%Y') }}
+        {% else %}{{ referencia[5:7] }}/{{ referencia[:4] }}{% endif %}
+      </strong>
+      <small>Arraste um compromisso para reagendar</small>
+    </div>
+  </div>
+
+  <div class="view-switch agenda-view-switch">
+    <a class="secondary-button {% if modo=='dia' %}active{% endif %}" href="{{ url_for('agenda.agenda', modo='dia', referencia=referencia) }}">Dia</a>
+    <a class="secondary-button {% if modo=='semana' %}active{% endif %}" href="{{ url_for('agenda.agenda', modo='semana', referencia=referencia) }}">Semana</a>
+    <a class="secondary-button {% if modo=='mes' %}active{% endif %}" href="{{ url_for('agenda.agenda', modo='mes', referencia=referencia) }}">Mês</a>
+  </div>
+
+  <form method="get" class="agenda-enterprise-filters">
+    <input type="hidden" name="modo" value="{{ modo }}">
+    <input type="date" name="referencia" value="{{ referencia }}">
+    <select name="employee_id">
+      <option value="">Todos os profissionais</option>
+      {% for e in funcionarios %}<option value="{{ e.id }}" {% if funcionario_filtro|string == e.id|string %}selected{% endif %}>{{ e.name }}</option>{% endfor %}
+    </select>
+    <select name="status">
+      <option value="">Todos os status</option>
+      {% for s in status_lista %}<option value="{{ s }}" {% if status_filtro==s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+    </select>
+    <input name="busca" value="{{ busca }}" placeholder="Tutor, pet ou serviço">
+    <button>Filtrar</button>
+  </form>
+</div>
+
+<div class="agenda-enterprise-layout">
+  <section class="agenda-calendar-card card">
+    {% if modo == 'mes' %}
+      <div class="month-weekdays">
+        {% for nome in ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'] %}<span>{{ nome }}</span>{% endfor %}
+      </div>
+      <div class="month-grid">
+        {% for dia in calendario %}
+          <div class="month-day drop-zone {% if dia.is_today %}today{% endif %} {% if not dia.is_current_month %}outside-month{% endif %}" data-date="{{ dia.iso }}" data-time="09:00">
+            <header>
+              <a href="{{ url_for('agenda.agenda', modo='dia', referencia=dia.iso) }}">{{ dia.date.day }}</a>
+              <span>{{ dia.events|length }}</span>
+            </header>
+            <div class="month-events">
+              {% for b in dia.blocks %}
+                <div class="calendar-block" title="{{ b.title or b.block_type }}">🔒 {{ b.start_time }} {{ b.title or b.block_type }}</div>
+              {% endfor %}
+              {% for a in dia.events[:4] %}
+                <article class="calendar-event event-{{ a.status|lower|replace(' ','-')|replace('ã','a')|replace('ç','c') }}" draggable="true" data-id="{{ a.id }}" data-duration="{{ a.duration_minutes or 60 }}">
+                  <strong>{{ a.horario }} · {{ a.pet_nome }}</strong>
+                  <small>{{ a.servico }}{% if a.funcionario_nome %} · {{ a.funcionario_nome }}{% endif %}</small>
+                </article>
+              {% endfor %}
+              {% if dia.events|length > 4 %}<a class="more-events" href="{{ url_for('agenda.agenda', modo='dia', referencia=dia.iso) }}">+{{ dia.events|length - 4 }} mais</a>{% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="time-calendar {% if modo == 'dia' %}single-day{% endif %}">
+        <div class="time-corner"></div>
+        {% for dia in calendario %}
+          <div class="time-day-head {% if dia.is_today %}today{% endif %}">
+            <small>{{ ['SEG','TER','QUA','QUI','SEX','SÁB','DOM'][dia.date.weekday()] }}</small>
+            <strong>{{ dia.date.strftime('%d/%m') }}</strong>
+          </div>
+        {% endfor %}
+
+        {% for hora in horas %}
+          <div class="time-label">{{ hora }}</div>
+          {% for dia in calendario %}
+            <div class="time-slot drop-zone" data-date="{{ dia.iso }}" data-time="{{ hora }}">
+              {% for b in dia.blocks if b.start_time[:2] == hora[:2] %}
+                <div class="calendar-block" title="{{ b.notes or '' }}">🔒 {{ b.title or b.block_type }}</div>
+              {% endfor %}
+              {% for a in dia.events if a.horario[:2] == hora[:2] %}
+                <article class="calendar-event event-{{ a.status|lower|replace(' ','-')|replace('ã','a')|replace('ç','c') }}" draggable="true" data-id="{{ a.id }}" data-duration="{{ a.duration_minutes or 60 }}">
+                  <strong>{{ a.horario }} · {{ a.pet_nome }}</strong>
+                  <small>{{ a.servico }}</small>
+                  <small>{{ a.funcionario_nome or 'Sem profissional' }}</small>
+                  <div class="calendar-event-actions">
+                    <a href="{{ url_for('agenda.editar_agendamento', agendamento_id=a.id) }}">Editar</a>
+                    {% if a.status not in ['Finalizado','Cancelado'] %}
+                    <form method="post" action="{{ url_for('agenda.iniciar_atendimento', agendamento_id=a.id) }}"><button>Iniciar</button></form>
+                    {% endif %}
+                  </div>
+                </article>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        {% endfor %}
+      </div>
+    {% endif %}
+  </section>
+
+  <aside class="agenda-enterprise-sidebar">
+    <details class="card agenda-panel" open>
+      <summary>Novo agendamento</summary>
+      <form method="post" class="form compact-form">
+        <select name="client_id" id="agenda-client" required><option value="">Tutor</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nome }}</option>{% endfor %}</select>
+        <select name="pet_id" id="agenda-pet" required><option value="">Pet</option>{% for p in pets %}<option value="{{ p.id }}" data-client="{{ p.client_id }}">{{ p.nome }} — {{ p.cliente_nome }}</option>{% endfor %}</select>
+        <div class="form-grid-2"><input type="date" name="data" value="{{ referencia }}" required><input type="time" name="hora" required></div>
+        <select name="servico" required><option value="">Serviço</option>{% for s in servicos %}<option>{{ s }}</option>{% endfor %}</select>
+        <div class="form-grid-2"><input type="number" name="duration_minutes" value="60" min="15" step="15"><input name="valor" placeholder="Valor"></div>
+        <select name="employee_id"><option value="">Profissional</option>{% for e in funcionarios %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select>
+        <select name="status">{% for s in status_lista %}<option>{{ s }}</option>{% endfor %}</select>
+        <label class="check-inline"><input type="checkbox" name="transport_required"> Necessita Táxi Dog</label>
+        <textarea name="observacoes" placeholder="Observações"></textarea>
+        <button>Criar agendamento</button>
+      </form>
+    </details>
+
+    <details class="card agenda-panel">
+      <summary>Bloquear horário</summary>
+      <form method="post" class="form compact-form" action="{{ url_for('agenda.adicionar_bloqueio') }}">
+        <select name="employee_id"><option value="">Toda a equipe</option>{% for e in funcionarios %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select>
+        <input type="date" name="block_date" value="{{ referencia }}" required>
+        <div class="form-grid-2"><input type="time" name="start_time" required><input type="time" name="end_time" required></div>
+        <select name="block_type"><option>Bloqueio</option><option>Almoço</option><option>Folga</option><option>Feriado</option><option>Reunião</option></select>
+        <input name="title" placeholder="Título">
+        <textarea name="notes" placeholder="Observações"></textarea>
+        <button>Bloquear</button>
+      </form>
+      {% if bloqueios %}
+      <div class="compact-list">
+        {% for b in bloqueios %}
+        <div><span>🔒 {{ b.block_date }} {{ b.start_time }}–{{ b.end_time }}<small>{{ b.funcionario_nome or 'Toda equipe' }} · {{ b.title or b.block_type }}</small></span><form method="post" action="{{ url_for('agenda.excluir_bloqueio', block_id=b.id) }}"><button class="link-danger">Remover</button></form></div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </details>
+
+    <details class="card agenda-panel">
+      <summary>Lista de espera <span class="pill">{{ espera|length }}</span></summary>
+      <form method="post" class="form compact-form" action="{{ url_for('agenda.adicionar_espera') }}">
+        <select name="client_id" id="wait-client" required><option value="">Tutor</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nome }}</option>{% endfor %}</select>
+        <select name="pet_id" id="wait-pet" required><option value="">Pet</option>{% for p in pets %}<option value="{{ p.id }}" data-client="{{ p.client_id }}">{{ p.nome }}</option>{% endfor %}</select>
+        <input type="date" name="preferred_date">
+        <div class="form-grid-2"><select name="preferred_period"><option>Qualquer</option><option>Manhã</option><option>Tarde</option></select><input type="number" name="priority" min="0" max="10" value="0" title="Prioridade"></div>
+        <select name="service"><option value="">Serviço</option>{% for s in servicos %}<option>{{ s }}</option>{% endfor %}</select>
+        <textarea name="notes" placeholder="Preferências"></textarea>
+        <button>Adicionar à espera</button>
+      </form>
+      <div class="compact-list">
+        {% for w in espera %}
+        <div><span><b>{{ w.pet_nome }}</b> — {{ w.cliente_nome }}<small>{{ w.preferred_date or 'Sem data' }} · {{ w.preferred_period or 'Qualquer' }} · {{ w.service or 'Serviço aberto' }}</small></span><form method="post" action="{{ url_for('agenda.remover_espera', wait_id=w.id) }}"><button class="link-danger">Remover</button></form></div>
+        {% else %}<p class="muted">Lista de espera vazia.</p>{% endfor %}
+      </div>
+    </details>
+
+    <div class="card agenda-panel">
+      <h3>Ocupação da equipe</h3>
+      <div class="occupancy-list">
+        {% for o in ocupacao %}
+        {% set pct = [((o.minutos or 0) / 480 * 100), 100]|min %}
+        <div><span><b>{{ o.name }}</b><small>{{ o.atendimentos or 0 }} atendimentos · {{ '%.1f'|format((o.minutos or 0)/60) }}h</small></span><div class="occupancy-bar"><i style="width:{{ pct }}%"></i></div></div>
+        {% else %}<p class="muted">Nenhum profissional ativo.</p>{% endfor %}
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div id="agenda-toast" class="agenda-toast" role="status"></div>
+<script>window.AGENDA_MOVE_URL = "{{ url_for('agenda.mover_agendamento', agendamento_id=0) }}";</script>
+<script src="{{ url_for('static', filename='js/agenda.js') }}"></script>
+{% endblock %}

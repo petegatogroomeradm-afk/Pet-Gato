@@ -1,0 +1,21 @@
+SPRINT 7.2.1 — INTELIGÊNCIA DO CRM E RETENÇÃO
+
+Incluído:
+- nível de relacionamento Bronze/Prata/Ouro;
+- frequência média de retorno;
+- previsão de próximo retorno;
+- alertas de cliente inativo, pendência e falta de agenda;
+- ranking de serviços preferidos;
+- evolução de gastos dos últimos meses;
+- alertas clínicos do pet;
+- variação de peso;
+- situação de retorno;
+- resumo de vacinas vencidas/próximas;
+- fotos, documentos e financeiro incorporados à timeline.
+
+Arquivos alterados:
+services/cliente_service.py
+services/pet_service.py
+templates/cliente_detalhes.html
+templates/pet_detalhes.html
+static/css/style.css

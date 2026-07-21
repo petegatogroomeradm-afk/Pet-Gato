@@ -1,0 +1,27 @@
+PET & GATÔ BUSINESS V4.4 — AGENDA ENTERPRISE
+
+Arquivos alterados:
+- database.py
+- modules/agenda.py
+- services/agenda_service.py
+- templates/agenda.html
+- static/css/style.css
+- static/js/agenda.js
+
+Principais recursos:
+- visual diário, semanal e mensal
+- navegação anterior/hoje/próximo
+- reagendamento por arrastar e soltar
+- conflito por sobreposição de horário
+- bloqueios de almoço, folga, feriado, reunião e outros
+- lista de espera
+- ocupação da equipe
+- filtros por profissional, status e busca
+- integração com Banho e Tosa preservada
+
+Instalação:
+1. Faça backup do projeto.
+2. Extraia este ZIP sobre a pasta petegato_business_v3.
+3. Limpe os __pycache__.
+4. Execute: py main.py
+5. Abra: http://127.0.0.1:5000/agenda

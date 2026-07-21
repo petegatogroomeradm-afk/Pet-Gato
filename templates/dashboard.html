@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Enterprise{% endblock %}
+{% block page_title %}Dashboard Enterprise{% endblock %}
+{% block page_subtitle %}Gestão inteligente da operação em tempo real{% endblock %}
+
+{% block content %}
+<div id="enterprise-dashboard" data-api="{{ url_for('dashboard_api') }}">
+    <section class="enterprise-hero">
+        <div>
+            <span class="eyebrow">Pet & Gatô Business V5.2.1</span>
+            <h2>{{ saudacao }}, {{ session.get('user_name', 'Administrador') }}</h2>
+            <p>Veja o desempenho financeiro, operacional e os alertas que precisam da sua atenção.</p>
+        </div>
+        <div class="enterprise-status">
+            <span class="live-dot"></span>
+            <div>
+                <strong>Sistema atualizado</strong>
+                <small id="dashboard-updated">{{ gerado_em }}</small>
+            </div>
+            <button class="icon-button" id="refresh-dashboard" type="button" title="Atualizar painel">↻</button>
+        </div>
+    </section>
+
+
+    <section class="dashboard-quick-actions" aria-label="Atalhos rápidos">
+        <a href="{{ url_for('clientes.clientes') }}">👤 <span>Novo cliente</span></a>
+        <a href="{{ url_for('pets.pets') }}">🐶 <span>Novo pet</span></a>
+        <a href="{{ url_for('agenda.agenda') }}">📅 <span>Agendamento</span></a>
+        <a href="{{ url_for('banho_tosa.banho_tosa') }}">🚿 <span>Atendimento</span></a>
+        <a href="{{ url_for('crm.dashboard') }}">📣 <span>CRM</span></a>
+        <a href="{{ url_for('fidelidade.dashboard') }}">🎁 <span>Fidelidade</span></a>
+        <button id="dashboard-global-search" type="button">🔎 <span>Busca global</span></button>
+    </section>
+
+    <section class="enterprise-kpis">
+        <article class="enterprise-kpi kpi-purple">
+            <div class="kpi-top"><span>Receita hoje</span><i>💰</i></div>
+            <strong data-dashboard-value="financeiro.receita_hoje" data-format="currency">
+                R$ {{ "%.2f"|format(financeiro.receita_hoje or 0) }}
+            </strong>
+            <small class="{{ 'trend-up' if comparativos.receita_hoje_pct >= 0 else 'trend-down' }}">
+                {{ '▲' if comparativos.receita_hoje_pct >= 0 else '▼' }}
+                {{ "%.1f"|format(comparativos.receita_hoje_pct|abs) }}% versus ontem
+            </small>
+        </article>
+
+        <article class="enterprise-kpi">
+            <div class="kpi-top"><span>Receita da semana</span><i>📅</i></div>
+            <strong data-dashboard-value="financeiro.receita_semana" data-format="currency">
+                R$ {{ "%.2f"|format(financeiro.receita_semana or 0) }}
+            </strong>
+            <small>Semana atual</small>
+        </article>
+
+        <article class="enterprise-kpi">
+            <div class="kpi-top"><span>Receita do mês</span><i>📈</i></div>
+            <strong data-dashboard-value="financeiro.receita_mes" data-format="currency">
+                R$ {{ "%.2f"|format(financeiro.receita_mes or 0) }}
+            </strong>
+            <small class="{{ 'trend-up' if comparativos.receita_mes_pct >= 0 else 'trend-down' }}">
+                {{ '▲' if comparativos.receita_mes_pct >= 0 else '▼' }}
+                {{ "%.1f"|format(comparativos.receita_mes_pct|abs) }}% versus mês anterior
+            </small>
+        </article>
+
+        <article class="enterprise-kpi kpi-goal">
+            <div class="kpi-top"><span>Meta mensal</span><i>🎯</i></div>
+            <strong data-dashboard-value="financeiro.meta_percentual" data-format="percent">
+                {{ "%.1f"|format(financeiro.meta_percentual or 0) }}%
+            </strong>
+            <div class="goal-track">
+                <i style="width: {{ [financeiro.meta_percentual, 100]|min }}%"></i>
+            </div>
+            <small>Faltam R$ {{ "%.2f"|format(financeiro.falta_meta or 0) }}</small>
+        </article>
+    </section>
+
+    <section class="enterprise-mini-grid">
+        <a href="{{ url_for('clientes.clientes') }}" class="enterprise-mini">
+            <span>👥 Clientes ativos</span>
+            <strong>{{ cards.clientes }}</strong>
+            <small>+{{ cards.clientes_novos_mes }} neste mês</small>
+        </a>
+        <a href="{{ url_for('pets.pets') }}" class="enterprise-mini">
+            <span>🐶 Pets ativos</span>
+            <strong>{{ cards.pets }}</strong>
+            <small>+{{ cards.pets_novos_mes }} neste mês</small>
+        </a>
+        <a href="{{ url_for('agenda.agenda') }}" class="enterprise-mini">
+            <span>📆 Agenda hoje</span>
+            <strong>{{ cards.agendamentos_hoje }}</strong>
+            <small>Agendamentos válidos</small>
+        </a>
+        <a href="{{ url_for('banho_tosa.banho_tosa') }}" class="enterprise-mini">
+            <span>🚿 Em atendimento</span>
+            <strong>{{ cards.pets_em_atendimento }}</strong>
+            <small>Pets na operação</small>
+        </a>
+        <a href="{{ url_for('motorista.motorista') }}" class="enterprise-mini">
+            <span>🚚 Táxi Dog hoje</span>
+            <strong>{{ cards.transporte_hoje }}</strong>
+            <small>Coletas e entregas</small>
+        </a>
+        <a href="{{ url_for('ponto.ponto') }}" class="enterprise-mini">
+            <span>👔 Equipe presente</span>
+            <strong>{{ cards.presentes_hoje }}/{{ cards.funcionarios }}</strong>
+            <small>Marcações de hoje</small>
+        </a>
+    </section>
+
+    <section class="enterprise-mini-grid enterprise-loyalty-grid">
+        <a href="{{ url_for('fidelidade.dashboard') }}" class="enterprise-mini">
+            <span>🎁 Pontos disponíveis</span>
+            <strong data-dashboard-value="fidelidade.points">{{ fidelidade.points }}</strong>
+            <small>{{ fidelidade.members }} cliente(s) no programa</small>
+        </a>
+        <a href="{{ url_for('fidelidade.dashboard') }}" class="enterprise-mini">
+            <span>💜 Cashback pendente</span>
+            <strong data-dashboard-value="fidelidade.cashback" data-format="currency">R$ {{ "%.2f"|format(fidelidade.cashback or 0) }}</strong>
+            <small>{{ fidelidade.active_coupons }} cupom(ns) ativo(s)</small>
+        </a>
+        <a href="{{ url_for('fidelidade.dashboard') }}" class="enterprise-mini">
+            <span>💎 Clientes Diamante</span>
+            <strong data-dashboard-value="fidelidade.diamond">{{ fidelidade.diamond }}</strong>
+            <small>Maior nível de fidelidade</small>
+        </a>
+        <a href="{{ url_for('crm.dashboard') }}" class="enterprise-mini">
+            <span>📌 Tarefas CRM</span>
+            <strong data-dashboard-value="crm.pending_tasks">{{ crm.pending_tasks }}</strong>
+            <small>{{ crm.overdue_tasks }} atrasada(s)</small>
+        </a>
+        <a href="{{ url_for('crm.dashboard') }}" class="enterprise-mini">
+            <span>💬 Contatos no mês</span>
+            <strong data-dashboard-value="crm.contacts_month">{{ crm.contacts_month }}</strong>
+            <small>Histórico de relacionamento</small>
+        </a>
+    </section>
+
+    <section class="enterprise-main-grid dashboard-growth-grid">
+        <article class="card enterprise-panel">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Visão anual</span>
+                    <h2>Receita dos últimos 12 meses</h2>
+                </div>
+            </div>
+            <div class="dashboard-bar-chart" id="monthly-revenue-chart" data-series='{{ grafico_receita_mensal|tojson }}'></div>
+        </article>
+        <article class="card enterprise-panel">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Crescimento</span>
+                    <h2>Novos clientes por mês</h2>
+                </div>
+            </div>
+            <div class="dashboard-bar-chart compact" id="customer-growth-chart" data-series='{{ grafico_clientes|tojson }}'></div>
+        </article>
+    </section>
+
+    <section class="enterprise-main-grid">
+        <article class="card enterprise-panel crm-task-panel">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Relacionamento</span>
+                    <h2>Próximas tarefas CRM</h2>
+                </div>
+                <a href="{{ url_for('crm.dashboard') }}">Abrir CRM</a>
+            </div>
+            <div class="dashboard-crm-tasks">
+                {% for task in crm_tasks %}
+                <a href="{{ url_for('crm.dashboard') }}" class="dashboard-crm-task">
+                    <span class="task-priority priority-{{ (task.priority or 'normal')|lower|replace('é','e') }}"></span>
+                    <div>
+                        <strong>{{ task.title }}</strong>
+                        <small>{{ task.client_name or 'Cliente não definido' }}{% if task.pet_name %} · {{ task.pet_name }}{% endif %}</small>
+                    </div>
+                    <time>{{ task.due_date or 'Sem prazo' }}</time>
+                </a>
+                {% else %}
+                <div class="enterprise-empty success-state">
+                    <span>✅</span>
+                    <strong>Nenhuma tarefa pendente</strong>
+                    <small>O relacionamento com os clientes está em dia.</small>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+        <article class="card enterprise-panel">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Fidelização</span>
+                    <h2>Resumo do programa</h2>
+                </div>
+                <a href="{{ url_for('fidelidade.dashboard') }}">Gerenciar</a>
+            </div>
+            <div class="loyalty-summary-ring" style="--value: {{ [((fidelidade.members / cards.clientes * 100) if cards.clientes else 0), 100]|min }}">
+                <div>
+                    <strong>{{ "%.0f"|format((fidelidade.members / cards.clientes * 100) if cards.clientes else 0) }}%</strong>
+                    <small>dos clientes</small>
+                </div>
+            </div>
+            <p class="loyalty-summary-text">{{ fidelidade.members }} de {{ cards.clientes }} clientes ativos já possuem conta de fidelidade.</p>
+        </article>
+    </section>
+
+    <section class="enterprise-main-grid">
+        <article class="card enterprise-panel financial-panel">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Financeiro</span>
+                    <h2>Entradas, saídas e resultado</h2>
+                </div>
+                <div class="panel-summary">
+                    <span>Saldo do mês</span>
+                    <strong class="{{ 'positive-value' if financeiro.saldo_mes >= 0 else 'negative-value' }}">
+                        R$ {{ "%.2f"|format(financeiro.saldo_mes or 0) }}
+                    </strong>
+                </div>
+            </div>
+            <div class="financial-chart" id="financial-chart"
+                 data-series='{{ grafico_financeiro|tojson }}'>
+                <svg viewBox="0 0 900 280" role="img" aria-label="Gráfico financeiro dos últimos 14 dias">
+                    <g class="chart-grid"></g>
+                    <polyline class="chart-line income-line" points=""></polyline>
+                    <polyline class="chart-line expense-line" points=""></polyline>
+                    <g class="chart-labels"></g>
+                </svg>
+            </div>
+            <div class="chart-legend enterprise-legend">
+                <span><i class="legend-income"></i> Entradas</span>
+                <span><i class="legend-expense"></i> Saídas</span>
+                <span><b>Ticket médio:</b> R$ {{ "%.2f"|format(financeiro.ticket_medio or 0) }}</span>
+            </div>
+        </article>
+
+        <article class="card enterprise-panel intelligence-panel">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Centro de inteligência</span>
+                    <h2>🤖 Resumo gerencial</h2>
+                </div>
+            </div>
+            <div class="intelligence-list">
+                {% for insight in insights %}
+                <div><span>✦</span><p>{{ insight }}</p></div>
+                {% endfor %}
+            </div>
+            <a class="secondary-button intelligence-action" href="{{ url_for('relatorios.relatorios') }}">
+                Abrir análise completa
+            </a>
+        </article>
+    </section>
+
+    <section class="enterprise-main-grid">
+        <article class="card enterprise-panel">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Operação</span>
+                    <h2>Agenda de hoje</h2>
+                </div>
+                <a href="{{ url_for('agenda.agenda') }}">Ver agenda completa</a>
+            </div>
+            <div class="today-schedule">
+                {% for item in agenda_hoje %}
+                <div class="today-schedule-item">
+                    <div class="schedule-hour">{{ item.horario or '--:--' }}</div>
+                    <div>
+                        <strong>{{ item.pet_nome or '-' }}</strong>
+                        <small>{{ item.cliente_nome or '-' }} · {{ item.servico or '-' }}</small>
+                        <small>{{ item.profissional or 'Profissional não definido' }}</small>
+                    </div>
+                    <span class="status-badge">{{ item.status }}</span>
+                </div>
+                {% else %}
+                <div class="enterprise-empty">
+                    <span>📆</span>
+                    <strong>Nenhum agendamento para hoje</strong>
+                    <small>A agenda está livre para novos encaixes.</small>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="card enterprise-panel">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Desempenho</span>
+                    <h2>Ranking de profissionais</h2>
+                </div>
+            </div>
+            <div class="enterprise-ranking">
+                {% set max_prof = ranking_profissionais[0].faturamento if ranking_profissionais else 1 %}
+                {% for item in ranking_profissionais %}
+                <div class="ranking-row">
+                    <div>
+                        <strong>{{ loop.index }}. {{ item.profissional }}</strong>
+                        <small>{{ item.atendimentos }} atendimento(s)</small>
+                    </div>
+                    <div class="ranking-bar"><i style="width: {{ (item.faturamento / max_prof * 100) if max_prof else 0 }}%"></i></div>
+                    <b>R$ {{ "%.2f"|format(item.faturamento or 0) }}</b>
+                </div>
+                {% else %}
+                <p class="empty-state">Nenhum atendimento com profissional no mês.</p>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="enterprise-main-grid">
+        <article class="card enterprise-panel">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Atenção necessária</span>
+                    <h2>Alertas inteligentes</h2>
+                </div>
+                <span class="pill">{{ alertas|length }}</span>
+            </div>
+            <div class="enterprise-alerts">
+                {% for alert in alertas %}
+                <a href="{{ alert.url }}" class="enterprise-alert alert-{{ alert.kind }}">
+                    <span>{{ alert.icon }}</span>
+                    <div>
+                        <strong>{{ alert.title }}</strong>
+                        <small>{{ alert.message }}</small>
+                    </div>
+                </a>
+                {% else %}
+                <div class="enterprise-empty success-state">
+                    <span>✅</span>
+                    <strong>Nenhum alerta crítico</strong>
+                    <small>A operação está dentro do esperado.</small>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="card enterprise-panel">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Preferência dos clientes</span>
+                    <h2>Serviços mais vendidos</h2>
+                </div>
+            </div>
+            <div class="enterprise-ranking services-ranking">
+                {% set max_service = ranking_servicos[0].total if ranking_servicos else 1 %}
+                {% for item in ranking_servicos %}
+                <div class="ranking-row">
+                    <div>
+                        <strong>{{ item.servico }}</strong>
+                        <small>R$ {{ "%.2f"|format(item.faturamento or 0) }}</small>
+                    </div>
+                    <div class="ranking-bar service-bar"><i style="width: {{ (item.total / max_service * 100) if max_service else 0 }}%"></i></div>
+                    <b>{{ item.total }}</b>
+                </div>
+                {% else %}
+                <p class="empty-state">Nenhum serviço no mês.</p>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="card enterprise-panel">
+        <div class="section-head">
+            <div>
+                <span class="eyebrow">Auditoria</span>
+                <h2>Linha do tempo da loja</h2>
+            </div>
+            <small class="muted">Últimos eventos registrados</small>
+        </div>
+        <div class="store-timeline">
+            {% for item in timeline %}
+            <div class="store-event">
+                <span class="store-event-dot"></span>
+                <div>
+                    <strong>{{ item.action }}</strong>
+                    <small>{{ item.user_name or 'Sistema' }} · {{ item.entity_type or 'Sistema' }}</small>
+                    {% if item.details %}<p>{{ item.details }}</p>{% endif %}
+                </div>
+                <time>{{ item.created_at or '-' }}</time>
+            </div>
+            {% else %}
+            <div class="enterprise-empty">
+                <span>🕘</span>
+                <strong>Nenhum evento registrado</strong>
+                <small>As ações auditadas aparecerão aqui.</small>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

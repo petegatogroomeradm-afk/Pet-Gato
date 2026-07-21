@@ -1,0 +1,31 @@
+PET & GATÔ BUSINESS V3 — PACOTE 2
+Agenda Profissional + Banho e Tosa Integrado
+
+PRINCIPAIS ENTREGAS
+- Agenda com visualização por dia, semana e mês.
+- Filtros por data, status, tutor, pet e serviço.
+- Indicadores de agendamentos, confirmados, em atendimento e valor previsto.
+- Cadastro com profissional, duração e necessidade de Táxi Dog.
+- Edição, alteração rápida de status, exclusão protegida e início de atendimento.
+- Conversão automática do agendamento em atendimento de Banho e Tosa.
+- Banho e Tosa com filtros, indicadores e cartões operacionais.
+- Profissional responsável, forma de pagamento, checklist e alertas.
+- Fluxo ampliado de status e sincronização com a Agenda.
+- Financeiro e estoque automáticos, com proteção contra duplicidade.
+- Edição do atendimento e linha do tempo melhorada.
+- Migrações automáticas para bancos já existentes.
+
+INSTALAÇÃO
+1. Faça backup da pasta atual.
+2. Extraia o ZIP sobre D:\Relogio de ponto WEB\petegato_business_v3.
+3. No PowerShell:
+   cd "D:\Relogio de ponto WEB\petegato_business_v3"
+   py -m pip install -r requirements.txt
+   py main.py
+
+TESTES RECOMENDADOS
+- Abrir /agenda e alternar Dia, Semana e Mês.
+- Criar, editar e confirmar um agendamento.
+- Clicar em Iniciar para enviá-lo ao Banho e Tosa.
+- Avançar o atendimento até Finalizado.
+- Conferir lançamento no Financeiro e baixa no Estoque.

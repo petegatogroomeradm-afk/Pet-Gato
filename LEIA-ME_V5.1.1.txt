@@ -1,0 +1,24 @@
+PET & GATÔ BUSINESS — V5.1.1 DASHBOARD EXECUTIVO
+
+Atualização criada sobre a V5.0.2 atual.
+
+NOVOS RECURSOS
+- Dashboard identificado como V5.1.1.
+- Indicadores de fidelidade: pontos, cashback, clientes Diamante e cupons ativos.
+- Indicadores de CRM: tarefas pendentes, atrasadas e contatos do mês.
+- Receita dos últimos 12 meses em gráfico.
+- Crescimento de novos clientes nos últimos 12 meses.
+- Lista das próximas tarefas CRM.
+- Resumo da adesão dos clientes ao programa de fidelidade.
+- Novos atalhos rápidos para CRM e Fidelidade.
+- Atualização automática dos novos indicadores pela API do dashboard.
+
+INSTALAÇÃO
+1. Faça backup da pasta e do banco atual.
+2. Substitua o conteúdo da pasta do sistema por este pacote.
+3. Preserve o arquivo instance/petegato_business_v3.db mais recente quando necessário.
+4. Inicie normalmente com: py main.py
+5. Acesse o Dashboard após o login.
+
+OBSERVAÇÃO
+Esta versão não remove nem recria dados. Ela usa as tabelas de CRM e fidelidade já existentes na V5.0.2.

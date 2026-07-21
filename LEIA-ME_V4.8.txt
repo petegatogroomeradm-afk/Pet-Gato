@@ -1,0 +1,26 @@
+PET & GATÔ BUSINESS V4.8 — ESTOQUE ENTERPRISE
+
+RECURSOS
+- Cadastro ampliado: marca, subcategoria, estoque máximo, código de barras e localização.
+- Entradas, saídas, perdas, consumo e ajustes com histórico.
+- Sugestão automática de compra baseada no estoque mínimo e máximo.
+- Curva ABC baseada no consumo dos últimos 90 dias.
+- Inventário físico com registro de divergências e ajuste automático.
+- Alertas de estoque crítico, zerado e validade em até 30 dias.
+- Indicadores de custo, valor de venda e lucro potencial.
+- Exportação CSV ampliada.
+- Integração de consumo do Banho & Tosa preservada.
+
+INSTALAÇÃO
+1. Faça backup da pasta petegato_business_v3.
+2. Extraia este ZIP sobre a pasta atual, permitindo substituir os arquivos.
+3. Apague as pastas __pycache__.
+4. Execute: py main.py
+
+TESTES
+1. Abra o menu Estoque.
+2. Cadastre ou edite um produto e informe estoque mínimo e máximo.
+3. Registre Entrada, Saída e Perda.
+4. Confira Compra sugerida e Curva ABC.
+5. Crie um inventário, altere uma contagem, salve e conclua.
+6. Confirme se a quantidade do produto foi ajustada.

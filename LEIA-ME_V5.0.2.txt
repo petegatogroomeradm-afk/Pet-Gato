@@ -1,0 +1,18 @@
+PET & GATÔ BUSINESS V5.0.2 — FIDELIZAÇÃO ENTERPRISE
+
+RECURSOS
+- Pontos por valor gasto, com regra configurável.
+- Cashback por nível Bronze, Prata, Ouro e Diamante.
+- Ranking de fidelidade e saldos por cliente.
+- Resgate de pontos e cashback com bloqueio de saldo negativo.
+- Ajustes manuais auditados por usuário.
+- Cupons percentuais ou de valor fixo, gerais ou exclusivos.
+- Validade, compra mínima e limite de uso dos cupons.
+- Histórico completo de movimentações.
+
+INSTALAÇÃO
+1. Faça backup da pasta atual.
+2. Extraia este ZIP completo substituindo a pasta petegato_business_v3.
+3. Remova pastas __pycache__.
+4. Execute py main.py.
+5. Abra Pet Shop > Fidelização.

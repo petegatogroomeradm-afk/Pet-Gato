@@ -1,0 +1,28 @@
+PET & GATÔ BUSINESS V4.7 — FINANCEIRO ENTERPRISE
+
+ALTERAÇÕES:
+- Fluxo de caixa diário com gráfico
+- DRE simplificada
+- Metas mensais
+- Contas recorrentes
+- Parcelamento automático
+- Centros de custo
+- Fechamento diário de caixa
+- Indicadores de vencidos, a pagar e receber
+- Exportação CSV ampliada
+- Integração preservada com Banho & Tosa e Táxi Dog
+
+ARQUIVOS:
+- database.py
+- modules/financeiro.py
+- services/financeiro_service.py
+- templates/financeiro.html
+- static/js/financeiro.js
+- static/css/style.css
+
+INSTALAÇÃO:
+1. Faça backup.
+2. Extraia sobre petegato_business_v3.
+3. Apague __pycache__.
+4. Execute py main.py.
+5. Abra /financeiro.

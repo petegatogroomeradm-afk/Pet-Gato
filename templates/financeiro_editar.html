@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block title %}Editar lançamento{% endblock %}{% block page_title %}Editar lançamento{% endblock %}{% block content %}
+<div class="card"><form method="post" class="form">
+<select name="type"><option {{ 'selected' if lancamento.type=='Entrada' }}>Entrada</option><option {{ 'selected' if lancamento.type=='Saída' }}>Saída</option></select>
+<input name="category" value="{{ lancamento.category or '' }}" placeholder="Categoria"><input name="description" value="{{ lancamento.description }}" required><input name="amount" value="{{ lancamento.amount }}" required>
+<div class="form-row"><input type="date" name="transaction_date" value="{{ lancamento.transaction_date or '' }}"><input type="date" name="due_date" value="{{ lancamento.due_date or '' }}"></div>
+<select name="status">{% for s in ['Pago','Pendente','Vencido','Cancelado'] %}<option {{ 'selected' if lancamento.status==s }}>{{ s }}</option>{% endfor %}</select>
+<input name="payment_method" value="{{ lancamento.payment_method or '' }}" placeholder="Forma de pagamento"><input name="account" value="{{ lancamento.account or 'Caixa' }}" placeholder="Conta"><input name="reference" value="{{ lancamento.reference or '' }}" placeholder="Referência"><textarea name="notes">{{ lancamento.notes or '' }}</textarea>
+<div class="actions-row"><button>Salvar alterações</button><a class="small-button" href="{{ url_for('financeiro.financeiro') }}">Voltar</a></div></form></div>{% endblock %}

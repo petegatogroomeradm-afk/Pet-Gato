@@ -1,0 +1,21 @@
+PET & GATÔ BUSINESS V4.6
+BUSCA GLOBAL + CENTRAL DE NOTIFICAÇÕES — PACOTE COMPATÍVEL
+
+Este pacote foi gerado diretamente sobre a estrutura real da V4.5 enviada.
+
+ARQUIVOS ALTERADOS:
+- main.py
+- services/global_service.py
+- templates/base.html
+- templates/dashboard.html
+- static/css/style.css
+- static/js/global_ui.js
+
+TESTES:
+1. Inicie com: py main.py
+2. Abra o Dashboard.
+3. Pressione Ctrl+K e pesquise um cliente ou pet.
+4. Clique no sino e confira as notificações.
+5. Teste os atalhos rápidos.
+
+Em caso de erro, restaure o backup anterior.

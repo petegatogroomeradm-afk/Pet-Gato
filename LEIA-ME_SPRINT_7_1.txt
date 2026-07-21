@@ -1,0 +1,34 @@
+SPRINT 7.1 — CRM 360° E PRONTUÁRIO DO PET
+
+IMPLEMENTADO
+- CRM do cliente com indicadores de gasto, ticket médio, banhos, tosas, dias sem retorno, transportes, pendências e próximo agendamento.
+- Linha do tempo unificada do cliente: agenda, atendimento, transporte e anotações.
+- Visão financeira e histórico profissional por atendimento.
+- Prontuário do pet com alertas de vacinas vencidas/próximas.
+- Gráfico leve de evolução do peso sem dependências externas.
+- Linha do tempo unificada do pet: atendimento, vacina, saúde, peso, transporte e anotações.
+- Profissional responsável no histórico.
+- Exclusão de anotações, documentos, fotos, pesagens e registros médicos.
+- Impressão das fichas pelo navegador.
+- Estilos responsivos para as novas telas.
+
+ARQUIVOS PRINCIPAIS ALTERADOS
+- modules/clientes.py
+- modules/pets.py
+- services/cliente_service.py
+- services/pet_service.py
+- templates/cliente_detalhes.html
+- templates/pet_detalhes.html
+- static/css/style.css
+
+INSTALAÇÃO
+1. Faça backup da pasta atual.
+2. Extraia este ZIP sobre D:\Relogio de ponto WEB\petegato_business_v3
+3. Limpe os caches e execute py main.py.
+
+TESTES
+- Abra /clientes e clique em CRM.
+- Confira indicadores, linha do tempo, documentos e anotações.
+- Abra /pets e clique em Ficha.
+- Cadastre vacina com próxima dose, pesagem, foto, documento, anotação e histórico médico.
+- Teste os botões Excluir e Imprimir.

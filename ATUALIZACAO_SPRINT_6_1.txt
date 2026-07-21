@@ -1,0 +1,14 @@
+SPRINT 6.1 — CORE DO ERP
+
+Incluído:
+- Repositories para Clientes, Pets, Agenda, Financeiro, Estoque e Motorista
+- Event Bus persistente com JSON e tratamento de falhas
+- Auditoria automática dos eventos
+- Cache TTL do Dashboard
+- Logs rotativos em logs/application.log e logs/errors.log
+- Inicialização do banco compatível com Flask e Waitress
+- Limite de upload de 16 MB
+- Páginas amigáveis para erros 404 e 500
+- Eventos reais em Clientes, Pets e Banho e Tosa
+
+Esta sprint cria a fundação sem alterar SaaS ou Configurações.

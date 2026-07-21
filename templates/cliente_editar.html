@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Editar Cliente{% endblock %}
+{% block page_title %}Editar Cliente{% endblock %}
+{% block page_subtitle %}Atualize os dados do tutor{% endblock %}
+{% block content %}
+<div class="card narrow-card"><form method="post" enctype="multipart/form-data" class="form">
+<input name="nome" value="{{ cliente.nome }}" required>
+<div class="form-grid-2"><input name="cpf" value="{{ cliente.cpf or '' }}" placeholder="CPF/CNPJ"><input name="telefone" value="{{ cliente.telefone or '' }}" placeholder="Telefone"><input name="whatsapp" value="{{ cliente.whatsapp or '' }}" placeholder="WhatsApp"><input type="email" name="email" value="{{ cliente.email or '' }}" placeholder="E-mail"></div>
+<input name="endereco" value="{{ cliente.endereco or '' }}" placeholder="Endereço"><input name="contato_emergencia" value="{{ cliente.contato_emergencia or '' }}" placeholder="Contato de emergência">
+<div class="form-grid-2"><label>Data de nascimento<input type="date" name="data_nascimento" value="{{ cliente.data_nascimento or '' }}"></label><select name="origem_cadastro"><option value="">Origem do cliente</option>{% for origem in ['Indicação','Instagram','Google','Passante','WhatsApp','Outro'] %}<option {% if cliente.origem_cadastro == origem %}selected{% endif %}>{{ origem }}</option>{% endfor %}</select><select name="canal_preferido"><option value="">Canal preferido</option>{% for canal in ['WhatsApp','Ligação','E-mail'] %}<option {% if cliente.canal_preferido == canal %}selected{% endif %}>{{ canal }}</option>{% endfor %}</select><label class="check-option"><input type="checkbox" name="consentimento_marketing" value="1" {% if cliente.consentimento_marketing %}checked{% endif %}> Aceita comunicações e promoções</label></div>
+<input name="tags" value="{{ cliente.tags or '' }}" placeholder="Tags"><label class="file-field">Trocar foto<input type="file" name="foto" accept="image/*"></label><textarea name="observacoes">{{ cliente.observacoes or '' }}</textarea><div class="actions"><button>Salvar alterações</button><a class="secondary-button" href="{{ url_for('clientes.visualizar_cliente', cliente_id=cliente.id) }}">Cancelar</a></div></form></div>
+{% endblock %}

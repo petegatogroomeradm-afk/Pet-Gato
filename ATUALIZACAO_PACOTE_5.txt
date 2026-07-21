@@ -1,0 +1,23 @@
+PACOTE 5 — DASHBOARD EXECUTIVO, RELATÓRIOS E FUNDAÇÃO DE EVENTOS
+
+Arquivos principais:
+- services/dashboard_service.py
+- services/event_bus.py
+- services/auditoria_service.py
+- modules/relatorios.py
+- templates/dashboard.html
+- templates/relatorios.html
+- templates/base.html
+- main.py
+- database.py
+- static/css/style.css
+
+Recursos:
+- Dashboard integrado com financeiro, agenda, banho/tosa, estoque e RH.
+- Indicadores do dia e do mês.
+- Gráfico financeiro dos últimos seis meses.
+- Próximos agendamentos, estoque crítico e pendências financeiras.
+- Relatório consolidado por período.
+- Exportação CSV de financeiro e atendimentos.
+- Impressão de relatório.
+- Tabelas de eventos internos e auditoria preparadas para as próximas integrações.

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Estoque Enterprise{% endblock %}
+{% block page_title %}Estoque Enterprise{% endblock %}
+{% block page_subtitle %}Produtos, compras, validade, movimentações e inventário{% endblock %}
+{% block content %}
+<div class="stock-kpis">
+  <div class="card metric"><span>Produtos ativos</span><strong>{{ resumo.total or 0 }}</strong></div>
+  <div class="card metric warning"><span>Estoque crítico</span><strong>{{ resumo.baixo or 0 }}</strong></div>
+  <div class="card metric danger"><span>Zerados</span><strong>{{ resumo.zerado or 0 }}</strong></div>
+  <div class="card metric"><span>Vencendo em 30 dias</span><strong>{{ resumo.vencendo or 0 }}</strong></div>
+  <div class="card metric"><span>Valor em custo</span><strong>R$ {{ '%.2f'|format(resumo.valor_custo or 0) }}</strong></div>
+  <div class="card metric success"><span>Lucro potencial</span><strong>R$ {{ '%.2f'|format(resumo.lucro_potencial or 0) }}</strong></div>
+</div>
+
+<div class="stock-actions">
+  <button type="button" data-stock-tab="produtos">📦 Produtos</button>
+  <button type="button" data-stock-tab="cadastro">＋ Novo produto</button>
+  <button type="button" data-stock-tab="compras">🛒 Compra sugerida</button>
+  <button type="button" data-stock-tab="abc">📊 Curva ABC</button>
+  <button type="button" data-stock-tab="movimentos">↕ Movimentações</button>
+  <button type="button" data-stock-tab="inventarios">🧮 Inventários</button>
+</div>
+
+<section class="stock-panel" data-panel="produtos">
+  <div class="card">
+    <h2>Produtos</h2>
+    <form method="get" class="stock-filter">
+      <input name="busca" value="{{ busca }}" placeholder="Produto, SKU, código, marca ou fornecedor">
+      <select name="categoria"><option value="">Todas as categorias</option>{% for c in categorias %}<option value="{{ c.category }}" {% if categoria==c.category %}selected{% endif %}>{{ c.category }}</option>{% endfor %}</select>
+      <select name="situacao"><option value="">Todas as situações</option><option value="baixo" {% if situacao=='baixo' %}selected{% endif %}>Estoque baixo</option><option value="zerado" {% if situacao=='zerado' %}selected{% endif %}>Zerado</option><option value="vencendo" {% if situacao=='vencendo' %}selected{% endif %}>Validade em até 30 dias</option></select>
+      <button>Filtrar</button><a class="small-button" href="{{ url_for('estoque.exportar_csv') }}">Exportar CSV</a>
+    </form>
+    <div class="table-wrap"><table><thead><tr><th>Produto</th><th>SKU</th><th>Qtd.</th><th>Mín./Máx.</th><th>Custo/Venda</th><th>Margem</th><th>Fornecedor</th><th>Validade</th><th>Ações</th></tr></thead><tbody>
+    {% for p in produtos %}{% set margem=((p.sale_price-p.cost_price)/p.sale_price*100) if p.sale_price else 0 %}
+    <tr class="{% if p.quantity<=0 %}stock-row-zero{% elif p.quantity<=p.min_quantity %}stock-row-low{% endif %}">
+      <td><strong>{{ p.name }}</strong><small>{{ p.brand or '-' }} · {{ p.category or '-' }}</small></td><td>{{ p.sku or '-' }}</td><td>{{ p.quantity or 0 }} {{ p.unit or '' }}</td><td>{{ p.min_quantity or 0 }} / {{ p.max_quantity or '-' }}</td>
+      <td>R$ {{ '%.2f'|format(p.cost_price or 0) }}<small>R$ {{ '%.2f'|format(p.sale_price or 0) }}</small></td><td>{{ '%.1f'|format(margem) }}%</td><td>{{ p.supplier or '-' }}</td><td>{{ p.expiration_date or '-' }}</td>
+      <td><div class="stock-row-actions"><a class="small-button" href="{{ url_for('estoque.editar_produto',produto_id=p.id) }}">Editar</a><details><summary class="small-button">Movimentar</summary><form method="post" class="form stock-popover" action="{{ url_for('estoque.movimentar',produto_id=p.id) }}"><select name="movement_type"><option>Entrada</option><option>Saída</option><option>Perda</option><option>Ajuste</option></select><input name="quantity" placeholder="Quantidade" required><input name="unit_cost" placeholder="Custo unitário"><input name="reason" placeholder="Motivo"><input name="reference" placeholder="Nota/Referência"><button>Salvar</button></form></details><form method="post" action="{{ url_for('estoque.excluir_produto',produto_id=p.id) }}" onsubmit="return confirm('Arquivar produto?')"><button class="danger-btn">Arquivar</button></form></div></td>
+    </tr>{% else %}<tr><td colspan="9">Nenhum produto encontrado.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </div>
+</section>
+
+<section class="stock-panel" data-panel="cadastro" hidden>
+<div class="card"><h2>Novo produto</h2><form method="post" class="form stock-form">
+<div class="grid-2"><input name="name" placeholder="Produto" required><input name="brand" placeholder="Marca"></div><div class="grid-2"><input name="category" placeholder="Categoria"><input name="subcategory" placeholder="Subcategoria"></div><div class="grid-2"><input name="sku" placeholder="SKU / código interno"><input name="barcode" placeholder="Código de barras"></div><div class="grid-3"><input name="quantity" placeholder="Quantidade inicial"><input name="unit" value="un"><input name="location" placeholder="Localização"></div><div class="grid-2"><input name="min_quantity" placeholder="Estoque mínimo"><input name="max_quantity" placeholder="Estoque máximo"></div><div class="grid-2"><input name="cost_price" placeholder="Preço de custo"><input name="sale_price" placeholder="Preço de venda"></div><input name="supplier" placeholder="Fornecedor"><label>Validade<input type="date" name="expiration_date"></label><button>Cadastrar produto</button></form></div>
+</section>
+
+<section class="stock-panel" data-panel="compras" hidden><div class="card"><h2>Sugestão de compra</h2><div class="table-wrap"><table><thead><tr><th>Produto</th><th>Atual</th><th>Mínimo</th><th>Máximo</th><th>Comprar</th><th>Fornecedor</th><th>Custo estimado</th></tr></thead><tbody>{% for p in sugestoes %}<tr><td><strong>{{ p.name }}</strong></td><td>{{ p.quantity }} {{ p.unit }}</td><td>{{ p.min_quantity }}</td><td>{{ p.max_quantity or '-' }}</td><td><strong>{{ p.suggested_quantity }} {{ p.unit }}</strong></td><td>{{ p.supplier or '-' }}</td><td>R$ {{ '%.2f'|format((p.suggested_quantity or 0)*(p.cost_price or 0)) }}</td></tr>{% else %}<tr><td colspan="7">Nenhuma compra necessária.</td></tr>{% endfor %}</tbody></table></div></div></section>
+
+<section class="stock-panel" data-panel="abc" hidden><div class="card"><h2>Curva ABC — consumo dos últimos 90 dias</h2><div class="table-wrap"><table><thead><tr><th>Classe</th><th>Produto</th><th>Categoria</th><th>Consumo</th><th>Valor consumido</th><th>Acumulado</th></tr></thead><tbody>{% for i in abc %}<tr><td><span class="abc-badge abc-{{ i.classe|lower }}">{{ i.classe }}</span></td><td>{{ i.name }}</td><td>{{ i.category or '-' }}</td><td>{{ i.consumo }}</td><td>R$ {{ '%.2f'|format(i.valor_consumido or 0) }}</td><td>{{ '%.1f'|format(i.percentual) }}%</td></tr>{% else %}<tr><td colspan="6">Ainda não há consumo suficiente para análise.</td></tr>{% endfor %}</tbody></table></div></div></section>
+
+<section class="stock-panel" data-panel="movimentos" hidden><div class="card"><h2>Últimas movimentações</h2><div class="table-wrap"><table><thead><tr><th>Data</th><th>Produto</th><th>Tipo</th><th>Quantidade</th><th>Custo</th><th>Motivo</th><th>Referência</th><th>Usuário</th></tr></thead><tbody>{% for m in movimentos %}<tr><td>{{ m.movement_date }}</td><td>{{ m.product_name }}</td><td><span class="movement-badge">{{ m.movement_type }}</span></td><td>{{ m.quantity }} {{ m.unit or '' }}</td><td>R$ {{ '%.2f'|format(m.unit_cost or 0) }}</td><td>{{ m.reason or '-' }}</td><td>{{ m.reference or '-' }}</td><td>{{ m.user_name or '-' }}</td></tr>{% else %}<tr><td colspan="8">Nenhuma movimentação.</td></tr>{% endfor %}</tbody></table></div></div></section>
+
+<section class="stock-panel" data-panel="inventarios" hidden><div class="grid"><div class="card"><h2>Novo inventário</h2><form method="post" action="{{ url_for('estoque.novo_inventario') }}" class="form"><input name="reference" placeholder="Referência do inventário"><textarea name="notes" placeholder="Observações"></textarea><button>Iniciar contagem</button></form></div><div class="card"><h2>Histórico</h2>{% for i in inventarios %}<a class="inventory-link" href="{{ url_for('estoque.inventario',inventory_id=i.id) }}"><strong>{{ i.reference }}</strong><span>{{ i.status }} · {{ i.started_at }}</span></a>{% else %}<p>Nenhum inventário realizado.</p>{% endfor %}</div></div></section>
+<script src="{{ url_for('static',filename='js/estoque.js') }}"></script>
+{% endblock %}

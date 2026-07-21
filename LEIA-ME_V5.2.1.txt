@@ -1,0 +1,19 @@
+PET & GATÔ BUSINESS — V5.2.1 AGENDA INTELIGENTE
+
+Implementado e validado sobre a V5.1.1 atual.
+
+RECURSOS DA AGENDA
+- Visões diária, semanal e mensal.
+- Agendamentos por tutor, pet e profissional.
+- Arrastar e soltar para reagendamento.
+- Grade em intervalos de 30 minutos.
+- Bloqueios de horários por profissional ou equipe.
+- Lista de espera com prioridade.
+- Detecção de conflito de horário.
+- Início de atendimento integrado ao Banho e Tosa.
+- Status operacionais e indicadores de ocupação.
+- Validação reforçada de tutor/pet, duração e status.
+
+INSTALAÇÃO
+Extraia substituindo a pasta do sistema somente depois de criar backup da versão atual.
+O banco existente em instance/petegato_business_v3.db foi preservado no pacote.

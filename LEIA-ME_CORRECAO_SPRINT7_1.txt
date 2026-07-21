@@ -1,0 +1,14 @@
+CORREÇÃO SPRINT 7.1 — CRM E PRONTUÁRIO
+
+Arquivos corrigidos:
+- services/cliente_service.py
+- services/pet_service.py
+
+Motivo:
+O psycopg2 interpreta o caractere % dentro do texto SQL como marcador de formatação quando a consulta também recebe parâmetros. Os filtros LIKE '%Banho%' e LIKE '%Tosa%' precisavam usar %% no texto SQL.
+
+Instalação:
+Extraia este ZIP sobre a pasta:
+D:\Relogio de ponto WEB\petegato_business_v3
+
+Depois remova caches e execute py main.py.

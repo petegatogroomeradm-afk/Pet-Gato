@@ -1,0 +1,22 @@
+PET & GATÔ BUSINESS V4.5 — BANHO & TOSA ENTERPRISE
+
+Arquivos alterados:
+- database.py
+- modules/banho_tosa.py
+- services/banho_service.py
+- services/estoque_service.py
+- templates/banho_tosa.html
+- static/css/style.css
+
+Novos recursos:
+- Kanban operacional com arrastar e soltar
+- Check-in e check-out
+- Cronômetro por atendimento
+- Fotos antes, durante e depois
+- Produtos utilizados por atendimento
+- Baixa específica no estoque e movimentação registrada
+- Comissão automática do profissional
+- Financeiro, estoque e comissão integrados ao fechamento
+- Novas tabelas criadas automaticamente ao iniciar
+
+Após extrair sobre o projeto, limpe os caches e execute py main.py.

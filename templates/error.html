@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Erro {{ code }}{% endblock %}
+{% block page_title %}Erro {{ code }}{% endblock %}
+{% block page_subtitle %}Não foi possível concluir a solicitação{% endblock %}
+{% block content %}
+<div class="card" style="max-width:720px;margin:40px auto;text-align:center;">
+  <div style="font-size:64px;">⚠️</div>
+  <h2>{{ message }}</h2>
+  <p>Tente novamente. Caso o problema continue, consulte <code>logs/errors.log</code>.</p>
+  <a class="small-button" href="{{ url_for('dashboard') }}">Voltar ao Dashboard</a>
+</div>
+{% endblock %}
