@@ -1,1 +1,22 @@
-{% extends 'portal_cliente/base.html' %}{% block content %}<form method="post" class="card form" style="max-width:620px"><h1>Solicitar reagendamento</h1><p>{{ item.pet_nome }} • {{ item.servico }}</p><p class="muted">Atual: {{ item.data_agendamento }} às {{ item.horario }}</p><label>Nova data</label><input id="data" type="date" name="data" min="{{ hoje }}" required><label>Novo horário</label><select id="horario" name="horario" required><option value="">Escolha primeiro a data</option></select><button class="btn">Enviar para aprovação</button></form><script>const data=document.getElementById('data'),hora=document.getElementById('horario');data.addEventListener('change',async()=>{const r=await fetch(`{{ url_for('portal_cliente.horarios_disponiveis') }}?data=${data.value}&ignorar_id={{ item.id }}`);const j=await r.json();hora.innerHTML=j.horarios.length?j.horarios.map(h=>`<option>${h}</option>`).join(''):'<option value="">Nenhum horário disponível</option>';});</script>{% endblock %}
+{% extends 'portal_cliente/base.html' %}{% block content %}<form method="post" class="card form" style="max-width:620px"><h1>Solicitar reagendamento</h1><p>{{ item.pet_nome }} • {{ item.servico }}</p><p class="muted">Atual: {{ item.data_agendamento }} às {{ item.horario }}</p><label>Nova data</label><input id="data" type="date" name="data" min="{{ hoje }}" required><label>Novo horário</label><select id="horario" name="horario" required><option value="">Escolha primeiro a data</option></select><button class="btn">Enviar para aprovação</button></form><script>
+const data=document.getElementById('data'),hora=document.getElementById('horario');
+data.addEventListener('change',async()=>{
+  hora.disabled=true;
+  hora.innerHTML='<option value="">Carregando...</option>';
+  try {
+    const url=`{{ url_for('portal_cliente.horarios_disponiveis') }}?data=${encodeURIComponent(data.value)}&ignorar_id={{ item.id }}`;
+    const r=await fetch(url,{headers:{'Accept':'application/json'}});
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j=await r.json();
+    const horarios=Array.isArray(j.horarios)?j.horarios:[];
+    hora.innerHTML=horarios.length
+      ? '<option value="">Selecione um horário</option>'+horarios.map(h=>`<option value="${h}">${h}</option>`).join('')
+      : '<option value="">Nenhum horário disponível</option>';
+  } catch (erro) {
+    console.error('Erro ao carregar horários:',erro);
+    hora.innerHTML='<option value="">Erro ao carregar horários. Tente novamente.</option>';
+  } finally {
+    hora.disabled=false;
+  }
+});
+</script>{% endblock %}

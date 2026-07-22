@@ -152,27 +152,28 @@ def conflito_horario(data_agendamento, horario, duracao, employee_id=None, ignor
     inicio_novo = datetime.strptime(f"{data_agendamento} {horario}", "%Y-%m-%d %H:%M")
     fim_novo = inicio_novo + timedelta(minutes=int(duracao or 60))
 
-    sql = """
-        SELECT id, horario, duration_minutes
-        FROM appointments
-        WHERE data_agendamento = ?
-          AND status NOT IN ('Cancelado','Faltou')
-    """
-    params = [data_agendamento]
+    # O conflito entre atendimentos só é rígido quando há um profissional definido.
+    # Sem profissional, a capacidade da loja controla quantos pets podem ocupar o horário.
     if employee_id:
-        sql += " AND employee_id = ?"
-        params.append(employee_id)
-    if ignorar_id:
-        sql += " AND id <> ?"
-        params.append(ignorar_id)
+        sql = """
+            SELECT id, horario, duration_minutes
+            FROM appointments
+            WHERE data_agendamento = ?
+              AND employee_id = ?
+              AND status NOT IN ('Recusado','Cancelado','Cancelado pelo cliente','Faltou')
+        """
+        params = [data_agendamento, employee_id]
+        if ignorar_id:
+            sql += " AND id <> ?"
+            params.append(ignorar_id)
 
-    for item in query_db(sql, tuple(params)):
-        inicio_existente = datetime.strptime(
-            f"{data_agendamento} {item['horario']}", "%Y-%m-%d %H:%M"
-        )
-        fim_existente = inicio_existente + timedelta(minutes=int(item["duration_minutes"] or 60))
-        if inicio_novo < fim_existente and fim_novo > inicio_existente:
-            return item
+        for item in query_db(sql, tuple(params)):
+            inicio_existente = datetime.strptime(
+                f"{data_agendamento} {item['horario']}", "%Y-%m-%d %H:%M"
+            )
+            fim_existente = inicio_existente + timedelta(minutes=int(item["duration_minutes"] or 60))
+            if inicio_novo < fim_existente and fim_novo > inicio_existente:
+                return item
 
     bloqueios = query_db(
         """
@@ -224,3 +225,60 @@ def montar_calendario(modo, inicio, fim, agendamentos, bloqueios):
         for dia in dias:
             dia["is_current_month"] = dia["date"].month == mes_ref
     return dias
+
+
+def obter_configuracao_capacidade():
+    item = query_db("SELECT * FROM agenda_capacity_settings ORDER BY id LIMIT 1", one=True)
+    if item:
+        return dict(item)
+    return {
+        "id": None,
+        "default_capacity": 3,
+        "allow_admin_override": 1,
+        "allow_recepcao_override": 1,
+    }
+
+
+def ocupacao_horario(data_agendamento, horario, ignorar_id=None):
+    sql = """
+        SELECT COUNT(*) AS total
+        FROM appointments
+        WHERE data_agendamento = ?
+          AND SUBSTR(CAST(horario AS TEXT),1,5) = ?
+          AND status NOT IN ('Recusado','Cancelado','Cancelado pelo cliente','Faltou')
+    """
+    params = [data_agendamento, str(horario)[:5]]
+    if ignorar_id:
+        sql += " AND id <> ?"
+        params.append(ignorar_id)
+    row = query_db(sql, tuple(params), one=True)
+    return int(row["total"] or 0) if row else 0
+
+
+def pode_fazer_encaixe(role):
+    cfg = obter_configuracao_capacidade()
+    if role == "admin":
+        return bool(cfg.get("allow_admin_override", 1))
+    if role == "recepcao":
+        return bool(cfg.get("allow_recepcao_override", 1))
+    return False
+
+
+def mapa_ocupacao(agendamentos):
+    cfg = obter_configuracao_capacidade()
+    capacidade = max(1, int(cfg.get("default_capacity") or 3))
+    mapa = {}
+    for item in agendamentos:
+        if item["status"] in ("Recusado", "Cancelado", "Cancelado pelo cliente", "Faltou"):
+            continue
+        chave = f"{item['data_agendamento']}|{str(item['horario'])[:5]}"
+        mapa[chave] = mapa.get(chave, 0) + 1
+    return {
+        chave: {
+            "ocupados": total,
+            "capacidade": capacidade,
+            "lotado": total >= capacidade,
+            "excedido": total > capacidade,
+        }
+        for chave, total in mapa.items()
+    }

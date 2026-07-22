@@ -32,12 +32,25 @@
       const time = zone.dataset.time || dragged.querySelector('strong')?.textContent?.slice(0, 5) || '09:00';
       const url = window.AGENDA_MOVE_URL.replace('/0/', `/${id}/`);
       try {
-        const response = await fetch(url, {
+        let response = await fetch(url, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({date, time})
         });
-        const data = await response.json();
+        let data = await response.json();
+        if (!response.ok && data.requires_override) {
+          const confirmar = window.confirm(`${data.message}
+
+Deseja realizar o encaixe acima da capacidade?`);
+          if (confirmar) {
+            response = await fetch(url, {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({date, time, force_capacity_override: true})
+            });
+            data = await response.json();
+          }
+        }
         if (!response.ok || !data.ok) throw new Error(data.message || 'Não foi possível reagendar.');
         showToast(data.message || 'Agendamento reagendado.');
         setTimeout(() => location.reload(), 550);

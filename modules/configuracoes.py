@@ -14,13 +14,31 @@ def audit(action, user_id=None, details=""):
 @configuracoes_bp.route("/configuracoes", methods=["GET", "POST"])
 def configuracoes():
     config = query_db("SELECT * FROM settings LIMIT 1", one=True)
+    agenda_config = query_db("SELECT * FROM agenda_capacity_settings ORDER BY id LIMIT 1", one=True)
     if request.method == "POST":
-        fields = [request.form.get(k, "").strip() for k in ("company_name","cnpj","phone","whatsapp","email","address","pix_key","notes")]
-        execute_db("DELETE FROM settings")
-        execute_db("INSERT INTO settings (company_name,cnpj,phone,whatsapp,email,address,pix_key,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?)", (*fields, now_iso()))
-        flash("Configurações salvas com sucesso.", "success")
+        if request.form.get("form_type") == "agenda_capacity":
+            try:
+                capacidade = max(1, min(int(request.form.get("default_capacity") or 3), 50))
+            except (TypeError, ValueError):
+                capacidade = 3
+            values = (
+                capacidade,
+                1 if request.form.get("allow_admin_override") else 0,
+                1 if request.form.get("allow_recepcao_override") else 0,
+                now_iso(),
+            )
+            if agenda_config:
+                execute_db("UPDATE agenda_capacity_settings SET default_capacity=?,allow_admin_override=?,allow_recepcao_override=?,updated_at=? WHERE id=?", values + (agenda_config["id"],))
+            else:
+                execute_db("INSERT INTO agenda_capacity_settings (default_capacity,allow_admin_override,allow_recepcao_override,created_at,updated_at) VALUES (?,?,?,?,?)", values[:3] + (now_iso(), now_iso()))
+            flash("Capacidade da agenda atualizada.", "success")
+        else:
+            fields = [request.form.get(k, "").strip() for k in ("company_name","cnpj","phone","whatsapp","email","address","pix_key","notes")]
+            execute_db("DELETE FROM settings")
+            execute_db("INSERT INTO settings (company_name,cnpj,phone,whatsapp,email,address,pix_key,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?)", (*fields, now_iso()))
+            flash("Configurações salvas com sucesso.", "success")
         return redirect(url_for("configuracoes.configuracoes"))
-    return render_template("configuracoes.html", config=config)
+    return render_template("configuracoes.html", config=config, agenda_config=agenda_config)
 
 
 @configuracoes_bp.route("/usuarios", methods=["GET", "POST"])

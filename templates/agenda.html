@@ -90,6 +90,8 @@
           <div class="time-label">{{ hora }}</div>
           {% for dia in calendario %}
             <div class="time-slot drop-zone" data-date="{{ dia.iso }}" data-time="{{ hora }}">
+              {% set cap = ocupacao_slots.get(dia.iso ~ '|' ~ hora) %}
+              <div class="slot-capacity {% if cap and cap.excedido %}over{% elif cap and cap.lotado %}full{% endif %}">{{ cap.ocupados if cap else 0 }}/{{ capacidade_config.default_capacity or 3 }}</div>
               {% for b in dia.blocks if b.start_time[:2] == hora[:2] %}
                 <div class="calendar-block" title="{{ b.notes or '' }}">🔒 {{ b.title or b.block_type }}</div>
               {% endfor %}
@@ -125,6 +127,7 @@
         <select name="employee_id"><option value="">Profissional</option>{% for e in funcionarios %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select>
         <select name="status">{% for s in status_lista %}<option>{{ s }}</option>{% endfor %}</select>
         <label class="check-inline"><input type="checkbox" name="transport_required"> Necessita Táxi Dog</label>
+        {% if pode_encaixar %}<label class="check-inline warning-check"><input type="checkbox" name="capacity_override"> Confirmar encaixe se o horário estiver lotado</label>{% endif %}
         <textarea name="observacoes" placeholder="Observações"></textarea>
         <button>Criar agendamento</button>
       </form>

@@ -1,8 +1,56 @@
 {% extends "base.html" %}
 
-{% block title %}Configurações{% endblock %}
-{% block page_title %}Configurações{% endblock %}
-{% block page_subtitle %}Dados gerais da empresa{% endblock %}
+{% block title %}Configurações
+
+<div class="card" style="margin-top:18px">
+    <h2>Capacidade da agenda</h2>
+    <p class="muted">Define quantos pets podem ocupar o mesmo horário. Clientes respeitam o limite; administrador e recepção podem fazer encaixes quando autorizados.</p>
+    <form method="post" class="form">
+        <input type="hidden" name="form_type" value="agenda_capacity">
+        <label>Capacidade padrão por horário
+            <input type="number" name="default_capacity" min="1" max="50" value="{{ agenda_config.default_capacity if agenda_config else 3 }}" required>
+        </label>
+        <label class="check-inline"><input type="checkbox" name="allow_admin_override" {% if not agenda_config or agenda_config.allow_admin_override %}checked{% endif %}> Permitir encaixe pelo administrador</label>
+        <label class="check-inline"><input type="checkbox" name="allow_recepcao_override" {% if not agenda_config or agenda_config.allow_recepcao_override %}checked{% endif %}> Permitir encaixe pela recepção</label>
+        <button>Salvar capacidade</button>
+    </form>
+</div>
+
+{% endblock %}
+{% block page_title %}Configurações
+
+<div class="card" style="margin-top:18px">
+    <h2>Capacidade da agenda</h2>
+    <p class="muted">Define quantos pets podem ocupar o mesmo horário. Clientes respeitam o limite; administrador e recepção podem fazer encaixes quando autorizados.</p>
+    <form method="post" class="form">
+        <input type="hidden" name="form_type" value="agenda_capacity">
+        <label>Capacidade padrão por horário
+            <input type="number" name="default_capacity" min="1" max="50" value="{{ agenda_config.default_capacity if agenda_config else 3 }}" required>
+        </label>
+        <label class="check-inline"><input type="checkbox" name="allow_admin_override" {% if not agenda_config or agenda_config.allow_admin_override %}checked{% endif %}> Permitir encaixe pelo administrador</label>
+        <label class="check-inline"><input type="checkbox" name="allow_recepcao_override" {% if not agenda_config or agenda_config.allow_recepcao_override %}checked{% endif %}> Permitir encaixe pela recepção</label>
+        <button>Salvar capacidade</button>
+    </form>
+</div>
+
+{% endblock %}
+{% block page_subtitle %}Dados gerais da empresa
+
+<div class="card" style="margin-top:18px">
+    <h2>Capacidade da agenda</h2>
+    <p class="muted">Define quantos pets podem ocupar o mesmo horário. Clientes respeitam o limite; administrador e recepção podem fazer encaixes quando autorizados.</p>
+    <form method="post" class="form">
+        <input type="hidden" name="form_type" value="agenda_capacity">
+        <label>Capacidade padrão por horário
+            <input type="number" name="default_capacity" min="1" max="50" value="{{ agenda_config.default_capacity if agenda_config else 3 }}" required>
+        </label>
+        <label class="check-inline"><input type="checkbox" name="allow_admin_override" {% if not agenda_config or agenda_config.allow_admin_override %}checked{% endif %}> Permitir encaixe pelo administrador</label>
+        <label class="check-inline"><input type="checkbox" name="allow_recepcao_override" {% if not agenda_config or agenda_config.allow_recepcao_override %}checked{% endif %}> Permitir encaixe pela recepção</label>
+        <button>Salvar capacidade</button>
+    </form>
+</div>
+
+{% endblock %}
 
 {% block content %}
 <div class="card">
@@ -21,4 +69,20 @@
         <button>Salvar configurações</button>
     </form>
 </div>
+
+
+<div class="card" style="margin-top:18px">
+    <h2>Capacidade da agenda</h2>
+    <p class="muted">Define quantos pets podem ocupar o mesmo horário. Clientes respeitam o limite; administrador e recepção podem fazer encaixes quando autorizados.</p>
+    <form method="post" class="form">
+        <input type="hidden" name="form_type" value="agenda_capacity">
+        <label>Capacidade padrão por horário
+            <input type="number" name="default_capacity" min="1" max="50" value="{{ agenda_config.default_capacity if agenda_config else 3 }}" required>
+        </label>
+        <label class="check-inline"><input type="checkbox" name="allow_admin_override" {% if not agenda_config or agenda_config.allow_admin_override %}checked{% endif %}> Permitir encaixe pelo administrador</label>
+        <label class="check-inline"><input type="checkbox" name="allow_recepcao_override" {% if not agenda_config or agenda_config.allow_recepcao_override %}checked{% endif %}> Permitir encaixe pela recepção</label>
+        <button>Salvar capacidade</button>
+    </form>
+</div>
+
 {% endblock %}

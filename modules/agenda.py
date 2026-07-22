@@ -18,6 +18,10 @@ from services.agenda_service import (
     navegar_referencia,
     ocupacao_profissionais,
     resumo_agenda,
+    obter_configuracao_capacidade,
+    ocupacao_horario,
+    pode_fazer_encaixe,
+    mapa_ocupacao,
 )
 
 agenda_bp = Blueprint("agenda", __name__)
@@ -40,6 +44,18 @@ def _duracao_valida(valor):
     except (TypeError, ValueError):
         return 60
     return max(15, min(duracao, 720))
+
+
+def _validar_capacidade(data_agendamento, hora, ignorar_id=None):
+    cfg = obter_configuracao_capacidade()
+    capacidade = max(1, int(cfg.get("default_capacity") or 3))
+    ocupados = ocupacao_horario(data_agendamento, hora, ignorar_id)
+    lotado = ocupados >= capacidade
+    solicitou_encaixe = bool(request.form.get("capacity_override"))
+    autorizado = pode_fazer_encaixe(session.get("role"))
+    if lotado and not (solicitou_encaixe and autorizado):
+        return False, ocupados, capacidade, False
+    return True, ocupados, capacidade, bool(lotado and solicitou_encaixe and autorizado)
 
 
 def _pet_pertence_ao_cliente(pet_id, client_id):
@@ -92,33 +108,30 @@ def agenda():
             return redirect(url_for("agenda.agenda"))
 
         if conflito_horario(data_agendamento, hora, duracao, employee_id):
-            flash("O horário conflita com outro atendimento ou bloqueio.", "danger")
+            flash("O horário conflita com outro atendimento do profissional ou bloqueio.", "danger")
+            return redirect(url_for("agenda.agenda", referencia=data_agendamento, modo="dia"))
+
+        permitido, ocupados, capacidade, encaixe = _validar_capacidade(data_agendamento, hora)
+        if not permitido:
+            flash(f"Horário lotado: {ocupados}/{capacidade} pets. Marque 'Confirmar encaixe' para ultrapassar a capacidade.", "danger")
             return redirect(url_for("agenda.agenda", referencia=data_agendamento, modo="dia"))
 
         insert_db(
             """
             INSERT INTO appointments
             (client_id, pet_id, employee_id, data_agendamento, horario, duration_minutes,
-             servico, valor, status, transport_required, observacoes, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             servico, valor, status, transport_required, observacoes, capacity_override,
+             capacity_override_by, capacity_override_at, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                client_id,
-                pet_id,
-                employee_id,
-                data_agendamento,
-                hora,
-                duracao,
-                servico,
-                valor,
-                status,
-                transporte,
-                observacoes,
-                now_iso(),
-                now_iso(),
+                client_id, pet_id, employee_id, data_agendamento, hora, duracao, servico, valor,
+                status, transporte, observacoes, 1 if encaixe else 0,
+                session.get("user_name") if encaixe else None, now_iso() if encaixe else None,
+                now_iso(), now_iso(),
             ),
         )
-        flash("Agendamento criado com sucesso.", "success")
+        flash("Agendamento criado como encaixe acima da capacidade." if encaixe else "Agendamento criado com sucesso.", "warning" if encaixe else "success")
         return redirect(url_for("agenda.agenda", referencia=data_agendamento, modo="dia"))
 
     modo, referencia, inicio, fim = intervalo_visualizacao(
@@ -154,6 +167,9 @@ def agenda():
         status_filtro=status,
         funcionario_filtro=employee_id,
         busca=busca,
+        capacidade_config=obter_configuracao_capacidade(),
+        ocupacao_slots=mapa_ocupacao(agendamentos),
+        pode_encaixar=pode_fazer_encaixe(session.get("role")),
     )
 
 
@@ -182,14 +198,19 @@ def editar_agendamento(agendamento_id):
         if status not in STATUS_AGENDA:
             status = "Agendado"
         if conflito_horario(data_agendamento, hora, duracao, employee_id, agendamento_id):
-            flash("O horário conflita com outro atendimento ou bloqueio.", "danger")
+            flash("O horário conflita com outro atendimento do profissional ou bloqueio.", "danger")
+            return redirect(url_for("agenda.editar_agendamento", agendamento_id=agendamento_id))
+        permitido, ocupados, capacidade, encaixe = _validar_capacidade(data_agendamento, hora, agendamento_id)
+        if not permitido:
+            flash(f"Horário lotado: {ocupados}/{capacidade} pets. Confirme o encaixe para salvar.", "danger")
             return redirect(url_for("agenda.editar_agendamento", agendamento_id=agendamento_id))
 
         execute_db(
             """
             UPDATE appointments SET client_id=?, pet_id=?, employee_id=?, data_agendamento=?,
                 horario=?, duration_minutes=?, servico=?, valor=?, status=?,
-                transport_required=?, observacoes=?, updated_at=?
+                transport_required=?, observacoes=?, capacity_override=?, capacity_override_by=?,
+                capacity_override_at=?, updated_at=?
             WHERE id=?
             """,
             (
@@ -204,6 +225,9 @@ def editar_agendamento(agendamento_id):
                 status,
                 1 if request.form.get("transport_required") else 0,
                 request.form.get("observacoes", "").strip(),
+                1 if encaixe else 0,
+                session.get("user_name") if encaixe else None,
+                now_iso() if encaixe else None,
                 now_iso(),
                 agendamento_id,
             ),
@@ -239,15 +263,31 @@ def mover_agendamento(agendamento_id):
         employee_id,
         agendamento_id,
     ):
-        return jsonify({"ok": False, "message": "Conflito de horário."}), 409
+        return jsonify({"ok": False, "message": "Conflito com profissional ou bloqueio."}), 409
+
+    cfg = obter_configuracao_capacidade()
+    capacidade = max(1, int(cfg.get("default_capacity") or 3))
+    ocupados = ocupacao_horario(nova_data, nova_hora, agendamento_id)
+    force = bool(payload.get("force_capacity_override"))
+    autorizado = pode_fazer_encaixe(session.get("role"))
+    if ocupados >= capacidade and not (force and autorizado):
+        return jsonify({
+            "ok": False,
+            "requires_override": autorizado,
+            "message": f"Horário lotado: {ocupados}/{capacidade} pets.",
+        }), 409
+    encaixe = ocupados >= capacidade and force and autorizado
 
     execute_db(
         """
         UPDATE appointments
-        SET data_agendamento = ?, horario = ?, employee_id = ?, status = ?, updated_at = ?
+        SET data_agendamento = ?, horario = ?, employee_id = ?, status = ?,
+            capacity_override=?, capacity_override_by=?, capacity_override_at=?, updated_at = ?
         WHERE id = ?
         """,
-        (nova_data, nova_hora, employee_id, "Reagendado", now_iso(), agendamento_id),
+        (nova_data, nova_hora, employee_id, "Reagendado", 1 if encaixe else 0,
+         session.get("user_name") if encaixe else None, now_iso() if encaixe else None,
+         now_iso(), agendamento_id),
     )
     return jsonify({"ok": True, "message": "Agendamento reagendado."})
 
@@ -416,7 +456,16 @@ def solicitacoes_online():
         ORDER BY a.created_at ASC
         """
     )
-    return render_template("solicitacoes_online.html", solicitacoes=solicitacoes)
+    cfg = obter_configuracao_capacidade()
+    capacidade = max(1, int(cfg.get("default_capacity") or 3))
+    itens = []
+    for row in solicitacoes:
+        item = dict(row)
+        item["ocupados"] = ocupacao_horario(item["data_agendamento"], item["horario"], item["id"])
+        item["capacidade"] = capacidade
+        item["lotado"] = item["ocupados"] >= capacidade
+        itens.append(item)
+    return render_template("solicitacoes_online.html", solicitacoes=itens, pode_encaixar=pode_fazer_encaixe(session.get("role")))
 
 
 @agenda_bp.route("/agenda/solicitacoes-online/<int:agendamento_id>/aprovar", methods=["POST"])
@@ -427,11 +476,15 @@ def aprovar_solicitacao_online(agendamento_id):
         return redirect(url_for("agenda.solicitacoes_online"))
     duracao = item["duration_minutes"] or 60
     if conflito_horario(item["data_agendamento"], item["horario"], duracao, item["employee_id"], agendamento_id):
-        flash("Este horário já está ocupado. Reagende antes de aprovar.", "danger")
+        flash("Este horário conflita com um profissional ou bloqueio. Reagende antes de aprovar.", "danger")
         return redirect(url_for("agenda.editar_agendamento", agendamento_id=agendamento_id))
+    permitido, ocupados, capacidade, encaixe = _validar_capacidade(item["data_agendamento"], item["horario"], agendamento_id)
+    if not permitido:
+        flash(f"Horário lotado: {ocupados}/{capacidade}. Marque 'Aprovar como encaixe' para continuar.", "danger")
+        return redirect(url_for("agenda.solicitacoes_online"))
     execute_db(
-        "UPDATE appointments SET status='Agendado', approval_notes=?, approved_at=?, approved_by=?, updated_at=? WHERE id=?",
-        (request.form.get("approval_notes", "").strip() or "Horário aprovado pela Pet & Gatô.", now_iso(), session.get("user_name", "Sistema"), now_iso(), agendamento_id),
+        "UPDATE appointments SET status='Agendado', approval_notes=?, approved_at=?, approved_by=?, capacity_override=?, capacity_override_by=?, capacity_override_at=?, updated_at=? WHERE id=?",
+        (request.form.get("approval_notes", "").strip() or "Horário aprovado pela Pet & Gatô.", now_iso(), session.get("user_name", "Sistema"), 1 if encaixe else 0, session.get("user_name") if encaixe else None, now_iso() if encaixe else None, now_iso(), agendamento_id),
     )
     flash("Solicitação aprovada e adicionada à agenda.", "success")
     return redirect(url_for("agenda.solicitacoes_online"))

@@ -198,6 +198,12 @@ def init_db():
             priority INTEGER DEFAULT 0, status TEXT DEFAULT 'Aguardando', notes TEXT,
             created_at TEXT, updated_at TEXT
         )""",
+        f"""CREATE TABLE IF NOT EXISTS agenda_capacity_settings (
+            id {serial}, default_capacity INTEGER NOT NULL DEFAULT 3,
+            allow_admin_override INTEGER NOT NULL DEFAULT 1,
+            allow_recepcao_override INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT, updated_at TEXT
+        )""",
         f"""CREATE TABLE IF NOT EXISTS employees (
             id {serial}, name TEXT NOT NULL, registration TEXT UNIQUE NOT NULL,
             cpf TEXT, phone TEXT, email TEXT, role_name TEXT, admission_date TEXT,
@@ -440,7 +446,7 @@ def init_db():
             ("alimentacao", "TEXT"), ("temperamento", "TEXT"),
             ("preferencia_tosa", "TEXT"), ("foto", "TEXT"), ("ativo", "INTEGER DEFAULT 1")
         ],
-        "appointments": [("employee_id", "INTEGER"), ("duration_minutes", "INTEGER DEFAULT 60"), ("transport_required", "INTEGER DEFAULT 0"), ("reminder_sent", "INTEGER DEFAULT 0"), ("updated_at", "TEXT"), ("requested_online", "INTEGER DEFAULT 0"), ("approval_notes", "TEXT"), ("approved_at", "TEXT"), ("approved_by", "TEXT")],
+        "appointments": [("employee_id", "INTEGER"), ("duration_minutes", "INTEGER DEFAULT 60"), ("transport_required", "INTEGER DEFAULT 0"), ("reminder_sent", "INTEGER DEFAULT 0"), ("updated_at", "TEXT"), ("requested_online", "INTEGER DEFAULT 0"), ("approval_notes", "TEXT"), ("approved_at", "TEXT"), ("approved_by", "TEXT"), ("capacity_override", "INTEGER DEFAULT 0"), ("capacity_override_by", "TEXT"), ("capacity_override_at", "TEXT")],
         "grooming_services": [("financeiro_lancado", "INTEGER DEFAULT 0"), ("estoque_baixado", "INTEGER DEFAULT 0"), ("payment_method", "TEXT DEFAULT 'A definir'"), ("started_at", "TEXT"), ("finished_at", "TEXT"), ("checked_in_at", "TEXT"), ("checked_out_at", "TEXT"), ("commission_lancada", "INTEGER DEFAULT 0"), ("updated_at", "TEXT")],
         "financial_transactions": [
             ("due_date", "TEXT"), ("status", "TEXT DEFAULT 'Pago'"),

@@ -7,7 +7,7 @@ from flask import Blueprint, flash, jsonify, redirect, render_template, request,
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from database import execute_db, insert_db, now_iso, query_db
-from services.agenda_service import HORAS_AGENDA, SERVICOS_AGENDA
+from services.agenda_service import HORAS_AGENDA, SERVICOS_AGENDA, obter_configuracao_capacidade, ocupacao_horario
 
 portal_cliente_bp = Blueprint("portal_cliente", __name__, url_prefix="/cliente")
 
@@ -48,17 +48,12 @@ def _pet_do_cliente(pet_id, client_id):
 def _horarios_disponiveis(data_agendamento: str, ignorar_id: int | None = None):
     if not data_agendamento or data_agendamento < date.today().isoformat():
         return []
-    sql = """
-        SELECT horario FROM appointments
-        WHERE data_agendamento=?
-          AND status NOT IN ('Recusado','Cancelado','Cancelado pelo cliente')
-    """
-    params = [data_agendamento]
-    if ignorar_id:
-        sql += " AND id<>?"
-        params.append(ignorar_id)
-    ocupados = {str(row["horario"])[:5] for row in query_db(sql, tuple(params))}
-    return [hora for hora in HORAS_AGENDA if str(hora)[:5] not in ocupados]
+    cfg = obter_configuracao_capacidade()
+    capacidade = max(1, int(cfg.get("default_capacity") or 3))
+    return [
+        hora for hora in HORAS_AGENDA
+        if ocupacao_horario(data_agendamento, hora, ignorar_id) < capacidade
+    ]
 
 
 @portal_cliente_bp.route("")
