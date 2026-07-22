@@ -1,0 +1,22 @@
+PET & GATÔ BUSINESS V6.4.1 — PORTAL DO CLIENTE PREMIUM
+
+Novidades:
+- edição dos dados do tutor;
+- alteração de senha;
+- edição e remoção lógica de pets;
+- bloqueio da remoção de pet com atendimento ativo;
+- horários disponíveis consultados em tempo real;
+- validação contra conflito de horário no servidor;
+- cancelamento pelo cliente;
+- solicitação de reagendamento mediante nova aprovação;
+- Termos de Uso e Política de Privacidade;
+- aceite obrigatório dos termos no cadastro;
+- layout responsivo renovado.
+
+Teste recomendado:
+1. Criar uma nova conta e aceitar os termos.
+2. Cadastrar e editar um pet.
+3. Solicitar um horário e aprová-lo no administrativo.
+4. Solicitar reagendamento no portal e aprovar novamente.
+5. Cancelar outro agendamento.
+6. Alterar os dados e a senha do tutor.

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from functools import wraps
 
-from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from database import execute_db, insert_db, now_iso, query_db
@@ -28,14 +28,37 @@ def _conta_atual():
         return None
     return query_db(
         """
-        SELECT a.*, c.nome, c.telefone, c.whatsapp, c.email, c.endereco
+        SELECT a.*, c.nome, c.telefone, c.whatsapp, c.email AS client_email, c.endereco,
+               c.consentimento_marketing
         FROM client_portal_accounts a
         JOIN clients c ON c.id = a.client_id
         WHERE a.id = ? AND a.active = 1
         """,
-        (account_id,),
-        one=True,
+        (account_id,), one=True,
     )
+
+
+def _pet_do_cliente(pet_id, client_id):
+    return query_db(
+        "SELECT * FROM pets WHERE id=? AND client_id=? AND COALESCE(ativo,1)=1",
+        (pet_id, client_id), one=True,
+    )
+
+
+def _horarios_disponiveis(data_agendamento: str, ignorar_id: int | None = None):
+    if not data_agendamento or data_agendamento < date.today().isoformat():
+        return []
+    sql = """
+        SELECT horario FROM appointments
+        WHERE data_agendamento=?
+          AND status NOT IN ('Recusado','Cancelado','Cancelado pelo cliente')
+    """
+    params = [data_agendamento]
+    if ignorar_id:
+        sql += " AND id<>?"
+        params.append(ignorar_id)
+    ocupados = {str(row["horario"])[:5] for row in query_db(sql, tuple(params))}
+    return [hora for hora in HORAS_AGENDA if str(hora)[:5] not in ocupados]
 
 
 @portal_cliente_bp.route("")
@@ -43,6 +66,11 @@ def inicio():
     if session.get("client_portal_id"):
         return redirect(url_for("portal_cliente.painel"))
     return render_template("portal_cliente/inicio.html")
+
+
+@portal_cliente_bp.route("/termos")
+def termos():
+    return render_template("portal_cliente/termos.html")
 
 
 @portal_cliente_bp.route("/cadastro", methods=["GET", "POST"])
@@ -56,9 +84,12 @@ def cadastro():
         password = request.form.get("password", "")
         confirm = request.form.get("confirm_password", "")
         consentimento = 1 if request.form.get("consentimento_marketing") else 0
+        termos_aceitos = bool(request.form.get("termos_aceitos"))
 
         if not nome or not email or not telefone or not password:
             flash("Preencha nome, e-mail, telefone e senha.", "danger")
+        elif not termos_aceitos:
+            flash("É necessário aceitar os Termos de Uso e a Política de Privacidade.", "danger")
         elif len(password) < 8:
             flash("A senha deve ter pelo menos 8 caracteres.", "danger")
         elif password != confirm:
@@ -78,10 +109,10 @@ def cadastro():
             account_id = insert_db(
                 """
                 INSERT INTO client_portal_accounts
-                (client_id, email, password_hash, active, created_at, updated_at)
-                VALUES (?, ?, ?, 1, ?, ?)
+                (client_id, email, password_hash, active, terms_accepted_at, created_at, updated_at)
+                VALUES (?, ?, ?, 1, ?, ?, ?)
                 """,
-                (client_id, email, generate_password_hash(password), now_iso(), now_iso()),
+                (client_id, email, generate_password_hash(password), now_iso(), now_iso(), now_iso()),
             )
             session.clear()
             session["client_portal_id"] = account_id
@@ -89,7 +120,6 @@ def cadastro():
             session["client_name"] = nome
             flash("Cadastro realizado. Agora cadastre seu pet.", "success")
             return redirect(url_for("portal_cliente.novo_pet"))
-
     return render_template("portal_cliente/cadastro.html")
 
 
@@ -100,8 +130,7 @@ def login_cliente():
         password = request.form.get("password", "")
         account = query_db(
             "SELECT * FROM client_portal_accounts WHERE LOWER(email)=LOWER(?) AND active=1",
-            (email,),
-            one=True,
+            (email,), one=True,
         )
         if account and check_password_hash(account["password_hash"], password):
             client = query_db("SELECT nome FROM clients WHERE id=?", (account["client_id"],), one=True)
@@ -132,46 +161,121 @@ def painel():
     agendamentos = query_db(
         """
         SELECT a.*, p.nome AS pet_nome
-        FROM appointments a
-        JOIN pets p ON p.id=a.pet_id
+        FROM appointments a JOIN pets p ON p.id=a.pet_id
         WHERE a.client_id=?
-        ORDER BY a.data_agendamento DESC, a.horario DESC
-        LIMIT 30
-        """,
-        (conta["client_id"],),
+        ORDER BY a.data_agendamento DESC, a.horario DESC LIMIT 30
+        """, (conta["client_id"],),
     )
-    return render_template("portal_cliente/painel.html", conta=conta, pets=pets, agendamentos=agendamentos)
+    return render_template("portal_cliente/painel.html", conta=conta, pets=pets, agendamentos=agendamentos, hoje=date.today().isoformat())
+
+
+@portal_cliente_bp.route("/conta", methods=["GET", "POST"])
+@cliente_login_required
+def editar_conta():
+    conta = _conta_atual()
+    if request.method == "POST":
+        nome = request.form.get("nome", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        telefone = request.form.get("telefone", "").strip()
+        whatsapp = request.form.get("whatsapp", "").strip() or telefone
+        endereco = request.form.get("endereco", "").strip()
+        if not nome or not email or not telefone:
+            flash("Preencha nome, e-mail e telefone.", "danger")
+        else:
+            outra = query_db("SELECT id FROM client_portal_accounts WHERE LOWER(email)=LOWER(?) AND id<>?", (email, conta["id"]), one=True)
+            if outra:
+                flash("Este e-mail já está sendo usado por outra conta.", "danger")
+            else:
+                execute_db("UPDATE clients SET nome=?,email=?,telefone=?,whatsapp=?,endereco=?,consentimento_marketing=? WHERE id=?",
+                           (nome,email,telefone,whatsapp,endereco,1 if request.form.get("consentimento_marketing") else 0,conta["client_id"]))
+                execute_db("UPDATE client_portal_accounts SET email=?,updated_at=? WHERE id=?", (email,now_iso(),conta["id"]))
+                session["client_name"] = nome
+                flash("Dados atualizados com sucesso.", "success")
+                return redirect(url_for("portal_cliente.painel"))
+    return render_template("portal_cliente/conta_form.html", conta=conta)
+
+
+@portal_cliente_bp.route("/senha", methods=["GET", "POST"])
+@cliente_login_required
+def alterar_senha():
+    conta = _conta_atual()
+    if request.method == "POST":
+        atual = request.form.get("senha_atual", "")
+        nova = request.form.get("nova_senha", "")
+        confirmar = request.form.get("confirmar_senha", "")
+        if not check_password_hash(conta["password_hash"], atual):
+            flash("A senha atual está incorreta.", "danger")
+        elif len(nova) < 8:
+            flash("A nova senha deve ter pelo menos 8 caracteres.", "danger")
+        elif nova != confirmar:
+            flash("A confirmação da nova senha não confere.", "danger")
+        else:
+            execute_db("UPDATE client_portal_accounts SET password_hash=?,updated_at=? WHERE id=?", (generate_password_hash(nova),now_iso(),conta["id"]))
+            flash("Senha alterada com sucesso.", "success")
+            return redirect(url_for("portal_cliente.painel"))
+    return render_template("portal_cliente/senha_form.html")
 
 
 @portal_cliente_bp.route("/pets/novo", methods=["GET", "POST"])
 @cliente_login_required
 def novo_pet():
+    return _salvar_pet()
+
+
+@portal_cliente_bp.route("/pets/<int:pet_id>/editar", methods=["GET", "POST"])
+@cliente_login_required
+def editar_pet(pet_id):
+    conta = _conta_atual()
+    pet = _pet_do_cliente(pet_id, conta["client_id"])
+    if not pet:
+        flash("Pet não encontrado.", "danger")
+        return redirect(url_for("portal_cliente.painel"))
+    return _salvar_pet(pet)
+
+
+def _salvar_pet(pet=None):
     conta = _conta_atual()
     if request.method == "POST":
         nome = request.form.get("nome", "").strip()
         if not nome:
             flash("Informe o nome do pet.", "danger")
         else:
-            insert_db(
-                """
-                INSERT INTO pets
-                (client_id, nome, especie, raca, porte, data_nascimento, sexo, peso,
-                 castrado, alergias, medicamentos, temperamento, preferencia_tosa,
-                 observacoes, ativo, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
-                """,
-                (
-                    conta["client_id"], nome, request.form.get("especie"), request.form.get("raca"),
-                    request.form.get("porte"), request.form.get("data_nascimento"), request.form.get("sexo"),
-                    request.form.get("peso") or None, 1 if request.form.get("castrado") else 0,
-                    request.form.get("alergias", "").strip(), request.form.get("medicamentos", "").strip(),
-                    request.form.get("temperamento", "").strip(), request.form.get("preferencia_tosa", "").strip(),
-                    request.form.get("observacoes", "").strip(), now_iso(),
-                ),
-            )
-            flash("Pet cadastrado com sucesso.", "success")
+            values = (nome, request.form.get("especie"), request.form.get("raca"), request.form.get("porte"),
+                      request.form.get("data_nascimento"), request.form.get("sexo"), request.form.get("peso") or None,
+                      1 if request.form.get("castrado") else 0, request.form.get("alergias", "").strip(),
+                      request.form.get("medicamentos", "").strip(), request.form.get("temperamento", "").strip(),
+                      request.form.get("preferencia_tosa", "").strip(), request.form.get("observacoes", "").strip())
+            if pet:
+                execute_db("""UPDATE pets SET nome=?,especie=?,raca=?,porte=?,data_nascimento=?,sexo=?,peso=?,castrado=?,alergias=?,medicamentos=?,temperamento=?,preferencia_tosa=?,observacoes=? WHERE id=? AND client_id=?""",
+                           values + (pet["id"], conta["client_id"]))
+                flash("Dados do pet atualizados.", "success")
+            else:
+                insert_db("""INSERT INTO pets (client_id,nome,especie,raca,porte,data_nascimento,sexo,peso,castrado,alergias,medicamentos,temperamento,preferencia_tosa,observacoes,ativo,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?)""",
+                          (conta["client_id"],) + values + (now_iso(),))
+                flash("Pet cadastrado com sucesso.", "success")
             return redirect(url_for("portal_cliente.painel"))
-    return render_template("portal_cliente/pet_form.html", conta=conta)
+    return render_template("portal_cliente/pet_form.html", conta=conta, pet=pet)
+
+
+@portal_cliente_bp.route("/pets/<int:pet_id>/remover", methods=["POST"])
+@cliente_login_required
+def remover_pet(pet_id):
+    conta = _conta_atual()
+    pet = _pet_do_cliente(pet_id, conta["client_id"])
+    if pet:
+        futuro = query_db("SELECT id FROM appointments WHERE pet_id=? AND data_agendamento>=? AND status NOT IN ('Recusado','Cancelado','Cancelado pelo cliente') LIMIT 1", (pet_id,date.today().isoformat()), one=True)
+        if futuro:
+            flash("Não é possível remover um pet com agendamento ativo.", "danger")
+        else:
+            execute_db("UPDATE pets SET ativo=0 WHERE id=? AND client_id=?", (pet_id,conta["client_id"]))
+            flash("Pet removido do portal.", "success")
+    return redirect(url_for("portal_cliente.painel"))
+
+
+@portal_cliente_bp.route("/horarios-disponiveis")
+@cliente_login_required
+def horarios_disponiveis():
+    return jsonify({"horarios": _horarios_disponiveis(request.args.get("data", ""), request.args.get("ignorar_id", type=int))})
 
 
 @portal_cliente_bp.route("/agendar", methods=["GET", "POST"])
@@ -180,33 +284,53 @@ def agendar():
     conta = _conta_atual()
     pets = query_db("SELECT id,nome FROM pets WHERE client_id=? AND COALESCE(ativo,1)=1 ORDER BY nome", (conta["client_id"],))
     if request.method == "POST":
-        pet_id = request.form.get("pet_id", "").strip()
-        data_agendamento = request.form.get("data", "").strip()
-        horario = request.form.get("horario", "").strip()
-        servico = request.form.get("servico", "").strip()
-        pet = query_db("SELECT id FROM pets WHERE id=? AND client_id=? AND COALESCE(ativo,1)=1", (pet_id, conta["client_id"]), one=True)
+        pet_id = request.form.get("pet_id", "").strip(); data_agendamento = request.form.get("data", "").strip()
+        horario = request.form.get("horario", "").strip(); servico = request.form.get("servico", "").strip()
+        pet = _pet_do_cliente(pet_id, conta["client_id"])
         if not pet or not data_agendamento or not horario or not servico:
             flash("Preencha pet, serviço, data e horário.", "danger")
         elif data_agendamento < date.today().isoformat():
             flash("Escolha uma data futura.", "danger")
+        elif horario not in _horarios_disponiveis(data_agendamento):
+            flash("Este horário acabou de ser ocupado. Escolha outro.", "danger")
         else:
-            insert_db(
-                """
-                INSERT INTO appointments
-                (client_id, pet_id, data_agendamento, horario, duration_minutes, servico,
-                 valor, status, transport_required, observacoes, requested_online,
-                 created_at, updated_at)
-                VALUES (?, ?, ?, ?, 60, ?, 0, 'Aguardando aprovação', ?, ?, 1, ?, ?)
-                """,
-                (
-                    conta["client_id"], pet_id, data_agendamento, horario, servico,
-                    1 if request.form.get("transport_required") else 0,
-                    request.form.get("observacoes", "").strip(), now_iso(), now_iso(),
-                ),
-            )
+            insert_db("""INSERT INTO appointments (client_id,pet_id,data_agendamento,horario,duration_minutes,servico,valor,status,transport_required,observacoes,requested_online,created_at,updated_at) VALUES (?,?,?,?,60,?,0,'Aguardando aprovação',?,?,1,?,?)""",
+                      (conta["client_id"],pet_id,data_agendamento,horario,servico,1 if request.form.get("transport_required") else 0,request.form.get("observacoes", "").strip(),now_iso(),now_iso()))
             flash("Solicitação enviada. A loja confirmará o horário após análise.", "success")
             return redirect(url_for("portal_cliente.painel"))
-    return render_template(
-        "portal_cliente/agendar.html", conta=conta, pets=pets,
-        servicos=SERVICOS_AGENDA, horas=HORAS_AGENDA, hoje=date.today().isoformat(),
-    )
+    return render_template("portal_cliente/agendar.html", conta=conta,pets=pets,servicos=SERVICOS_AGENDA,horas=[],hoje=date.today().isoformat())
+
+
+@portal_cliente_bp.route("/agendamentos/<int:agendamento_id>/cancelar", methods=["POST"])
+@cliente_login_required
+def cancelar_agendamento(agendamento_id):
+    conta = _conta_atual()
+    item = query_db("SELECT * FROM appointments WHERE id=? AND client_id=?", (agendamento_id,conta["client_id"]), one=True)
+    if not item:
+        flash("Agendamento não encontrado.", "danger")
+    elif item["data_agendamento"] < date.today().isoformat() or item["status"] in ("Concluído","Finalizado","Cancelado","Cancelado pelo cliente"):
+        flash("Este agendamento não pode mais ser cancelado pelo portal.", "danger")
+    else:
+        motivo = request.form.get("motivo", "").strip()
+        execute_db("UPDATE appointments SET status='Cancelado pelo cliente',approval_notes=?,updated_at=? WHERE id=?", (motivo or "Cancelado pelo cliente pelo portal.",now_iso(),agendamento_id))
+        flash("Agendamento cancelado. A equipe foi informada.", "success")
+    return redirect(url_for("portal_cliente.painel"))
+
+
+@portal_cliente_bp.route("/agendamentos/<int:agendamento_id>/reagendar", methods=["GET", "POST"])
+@cliente_login_required
+def reagendar(agendamento_id):
+    conta = _conta_atual()
+    item = query_db("SELECT a.*,p.nome pet_nome FROM appointments a JOIN pets p ON p.id=a.pet_id WHERE a.id=? AND a.client_id=?", (agendamento_id,conta["client_id"]), one=True)
+    if not item:
+        flash("Agendamento não encontrado.", "danger"); return redirect(url_for("portal_cliente.painel"))
+    if request.method == "POST":
+        nova_data=request.form.get("data",""); novo_horario=request.form.get("horario","")
+        if nova_data < date.today().isoformat() or novo_horario not in _horarios_disponiveis(nova_data, agendamento_id):
+            flash("Escolha uma data e um horário disponíveis.", "danger")
+        else:
+            execute_db("UPDATE appointments SET data_agendamento=?,horario=?,status='Aguardando aprovação',approval_notes=?,updated_at=? WHERE id=? AND client_id=?",
+                       (nova_data,novo_horario,"Reagendamento solicitado pelo cliente.",now_iso(),agendamento_id,conta["client_id"]))
+            flash("Pedido de reagendamento enviado para aprovação.", "success")
+            return redirect(url_for("portal_cliente.painel"))
+    return render_template("portal_cliente/reagendar.html", item=item, hoje=date.today().isoformat())

@@ -431,6 +431,7 @@ def init_db():
             ("locked_until", "TEXT"), ("last_login_at", "TEXT"), ("last_login_ip", "TEXT"),
             ("last_login_user_agent", "TEXT"), ("login_count", "INTEGER DEFAULT 0"),
             ("updated_at", "TEXT"), ("created_by", "TEXT")],
+        "client_portal_accounts": [("terms_accepted_at", "TEXT")],
         "clients": [("foto", "TEXT"), ("tags", "TEXT"), ("contato_emergencia", "TEXT"), ("data_nascimento", "TEXT"), ("origem_cadastro", "TEXT"), ("canal_preferido", "TEXT"), ("consentimento_marketing", "INTEGER DEFAULT 0"), ("ativo", "INTEGER DEFAULT 1")],
         "pets": [
             ("sexo", "TEXT"), ("cor", "TEXT"), ("peso", "REAL"),
