@@ -24,6 +24,8 @@ from services.agenda_service import (
     mapa_ocupacao,
 )
 
+from services.appointment_grooming_sync import sincronizar_agendamento_com_banho
+
 agenda_bp = Blueprint("agenda", __name__)
 
 
@@ -127,7 +129,7 @@ def agenda():
             flash(f"Horário lotado: {ocupados}/{capacidade} pets. Marque 'Confirmar encaixe' para ultrapassar a capacidade.", "danger")
             return redirect(url_for("agenda.agenda", referencia=data_agendamento, modo="dia"))
 
-        insert_db(
+        agendamento_id = insert_db(
             """
             INSERT INTO appointments
             (client_id, pet_id, employee_id, data_agendamento, horario, duration_minutes,
@@ -142,6 +144,7 @@ def agenda():
                 now_iso(), now_iso(),
             ),
         )
+        sincronizar_agendamento_com_banho(agendamento_id)
         flash("Agendamento criado como encaixe acima da capacidade." if encaixe else "Agendamento criado com sucesso.", "warning" if encaixe else "success")
         return redirect(url_for("agenda.agenda", referencia=data_agendamento, modo="dia"))
 
@@ -243,6 +246,7 @@ def editar_agendamento(agendamento_id):
                 agendamento_id,
             ),
         )
+        sincronizar_agendamento_com_banho(agendamento_id)
         flash("Agendamento atualizado.", "success")
         return redirect(url_for("agenda.agenda", referencia=data_agendamento, modo="dia"))
 
@@ -300,6 +304,7 @@ def mover_agendamento(agendamento_id):
          session.get("user_name") if encaixe else None, now_iso() if encaixe else None,
          now_iso(), agendamento_id),
     )
+    sincronizar_agendamento_com_banho(agendamento_id)
     return jsonify({"ok": True, "message": "Agendamento reagendado."})
 
 
@@ -326,6 +331,7 @@ def atualizar_status_rapido(agendamento_id):
             "UPDATE appointments SET status=?, updated_at=? WHERE id=?",
             (novo_status, now_iso(), agendamento_id),
         )
+    sincronizar_agendamento_com_banho(agendamento_id)
     flash(f"Status atualizado para {novo_status}.", "success")
     return redirect(request.referrer or url_for("agenda.agenda"))
 
@@ -337,6 +343,7 @@ def atualizar_status(agendamento_id):
         "UPDATE appointments SET status=?, updated_at=? WHERE id=?",
         (status, now_iso(), agendamento_id),
     )
+    sincronizar_agendamento_com_banho(agendamento_id)
     flash(f"Status atualizado para {status}.", "success")
     return redirect(request.referrer or url_for("agenda.agenda"))
 
@@ -524,6 +531,7 @@ def aprovar_solicitacao_online(agendamento_id):
         "UPDATE appointments SET status='Agendado', approval_notes=?, approved_at=?, approved_by=?, capacity_override=?, capacity_override_by=?, capacity_override_at=?, updated_at=? WHERE id=?",
         (request.form.get("approval_notes", "").strip() or "Horário aprovado pela Pet & Gatô.", now_iso(), session.get("user_name", "Sistema"), 1 if encaixe else 0, session.get("user_name") if encaixe else None, now_iso() if encaixe else None, now_iso(), agendamento_id),
     )
+    sincronizar_agendamento_com_banho(agendamento_id)
     flash("Solicitação aprovada e adicionada à agenda.", "success")
     return redirect(url_for("agenda.solicitacoes_online"))
 

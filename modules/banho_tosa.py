@@ -16,6 +16,7 @@ from services.banho_service import (
     atualizar_status_atendimento, lancar_comissao,
 )
 
+from services.appointment_grooming_sync import sincronizar_agendamentos_existentes
 banho_tosa_bp=Blueprint("banho_tosa",__name__)
 BASE_DIR=Path(__file__).resolve().parents[1]
 PHOTO_DIR=BASE_DIR/"static"/"uploads"/"atendimentos"
@@ -65,6 +66,7 @@ def banho_tosa():
         registrar_historico(atendimento_id,"Atendimento criado","Administrador")
         flash("Atendimento cadastrado com sucesso.","success"); return redirect(url_for("banho_tosa.banho_tosa"))
 
+    sincronizar_agendamentos_existentes()
     data_filtro=request.args.get("data","").strip(); status_filtro=request.args.get("status","").strip(); busca=request.args.get("busca","").strip()
     sql="""SELECT g.*,c.nome AS cliente_nome,c.whatsapp,p.nome AS pet_nome,p.foto AS pet_foto,e.name AS funcionario_nome
         FROM grooming_services g LEFT JOIN clients c ON c.id=g.client_id LEFT JOIN pets p ON p.id=g.pet_id

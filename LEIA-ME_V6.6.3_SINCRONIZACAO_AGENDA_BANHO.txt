@@ -1,0 +1,24 @@
+PET & GATÔ BUSINESS — V6.6.3
+SINCRONIZAÇÃO AGENDA ↔ BANHO & TOSA
+
+CORREÇÕES
+- Agendamentos criados pelo Administrador/Recepção passam a gerar automaticamente o atendimento no Kanban.
+- Solicitações online aprovadas passam a aparecer automaticamente no Banho & Tosa.
+- Agendamentos antigos sem vínculo são reparados ao abrir o módulo Banho & Tosa.
+- Alterações de data, horário, pet, tutor, serviço, valor e profissional são sincronizadas.
+- Mudanças de status na Agenda são refletidas no Kanban.
+- Mudanças de status no Kanban são refletidas na Agenda.
+- Corrigido o fluxo Entrega/Entregue para não marcar o agendamento como Finalizado antes da hora.
+- Solicitações aguardando aprovação e recusadas não entram no Kanban.
+
+TESTE
+1. Abra Banho & Tosa na data dos agendamentos existentes.
+2. Confirme que os cards aparecem em Recepção/coluna correspondente.
+3. Crie um novo agendamento pela Agenda e atualize Banho & Tosa.
+4. Aprove uma solicitação online e confira o Kanban.
+5. Avance um card e confirme que o status também muda na Agenda.
+
+INSTALAÇÃO
+Copie os arquivos por cima do projeto atual e preserve a pasta instance.
+Reinicie com: py main.py
+Atualize o navegador com Ctrl+F5.

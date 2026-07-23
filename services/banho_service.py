@@ -48,8 +48,7 @@ def atualizar_status_atendimento(atendimento_id, novo_status):
     execute_db(f"UPDATE grooming_services SET {', '.join(campos)} WHERE id=?", tuple(params))
     atendimento=query_db("SELECT appointment_id FROM grooming_services WHERE id=?",(atendimento_id,),one=True)
     if atendimento and atendimento["appointment_id"]:
-        status_agenda="Finalizado" if novo_status in ("Finalizado","Em entrega","Entregue") else novo_status
-        execute_db("UPDATE appointments SET status=?, updated_at=? WHERE id=?",(status_agenda,now_iso(),atendimento["appointment_id"]))
+        execute_db("UPDATE appointments SET status=?, updated_at=? WHERE id=?",(novo_status,now_iso(),atendimento["appointment_id"]))
 
 def lancar_comissao(atendimento_id):
     atendimento=query_db("""SELECT g.id,g.employee_id,g.valor,e.commission_rate
