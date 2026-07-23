@@ -3,7 +3,7 @@ from database import query_db, execute_db, now_iso
 FLUXO_STATUS_BANHO = [
     "Agendado", "Aguardando coleta", "Em transporte", "Em atendimento",
     "Banho iniciado", "Banho concluído", "Secagem", "Tosa iniciada",
-    "Tosa concluída", "Fotos", "Finalizado", "Em entrega", "Entregue",
+    "Tosa concluída", "Fotos", "Pagamento", "Em entrega", "Entregue", "Finalizado",
 ]
 
 KANBAN_COLUNAS = [
@@ -13,8 +13,9 @@ KANBAN_COLUNAS = [
     ("secagem", "Secagem", ["Banho concluído", "Secagem"]),
     ("tosa", "Tosa", ["Tosa iniciada", "Tosa concluída"]),
     ("fotos", "Fotos", ["Fotos"]),
-    ("pagamento", "Pagamento", ["Finalizado"]),
+    ("pagamento", "Pagamento", ["Pagamento"]),
     ("entrega", "Entrega", ["Em entrega", "Entregue"]),
+    ("finalizados", "Finalizados", ["Finalizado"]),
     ("cancelado", "Cancelados", ["Cancelado"]),
 ]
 

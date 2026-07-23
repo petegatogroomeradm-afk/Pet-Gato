@@ -77,4 +77,43 @@ Deseja realizar o encaixe acima da capacidade?`);
   }
   bindPetFilter('agenda-client', 'agenda-pet');
   bindPetFilter('wait-client', 'wait-pet');
+
+  const eventDialog = document.getElementById('agenda-event-dialog');
+  const dialogClose = eventDialog?.querySelector('.dialog-close');
+
+  function esc(value) {
+    return String(value ?? '').replace(/[&<>'"]/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+  }
+
+  function statusAction(id, status, label) {
+    return `<form method="post" action="/agenda/${id}/status-rapido"><input type="hidden" name="status" value="${esc(status)}"><button>${esc(label)}</button></form>`;
+  }
+
+  document.querySelectorAll('.calendar-event').forEach((event) => {
+    event.addEventListener('click', (e) => {
+      if (e.target.closest('a,button,form')) return;
+      if (!eventDialog) return;
+      const d = event.dataset;
+      document.getElementById('dialog-pet').textContent = d.pet || 'Pet';
+      document.getElementById('dialog-status').textContent = d.status || '—';
+      document.getElementById('dialog-tutor').textContent = d.tutor || '—';
+      document.getElementById('dialog-phone').textContent = d.phone || '—';
+      document.getElementById('dialog-service').textContent = `${d.service || '—'} · ${d.duration || 60} min`;
+      document.getElementById('dialog-employee').textContent = d.employee || '—';
+      document.getElementById('dialog-datetime').textContent = `${d.date || '—'} às ${d.time || '—'}`;
+      document.getElementById('dialog-transport').textContent = d.transport || 'Não';
+      const actions = document.getElementById('dialog-actions');
+      let html = `<a href="/agenda/${d.id}/editar">Editar</a>`;
+      if (['Agendado','Confirmado','Reagendado','Aguardando aprovação'].includes(d.status)) html += statusAction(d.id,'Na loja','Registrar chegada');
+      if (d.status === 'Na loja') html += `<form method="post" action="/agenda/${d.id}/iniciar"><button>Iniciar atendimento</button></form>`;
+      if (d.status === 'Em atendimento') html += statusAction(d.id,'Pronto','Marcar como pronto');
+      if (d.status === 'Pronto') html += statusAction(d.id,'Entregue','Registrar entrega');
+      if (!['Cancelado','Entregue','Finalizado'].includes(d.status)) html += statusAction(d.id,'Cancelado','Cancelar');
+      actions.innerHTML = html;
+      eventDialog.showModal();
+    });
+  });
+  dialogClose?.addEventListener('click', () => eventDialog.close());
+  eventDialog?.addEventListener('click', (e) => { if (e.target === eventDialog) eventDialog.close(); });
+
 })();

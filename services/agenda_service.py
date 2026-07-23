@@ -9,7 +9,10 @@ STATUS_AGENDA = [
     "Aguardando aprovação",
     "Agendado",
     "Confirmado",
+    "Na loja",
     "Em atendimento",
+    "Pronto",
+    "Entregue",
     "Finalizado",
     "Cancelado",
     "Faltou",
@@ -117,18 +120,20 @@ def resumo_agenda(inicio, fim):
     return query_db(
         """
         SELECT COUNT(*) AS total,
-               SUM(CASE WHEN status = 'Confirmado' THEN 1 ELSE 0 END) AS confirmados,
+               SUM(CASE WHEN status IN ('Agendado','Confirmado','Reagendado') THEN 1 ELSE 0 END) AS confirmados,
+               SUM(CASE WHEN status = 'Aguardando aprovação' THEN 1 ELSE 0 END) AS aguardando_aprovacao,
+               SUM(CASE WHEN status = 'Na loja' THEN 1 ELSE 0 END) AS na_loja,
                SUM(CASE WHEN status = 'Em atendimento' THEN 1 ELSE 0 END) AS em_atendimento,
-               SUM(CASE WHEN status = 'Finalizado' THEN 1 ELSE 0 END) AS finalizados,
-               SUM(CASE WHEN status = 'Cancelado' THEN 1 ELSE 0 END) AS cancelados,
-               COALESCE(SUM(CASE WHEN status != 'Cancelado' THEN valor ELSE 0 END), 0) AS valor_previsto,
-               COALESCE(SUM(CASE WHEN status NOT IN ('Cancelado','Faltou') THEN duration_minutes ELSE 0 END), 0) AS minutos_ocupados
+               SUM(CASE WHEN status = 'Pronto' THEN 1 ELSE 0 END) AS prontos,
+               SUM(CASE WHEN status = 'Entregue' THEN 1 ELSE 0 END) AS entregues,
+               SUM(CASE WHEN transport_required = 1 AND status NOT IN ('Cancelado','Recusado','Finalizado','Entregue') THEN 1 ELSE 0 END) AS taxi_dog,
+               COALESCE(SUM(CASE WHEN status NOT IN ('Cancelado','Recusado') THEN valor ELSE 0 END),0) AS valor_previsto
         FROM appointments
         WHERE data_agendamento BETWEEN ? AND ?
         """,
         (inicio.isoformat(), fim.isoformat()),
         one=True,
-    )
+    ) or {}
 
 
 def ocupacao_profissionais(inicio, fim):

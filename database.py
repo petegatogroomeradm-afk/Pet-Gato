@@ -446,7 +446,7 @@ def init_db():
             ("alimentacao", "TEXT"), ("temperamento", "TEXT"),
             ("preferencia_tosa", "TEXT"), ("foto", "TEXT"), ("ativo", "INTEGER DEFAULT 1")
         ],
-        "appointments": [("employee_id", "INTEGER"), ("duration_minutes", "INTEGER DEFAULT 60"), ("transport_required", "INTEGER DEFAULT 0"), ("reminder_sent", "INTEGER DEFAULT 0"), ("updated_at", "TEXT"), ("requested_online", "INTEGER DEFAULT 0"), ("approval_notes", "TEXT"), ("approved_at", "TEXT"), ("approved_by", "TEXT"), ("capacity_override", "INTEGER DEFAULT 0"), ("capacity_override_by", "TEXT"), ("capacity_override_at", "TEXT")],
+        "appointments": [("employee_id", "INTEGER"), ("duration_minutes", "INTEGER DEFAULT 60"), ("transport_required", "INTEGER DEFAULT 0"), ("reminder_sent", "INTEGER DEFAULT 0"), ("updated_at", "TEXT"), ("requested_online", "INTEGER DEFAULT 0"), ("approval_notes", "TEXT"), ("approved_at", "TEXT"), ("approved_by", "TEXT"), ("capacity_override", "INTEGER DEFAULT 0"), ("capacity_override_by", "TEXT"), ("capacity_override_at", "TEXT"), ("checkin_at", "TEXT"), ("ready_at", "TEXT"), ("delivered_at", "TEXT")],
         "grooming_services": [("financeiro_lancado", "INTEGER DEFAULT 0"), ("estoque_baixado", "INTEGER DEFAULT 0"), ("payment_method", "TEXT DEFAULT 'A definir'"), ("started_at", "TEXT"), ("finished_at", "TEXT"), ("checked_in_at", "TEXT"), ("checked_out_at", "TEXT"), ("commission_lancada", "INTEGER DEFAULT 0"), ("updated_at", "TEXT")],
         "financial_transactions": [
             ("due_date", "TEXT"), ("status", "TEXT DEFAULT 'Pago'"),

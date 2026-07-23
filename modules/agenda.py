@@ -27,6 +27,17 @@ from services.agenda_service import (
 agenda_bp = Blueprint("agenda", __name__)
 
 
+STATUS_RAPIDOS = {
+    "Agendado": ("Agendado", None),
+    "Confirmado": ("Confirmado", None),
+    "Na loja": ("Na loja", "checkin_at"),
+    "Em atendimento": ("Em atendimento", None),
+    "Pronto": ("Pronto", "ready_at"),
+    "Entregue": ("Entregue", "delivered_at"),
+    "Cancelado": ("Cancelado", None),
+}
+
+
 def _valor_decimal(valor):
     texto = (valor or "0").strip().replace("R$", "").replace(" ", "")
     if "," in texto:
@@ -290,6 +301,33 @@ def mover_agendamento(agendamento_id):
          now_iso(), agendamento_id),
     )
     return jsonify({"ok": True, "message": "Agendamento reagendado."})
+
+
+@agenda_bp.route("/agenda/<int:agendamento_id>/status-rapido", methods=["POST"])
+def atualizar_status_rapido(agendamento_id):
+    status = (request.form.get("status") or "").strip()
+    if status not in STATUS_RAPIDOS:
+        flash("Status inválido.", "danger")
+        return redirect(request.referrer or url_for("agenda.agenda"))
+
+    agendamento = query_db("SELECT id, status FROM appointments WHERE id=?", (agendamento_id,), one=True)
+    if not agendamento:
+        flash("Agendamento não encontrado.", "danger")
+        return redirect(url_for("agenda.agenda"))
+
+    novo_status, coluna_data = STATUS_RAPIDOS[status]
+    if coluna_data:
+        execute_db(
+            f"UPDATE appointments SET status=?, {coluna_data}=?, updated_at=? WHERE id=?",
+            (novo_status, now_iso(), now_iso(), agendamento_id),
+        )
+    else:
+        execute_db(
+            "UPDATE appointments SET status=?, updated_at=? WHERE id=?",
+            (novo_status, now_iso(), agendamento_id),
+        )
+    flash(f"Status atualizado para {novo_status}.", "success")
+    return redirect(request.referrer or url_for("agenda.agenda"))
 
 
 @agenda_bp.route("/agenda/<int:agendamento_id>/status", methods=["POST"])

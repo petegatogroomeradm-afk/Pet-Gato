@@ -1,22 +1,61 @@
 {% extends 'portal_cliente/base.html' %}{% block content %}<form method="post" class="card form"><h1>Solicitar agendamento</h1><p class="notice">O horário só será confirmado após aprovação da equipe da Pet & Gatô.</p>{% if not pets %}<div class="flash">Cadastre um pet antes de solicitar um horário.</div><a class="btn" href="{{ url_for('portal_cliente.novo_pet') }}">Cadastrar pet</a>{% else %}<label>Pet</label><select name="pet_id" required>{% for pet in pets %}<option value="{{ pet.id }}">{{ pet.nome }}</option>{% endfor %}</select><div class="row"><div><label>Serviço</label><select name="servico" required>{% for item in servicos %}<option>{{ item }}</option>{% endfor %}</select></div><div><label>Data desejada</label><input id="data" type="date" min="{{ hoje }}" name="data" required></div></div><label>Horário disponível</label><select id="horario" name="horario" required><option value="">Escolha primeiro a data</option></select><label><input type="checkbox" name="transport_required" style="width:auto"> Preciso de Táxi Dog</label><label>Observações</label><textarea name="observacoes" placeholder="Informe detalhes importantes"></textarea><button class="btn">Enviar solicitação</button>{% endif %}</form><script>
-const data=document.getElementById('data'),hora=document.getElementById('horario');
-if(data){data.addEventListener('change',async()=>{
-  hora.disabled=true;
-  hora.innerHTML='<option value="">Carregando...</option>';
+const data = document.getElementById('data');
+const hora = document.getElementById('horario');
+let timerHorarios = null;
+let controleHorarios = null;
+let requisicaoAtual = 0;
+
+async function carregarHorarios() {
+  if (!data || !hora) return;
+
+  const valorData = data.value;
+  if (!valorData || !data.validity.valid || !/^\d{4}-\d{2}-\d{2}$/.test(valorData)) {
+    hora.disabled = false;
+    hora.innerHTML = '<option value="">Escolha uma data válida</option>';
+    return;
+  }
+
+  if (controleHorarios) controleHorarios.abort();
+  controleHorarios = new AbortController();
+  const numeroRequisicao = ++requisicaoAtual;
+
+  hora.disabled = true;
+  hora.innerHTML = '<option value="">Carregando...</option>';
+
   try {
-    const url=`{{ url_for('portal_cliente.horarios_disponiveis') }}?data=${encodeURIComponent(data.value)}`;
-    const r=await fetch(url,{headers:{'Accept':'application/json'}});
-    if(!r.ok) throw new Error(`HTTP ${r.status}`);
-    const j=await r.json();
-    const horarios=Array.isArray(j.horarios)?j.horarios:[];
-    hora.innerHTML=horarios.length
-      ? '<option value="">Selecione um horário</option>'+horarios.map(h=>`<option value="${h}">${h}</option>`).join('')
+    const url = `{{ url_for('portal_cliente.horarios_disponiveis') }}?data=${encodeURIComponent(valorData)}`;
+    const resposta = await fetch(url, {
+      headers: {'Accept': 'application/json'},
+      signal: controleHorarios.signal,
+      cache: 'no-store'
+    });
+
+    if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+    const dados = await resposta.json();
+
+    if (numeroRequisicao !== requisicaoAtual || data.value !== valorData) return;
+
+    const horarios = Array.isArray(dados.horarios) ? dados.horarios : [];
+    hora.innerHTML = horarios.length
+      ? '<option value="">Selecione um horário</option>' + horarios.map(h => `<option value="${h}">${h}</option>`).join('')
       : '<option value="">Nenhum horário disponível</option>';
   } catch (erro) {
-    console.error('Erro ao carregar horários:',erro);
-    hora.innerHTML='<option value="">Erro ao carregar horários. Tente novamente.</option>';
+    if (erro.name === 'AbortError') return;
+    console.error('Erro ao carregar horários:', erro);
+    if (numeroRequisicao === requisicaoAtual) {
+      hora.innerHTML = '<option value="">Erro ao carregar horários. Tente novamente.</option>';
+    }
   } finally {
-    hora.disabled=false;
+    if (numeroRequisicao === requisicaoAtual) hora.disabled = false;
   }
-});}
+}
+
+if (data) {
+  const agendarCarregamento = () => {
+    clearTimeout(timerHorarios);
+    timerHorarios = setTimeout(carregarHorarios, 300);
+  };
+  data.addEventListener('input', agendarCarregamento);
+  data.addEventListener('change', agendarCarregamento);
+}
 </script>{% endblock %}
