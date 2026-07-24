@@ -308,6 +308,66 @@ def mover_agendamento(agendamento_id):
     return jsonify({"ok": True, "message": "Agendamento reagendado."})
 
 
+@agenda_bp.route("/agenda/<int:agendamento_id>/checkin-inteligente", methods=["POST"])
+def checkin_inteligente(agendamento_id):
+    """Registra a chegada e prepara o atendimento no Kanban sem recarregar a agenda."""
+    agendamento = query_db("SELECT * FROM appointments WHERE id=?", (agendamento_id,), one=True)
+    wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.accept_mimetypes.best == "application/json"
+
+    if not agendamento:
+        if wants_json:
+            return jsonify({"ok": False, "message": "Agendamento não encontrado."}), 404
+        flash("Agendamento não encontrado.", "danger")
+        return redirect(url_for("agenda.agenda"))
+
+    if (agendamento["status"] or "") in ("Cancelado", "Recusado", "Entregue", "Finalizado"):
+        if wants_json:
+            return jsonify({"ok": False, "message": "Esse agendamento não aceita check-in."}), 400
+        flash("Esse agendamento não aceita check-in.", "danger")
+        return redirect(request.referrer or url_for("agenda.agenda"))
+
+    instante = now_iso()
+    execute_db(
+        "UPDATE appointments SET status='Na loja', checkin_at=COALESCE(checkin_at,?), updated_at=? WHERE id=?",
+        (instante, instante, agendamento_id),
+    )
+
+    grooming_id = sincronizar_agendamento_com_banho(agendamento_id)
+    if grooming_id:
+        execute_db(
+            """UPDATE grooming_services
+               SET status='Agendado', checked_in_at=COALESCE(checked_in_at,?),
+                   started_at=COALESCE(started_at,?), updated_at=?
+             WHERE id=?""",
+            (instante, instante, instante, grooming_id),
+        )
+        checklist = query_db("SELECT id FROM grooming_checklists WHERE grooming_id=?", (grooming_id,), one=True)
+        if checklist:
+            execute_db(
+                "UPDATE grooming_checklists SET checked_in_at=COALESCE(checked_in_at,?), updated_at=? WHERE grooming_id=?",
+                (instante, instante, grooming_id),
+            )
+        else:
+            execute_db(
+                "INSERT INTO grooming_checklists (grooming_id,checked_in_at,updated_at) VALUES (?,?,?)",
+                (grooming_id, instante, instante),
+            )
+        from services.historico_service import registrar_historico
+        registrar_historico(grooming_id, "Check-in inteligente realizado", session.get("user_name") or "Recepção")
+
+    if wants_json:
+        return jsonify({
+            "ok": True,
+            "status": "Na loja",
+            "checkin_at": instante,
+            "grooming_id": grooming_id,
+            "message": f"Check-in de {agendamento['pet_id']} registrado com sucesso.",
+        })
+
+    flash("Check-in registrado e pet enviado para a Recepção.", "success")
+    return redirect(request.referrer or url_for("agenda.agenda"))
+
+
 @agenda_bp.route("/agenda/<int:agendamento_id>/status-rapido", methods=["POST"])
 def atualizar_status_rapido(agendamento_id):
     status = (request.form.get("status") or "").strip()

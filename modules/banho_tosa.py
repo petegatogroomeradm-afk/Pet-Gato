@@ -161,8 +161,28 @@ def excluir_foto(foto_id):
 @banho_tosa_bp.route("/banho-tosa/<int:atendimento_id>/avancar-status",methods=["POST"])
 def avancar_status(atendimento_id):
     atendimento=obter_atendimento(atendimento_id)
-    if not atendimento: flash("Atendimento não encontrado.","danger"); return redirect(url_for("banho_tosa.banho_tosa"))
-    return _processar_status(atendimento_id,proximo_status(atendimento["status"]))
+    wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.accept_mimetypes.best == "application/json"
+    if not atendimento:
+        if wants_json:
+            return jsonify({"ok": False, "message": "Atendimento não encontrado."}), 404
+        flash("Atendimento não encontrado.","danger")
+        return redirect(url_for("banho_tosa.banho_tosa"))
+
+    novo = proximo_status(atendimento["status"])
+    if wants_json:
+        ok = _processar_status(atendimento_id, novo, json_mode=True)
+        if not ok:
+            return jsonify({"ok": False, "message": "Não foi possível atualizar o atendimento."}), 400
+        coluna = next((codigo for codigo, _titulo, statuses in KANBAN_COLUNAS if novo in statuses), "")
+        return jsonify({
+            "ok": True,
+            "status_anterior": atendimento["status"],
+            "status": novo,
+            "coluna": coluna,
+            "finalizado": novo == "Finalizado",
+            "message": f"Status atualizado para {novo}."
+        })
+    return _processar_status(atendimento_id, novo)
 
 @banho_tosa_bp.route("/banho-tosa/<int:atendimento_id>/status",methods=["POST"])
 def definir_status(atendimento_id):

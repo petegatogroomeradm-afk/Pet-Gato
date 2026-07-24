@@ -124,7 +124,7 @@
                   {% if a.capacity_override %}<em class="event-badge-overbook">Encaixe</em>{% endif %}
                   <div class="calendar-event-actions">
                     {% if a.status in ['Agendado','Confirmado','Reagendado','Aguardando aprovação'] %}
-                    <form method="post" action="{{ url_for('agenda.atualizar_status_rapido', agendamento_id=a.id) }}"><input type="hidden" name="status" value="Na loja"><button title="Registrar chegada">Chegou</button></form>
+                    <form method="post" class="js-smart-checkin" action="{{ url_for('agenda.checkin_inteligente', agendamento_id=a.id) }}"><button title="Registrar chegada e iniciar o tempo total">✓ Chegou</button></form>
                     {% elif a.status == 'Na loja' %}
                     <form method="post" action="{{ url_for('agenda.iniciar_atendimento', agendamento_id=a.id) }}"><button>Iniciar</button></form>
                     {% elif a.status == 'Em atendimento' %}

@@ -1,0 +1,17 @@
+PET & GATÔ BUSINESS — V7.0.1 CHECK-IN INTELIGENTE
+
+NOVO FLUXO
+1. Na Agenda, clique em “✓ Chegou”.
+2. O check-in é registrado sem recarregar a página.
+3. O horário real de chegada é salvo em appointments.checkin_at.
+4. O atendimento vinculado é criado/sincronizado no Banho & Tosa.
+5. O pet permanece na coluna Recepção e o tempo total começa a ser contado.
+6. O histórico registra quem realizou o check-in.
+
+TESTE
+- Abra a Agenda no modo Dia ou Semana.
+- Clique em “✓ Chegou” em um pet agendado.
+- Confira a mensagem de sucesso.
+- Abra Banho & Tosa e confirme o pet na coluna Recepção.
+
+Não há migração manual de banco. As colunas necessárias já existem.

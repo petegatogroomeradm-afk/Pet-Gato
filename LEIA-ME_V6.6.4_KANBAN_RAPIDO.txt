@@ -1,0 +1,8 @@
+PET & GATÔ BUSINESS V6.6.4 — KANBAN RÁPIDO
+
+- O botão Avançar agora usa requisição assíncrona (AJAX).
+- O cartão muda de coluna imediatamente, sem recarregar a página inteira.
+- Os contadores das colunas são atualizados automaticamente.
+- O botão fica bloqueado durante a operação para impedir clique duplo.
+- Em caso de erro, a tela é recarregada para restaurar o estado real do banco.
+- A rota continua compatível com o fluxo tradicional sem JavaScript.
