@@ -78,6 +78,51 @@ Deseja realizar o encaixe acima da capacidade?`);
   bindPetFilter('agenda-client', 'agenda-pet');
   bindPetFilter('wait-client', 'wait-pet');
 
+
+
+  function serviceAccent(service) {
+    const text = String(service || '').toLowerCase();
+    if (text.includes('tosa')) return '#3b82f6';
+    if (text.includes('hotel')) return '#22c55e';
+    if (text.includes('táxi') || text.includes('taxi')) return '#f59e0b';
+    if (text.includes('urg')) return '#ef4444';
+    return '#8b5cf6';
+  }
+  document.querySelectorAll('.calendar-event').forEach((event) => {
+    event.style.setProperty('--service-accent', serviceAccent(event.dataset.service));
+  });
+
+  const now = new Date();
+  const todayIso = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const currentHour = `${String(now.getHours()).padStart(2,'0')}:00`;
+  document.querySelectorAll(`.time-slot[data-date="${todayIso}"][data-time="${currentHour}"]`).forEach((slot) => slot.classList.add('current-hour'));
+  document.querySelectorAll('.time-label').forEach((label) => { if (label.textContent.trim() === currentHour) label.classList.add('current-hour'); });
+
+  const suggestButton = document.getElementById('suggest-times');
+  const suggestedTimes = document.getElementById('suggested-times');
+  suggestButton?.addEventListener('click', async () => {
+    const date = document.querySelector('#new-appointment-form input[name="data"]')?.value;
+    const duration = document.getElementById('agenda-duration')?.value || 60;
+    const employee = document.getElementById('agenda-employee')?.value || '';
+    if (!date) { showToast('Selecione a data antes de buscar horários.', false); return; }
+    suggestButton.disabled = true; suggestButton.textContent = 'Buscando...';
+    try {
+      const params = new URLSearchParams({date, duration, employee_id: employee});
+      const response = await fetch(`${window.AGENDA_AVAILABILITY_URL}?${params}`);
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Não foi possível consultar horários.');
+      suggestedTimes.innerHTML = data.suggestions.length ? data.suggestions.map((item) => `<button type="button" data-time="${esc(item.time)}">${esc(item.label)}</button>`).join('') : '<small class="muted">Nenhum horário livre encontrado.</small>';
+    } catch (error) { showToast(error.message, false); }
+    finally { suggestButton.disabled = false; suggestButton.textContent = 'Sugerir horários'; }
+  });
+  suggestedTimes?.addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-time]');
+    if (!button) return;
+    const input = document.getElementById('agenda-time');
+    if (input) input.value = button.dataset.time;
+    suggestedTimes.querySelectorAll('button').forEach((item) => item.classList.toggle('active', item === button));
+  });
+
   const eventDialog = document.getElementById('agenda-event-dialog');
   const dialogClose = eventDialog?.querySelector('.dialog-close');
 
@@ -139,6 +184,10 @@ Deseja realizar o encaixe acima da capacidade?`);
       document.getElementById('dialog-employee').textContent = d.employee || '—';
       document.getElementById('dialog-datetime').textContent = `${d.date || '—'} às ${d.time || '—'}`;
       document.getElementById('dialog-transport').textContent = d.transport || 'Não';
+      document.getElementById('dialog-move-date').value = d.date || '';
+      document.getElementById('dialog-move-time').value = d.time || '';
+      document.getElementById('dialog-move-employee').value = d.employeeId || '';
+      eventDialog.dataset.currentId = d.id;
       const actions = document.getElementById('dialog-actions');
       let html = `<a href="/agenda/${d.id}/editar">Editar</a>`;
       if (['Agendado','Confirmado','Reagendado','Aguardando aprovação'].includes(d.status)) html += smartCheckinAction(d.id,'✓ Registrar chegada');
@@ -152,5 +201,31 @@ Deseja realizar o encaixe acima da capacidade?`);
   });
   dialogClose?.addEventListener('click', () => eventDialog.close());
   eventDialog?.addEventListener('click', (e) => { if (e.target === eventDialog) eventDialog.close(); });
+
+
+  document.getElementById('dialog-move-save')?.addEventListener('click', async () => {
+    const id = eventDialog?.dataset.currentId;
+    if (!id) return;
+    const date = document.getElementById('dialog-move-date')?.value;
+    const time = document.getElementById('dialog-move-time')?.value;
+    const employee_id = document.getElementById('dialog-move-employee')?.value || null;
+    if (!date || !time) { showToast('Informe data e horário.', false); return; }
+    const button = document.getElementById('dialog-move-save');
+    button.disabled = true; button.textContent = 'Salvando...';
+    try {
+      const url = window.AGENDA_MOVE_URL.replace('/0/', `/${id}/`);
+      let response = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date,time,employee_id})});
+      let data = await response.json();
+      if (!response.ok && data.requires_override && window.confirm(`${data.message}\n\nDeseja confirmar o encaixe?`)) {
+        response = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date,time,employee_id,force_capacity_override:true})});
+        data = await response.json();
+      }
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Não foi possível reagendar.');
+      showToast(data.message || 'Agendamento reagendado.');
+      eventDialog.close();
+      setTimeout(() => location.reload(),500);
+    } catch (error) { showToast(error.message,false); }
+    finally { button.disabled = false; button.textContent = 'Salvar reagendamento'; }
+  });
 
 })();

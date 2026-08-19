@@ -1,0 +1,18 @@
+PET & GATÔ BUSINESS V8.8 - CONCILIAÇÃO FINANCEIRA
+
+Novidades:
+- Cadastro de contas financeiras (caixa, banco, carteira digital e maquininha).
+- Saldo atual e saldo conciliado por conta.
+- Conciliação de lançamentos pagos como Conciliado, Pendente ou Divergente.
+- Campo para referência bancária: ID PIX, NSU, boleto ou documento.
+- Filtros por mês, conta e situação.
+- Compatível com SQLite e PostgreSQL.
+
+Instalação:
+1. Pare o sistema.
+2. Extraia os arquivos sobre a pasta atual, confirmando a substituição.
+3. Remova as pastas __pycache__.
+4. Execute py main.py.
+5. Acesse Financeiro > Conciliação financeira.
+
+As novas colunas são criadas automaticamente na primeira inicialização.

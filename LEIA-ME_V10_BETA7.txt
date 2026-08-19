@@ -1,0 +1,10 @@
+PET & GATÔ BUSINESS V10.0.0 BETA 7
+
+AGENDA + COMUNICAÇÃO WHATSAPP
+
+- Botões de WhatsApp nos agendamentos.
+- Mensagens de confirmação, lembrete, atraso, pet pronto, cancelamento e avaliação.
+- Registro automático no histórico de comunicação e CRM.
+- Compatível com SQLite e PostgreSQL.
+
+Instalação: extraia sobre a Beta 6, limpe __pycache__ e execute py main.py.

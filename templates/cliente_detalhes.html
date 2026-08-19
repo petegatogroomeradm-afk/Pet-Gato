@@ -3,6 +3,18 @@
 {% block page_title %}CRM do Cliente{% endblock %}
 {% block page_subtitle %}Visão 360° do tutor{% endblock %}
 {% block content %}
+<div class="client360-actions no-print">
+  <a class="small-button" href="{{ url_for('agenda.agenda') }}">+ Agendamento</a>
+  <a class="secondary-button" href="{{ url_for('pets.pets') }}">+ Novo pet</a>
+  {% if cliente.whatsapp %}<a class="secondary-button" target="_blank" href="https://wa.me/55{{ cliente.whatsapp|replace('(','')|replace(')','')|replace('-','')|replace(' ','') }}">Abrir WhatsApp</a>{% endif %}
+  <a class="secondary-button" href="{{ url_for('clientes.editar_cliente', cliente_id=cliente.id) }}">Editar cadastro</a>
+</div>
+<nav class="client360-nav no-print" aria-label="Seções do Cliente 360">
+  <a href="#visao-geral">Visão geral</a><a href="#pets">Pets</a><a href="#agenda-cliente">Agenda</a>
+  <a href="#financeiro-cliente">Financeiro</a><a href="#fidelidade-cliente">Fidelidade</a>
+  <a href="#crm-cliente">CRM</a><a href="#arquivos-cliente">Arquivos</a><a href="#historico-cliente">Histórico</a>
+</nav>
+<div id="visao-geral"></div>
 <div class="profile-hero card crm-hero">
   <div class="profile-main">
     {% if cliente.foto %}<img class="profile-avatar" src="{{ url_for('static', filename='uploads/clientes/' ~ cliente.foto) }}">{% else %}<div class="profile-avatar avatar-placeholder">👤</div>{% endif %}
@@ -47,7 +59,7 @@
   <div class="card mini-kpi"><span>Próximo agendamento</span><strong class="mini-date">{{ proximo_agendamento.data_agendamento if proximo_agendamento else '-' }}</strong></div>
 </div>
 
-<div class="grid">
+<div class="grid" id="pets">
   <div class="card">
     <div class="section-head"><h2>Pets vinculados</h2><a class="secondary-button no-print" href="{{ url_for('pets.pets') }}">Novo pet</a></div>
     <div class="pet-grid">{% for p in pets %}<a class="pet-tile" href="{{ url_for('pets.visualizar_pet', pet_id=p.id) }}">{% if p.foto %}<img src="{{ url_for('static', filename='uploads/pets/' ~ p.foto) }}">{% else %}<span>🐾</span>{% endif %}<strong>{{ p.nome }}</strong><small>{{ p.raca or p.especie or '-' }}</small></a>{% else %}<p>Nenhum pet vinculado.</p>{% endfor %}</div>
@@ -59,7 +71,24 @@
   </div>
 </div>
 
-<div class="grid">
+<section class="card client360-section" id="agenda-cliente">
+  <div class="section-head"><div><h2>Agenda do cliente</h2><small>Próximos compromissos confirmados ou em acompanhamento.</small></div><span class="pill">{{ proximos_agendamentos|length }}</span></div>
+  <div class="client360-appointment-list">{% for a in proximos_agendamentos %}<article><time>{{ a.data_agendamento }}<b>{{ a.horario or '--:--' }}</b></time><div><strong>{{ a.pet_nome or 'Pet' }} · {{ a.servico or 'Serviço' }}</strong><small>{{ a.profissional_nome or 'Sem profissional' }}</small></div><span class="status-badge">{{ a.status or '-' }}</span></article>{% else %}<div class="empty-state">Nenhum próximo agendamento.</div>{% endfor %}</div>
+</section>
+
+<div class="dashboard-grid client360-business-grid">
+  <section class="card" id="fidelidade-cliente">
+    <div class="section-head"><div><h2>Fidelidade</h2><small>Saldo e relacionamento comercial.</small></div><span class="level-chip">{{ fidelidade.level or 'Não participante' }}</span></div>
+    <div class="client360-loyalty"><div><span>Pontos disponíveis</span><strong>{{ fidelidade.points_balance or 0 }}</strong></div><div><span>Cashback</span><strong>R$ {{ '%.2f'|format(fidelidade.cashback_balance or 0) }}</strong></div><div><span>Pontos acumulados</span><strong>{{ fidelidade.lifetime_points or 0 }}</strong></div></div>
+    <div class="client360-mini-list">{% for m in fidelidade_movimentos[:5] %}<div><span>{{ m.created_at or '-' }} · {{ m.movement_type or 'Movimento' }}</span><strong>{{ m.points or 0 }} pts</strong></div>{% else %}<div class="empty-state">Sem movimentações de fidelidade.</div>{% endfor %}</div>
+  </section>
+  <section class="card" id="crm-cliente">
+    <div class="section-head"><div><h2>CRM e relacionamento</h2><small>Tarefas e últimos contatos com o tutor.</small></div><span class="pill">{{ crm_tarefas|length }}</span></div>
+    <div class="client360-crm-columns"><div><h3>Tarefas</h3>{% for t in crm_tarefas[:6] %}<article class="crm-quick-item"><div><strong>{{ t.title }}</strong><small>{{ t.due_date or t.created_at or '-' }} · {{ t.contact_channel or '-' }}</small></div><span class="status-badge">{{ t.status }}</span></article>{% else %}<div class="empty-state">Nenhuma tarefa CRM.</div>{% endfor %}</div><div><h3>Contatos recentes</h3>{% for c in crm_contatos[:6] %}<article class="crm-quick-item"><div><strong>{{ c.subject or c.channel or 'Contato' }}</strong><small>{{ c.created_at or '-' }} · {{ c.result or '-' }}</small></div></article>{% else %}<div class="empty-state">Nenhum contato registrado.</div>{% endfor %}</div></div>
+  </section>
+</div>
+
+<div class="grid" id="arquivos-cliente">
   <div class="card">
     <h2>Anotações</h2>
     <form method="post" class="form compact-form no-print" action="{{ url_for('clientes.adicionar_anotacao', cliente_id=cliente.id) }}"><textarea name="observacao" placeholder="Nova anotação" required></textarea><button>Adicionar</button></form>
@@ -89,7 +118,7 @@
   </div>
 </div>
 
-<div class="dashboard-grid">
+<div class="dashboard-grid" id="financeiro-cliente">
   <div class="card">
     <h2>Linha do tempo</h2>
     <div class="crm-timeline">{% for item in timeline %}<div class="crm-event"><span class="event-icon">{{ item.icone }}</span><div><b>{{ item.titulo }}</b><small>{{ item.data }} · {{ item.tipo }}</small><p>{{ item.detalhe }}</p></div></div>{% else %}<div class="empty-state">Nenhum evento registrado.</div>{% endfor %}</div>
@@ -101,5 +130,5 @@
   </div>
 </div>
 
-<div class="card"><h2>Histórico de atendimentos</h2><div class="table-wrap"><table><thead><tr><th>Data</th><th>Pet</th><th>Serviço</th><th>Profissional</th><th>Valor</th><th>Status</th></tr></thead><tbody>{% for h in historico %}<tr><td>{{ h.data }}</td><td>{{ h.pet_nome }}</td><td>{{ h.servico }}</td><td>{{ h.profissional_nome or '-' }}</td><td>R$ {{ '%.2f'|format(h.valor or 0) }}</td><td>{{ h.status }}</td></tr>{% else %}<tr><td colspan="6">Sem atendimentos.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="card" id="historico-cliente"><h2>Histórico de atendimentos</h2><div class="table-wrap"><table><thead><tr><th>Data</th><th>Pet</th><th>Serviço</th><th>Profissional</th><th>Valor</th><th>Status</th></tr></thead><tbody>{% for h in historico %}<tr><td>{{ h.data }}</td><td>{{ h.pet_nome }}</td><td>{{ h.servico }}</td><td>{{ h.profissional_nome or '-' }}</td><td>R$ {{ '%.2f'|format(h.valor or 0) }}</td><td>{{ h.status }}</td></tr>{% else %}<tr><td colspan="6">Sem atendimentos.</td></tr>{% endfor %}</tbody></table></div></div>
 {% endblock %}

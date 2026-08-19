@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Fechamento mensal{% endblock %}
+{% block page_title %}Fechamento mensal{% endblock %}
+{% block page_subtitle %}DRE gerencial, categorias, formas de pagamento e movimentações do mês{% endblock %}
+
+{% block content %}
+<style>
+.report-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem}.report-filter{display:flex;gap:.6rem;align-items:end;flex-wrap:wrap;padding:1rem;border:1px solid var(--border);border-radius:16px;background:var(--card)}.report-filter label{display:grid;gap:.35rem}.report-filter input{min-width:180px}.metric-grid{display:grid;grid-template-columns:repeat(6,minmax(150px,1fr));gap:.8rem;margin:1rem 0}.metric{padding:1rem;border:1px solid var(--border);border-radius:16px;background:var(--card)}.metric small{display:block;opacity:.7;margin-bottom:.35rem}.metric strong{font-size:1.25rem}.positive{color:#39d98a}.negative{color:#ff6b7a}.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.report-card{padding:1rem;border:1px solid var(--border);border-radius:16px;background:var(--card);overflow:auto}.report-card h2{margin-top:0}.bar-row{display:grid;grid-template-columns:minmax(130px,1fr) 3fr auto;gap:.7rem;align-items:center;margin:.55rem 0}.bar{height:9px;border-radius:20px;background:rgba(255,255,255,.08);overflow:hidden}.bar span{display:block;height:100%;background:linear-gradient(90deg,#8b5cf6,#d946ef)}table{width:100%;border-collapse:collapse}th,td{padding:.7rem;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}.full{grid-column:1/-1}@media(max-width:1100px){.metric-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:760px){.metric-grid{grid-template-columns:1fr 1fr}.report-grid{grid-template-columns:1fr}}
+@media print{.sidebar,.topbar,.report-actions,.report-filter{display:none!important}.main-content{margin:0!important}.report-card,.metric{break-inside:avoid}}
+</style>
+
+<div class="report-actions">
+  <a class="small-button" href="{{ url_for('financeiro.financeiro') }}">← Financeiro</a>
+  <a class="small-button" href="{{ url_for('financeiro.relatorio_mensal', mes=mes_anterior) }}">◀ Mês anterior</a>
+  <a class="small-button" href="{{ url_for('financeiro.relatorio_mensal', mes=proximo_mes) }}">Próximo mês ▶</a>
+  <a class="small-button" href="{{ url_for('financeiro.exportar_relatorio_mensal_csv', mes=mes) }}">⬇ Exportar CSV</a>
+  <button class="small-button" onclick="window.print()">🖨 Imprimir</button>
+</div>
+<form class="report-filter" method="get">
+  <label>Mês<input type="month" name="mes" value="{{ mes }}"></label>
+  <button class="button" type="submit">Atualizar relatório</button>
+  <span class="muted">Período: {{ inicio }} até {{ fim }}</span>
+</form>
+
+<div class="metric-grid">
+  <div class="metric"><small>Receitas realizadas</small><strong class="positive">R$ {{ '%.2f'|format(receitas)|replace('.', ',') }}</strong></div>
+  <div class="metric"><small>Despesas pagas</small><strong class="negative">R$ {{ '%.2f'|format(despesas)|replace('.', ',') }}</strong></div>
+  <div class="metric"><small>Resultado do mês</small><strong class="{{ 'positive' if resultado >= 0 else 'negative' }}">R$ {{ '%.2f'|format(resultado)|replace('.', ',') }}</strong></div>
+  <div class="metric"><small>Margem</small><strong>{{ '%.1f'|format(margem) }}%</strong></div>
+  <div class="metric"><small>A receber</small><strong>R$ {{ '%.2f'|format(resumo['receivable'] or 0)|replace('.', ',') }}</strong></div>
+  <div class="metric"><small>A pagar</small><strong>R$ {{ '%.2f'|format(resumo['payable'] or 0)|replace('.', ',') }}</strong></div>
+</div>
+
+<div class="report-grid">
+  <section class="report-card">
+    <h2>Resultado por categoria</h2>
+    {% set max_category = categorias|map(attribute='total_amount')|max if categorias else 1 %}
+    {% for row in categorias %}
+      <div class="bar-row">
+        <span>{{ row['category_name'] }} <small>({{ row['transaction_type'] }})</small></span>
+        <div class="bar"><span style="width:{{ ((row['total_amount'] or 0) / max_category * 100) if max_category else 0 }}%"></span></div>
+        <strong>R$ {{ '%.2f'|format(row['total_amount'] or 0)|replace('.', ',') }}</strong>
+      </div>
+    {% else %}<p class="muted">Nenhum lançamento pago no mês.</p>{% endfor %}
+  </section>
+
+  <section class="report-card">
+    <h2>Formas de pagamento</h2>
+    <table><thead><tr><th>Forma</th><th>Entradas</th><th>Saídas</th></tr></thead><tbody>
+      {% for row in formas_pagamento %}<tr><td>{{ row['payment_name'] }}</td><td>R$ {{ '%.2f'|format(row['entries'] or 0)|replace('.', ',') }}</td><td>R$ {{ '%.2f'|format(row['exits'] or 0)|replace('.', ',') }}</td></tr>
+      {% else %}<tr><td colspan="3">Nenhuma movimentação.</td></tr>{% endfor %}
+    </tbody></table>
+  </section>
+
+  <section class="report-card full">
+    <h2>Movimento diário</h2>
+    <table><thead><tr><th>Data</th><th>Entradas</th><th>Saídas</th><th>Resultado</th></tr></thead><tbody>
+      {% for row in diario %}{% set daily_result=(row['entries'] or 0)-(row['exits'] or 0) %}<tr><td>{{ row['reference_date'] }}</td><td>R$ {{ '%.2f'|format(row['entries'] or 0)|replace('.', ',') }}</td><td>R$ {{ '%.2f'|format(row['exits'] or 0)|replace('.', ',') }}</td><td class="{{ 'positive' if daily_result >= 0 else 'negative' }}">R$ {{ '%.2f'|format(daily_result)|replace('.', ',') }}</td></tr>
+      {% else %}<tr><td colspan="4">Nenhuma movimentação.</td></tr>{% endfor %}
+    </tbody></table>
+  </section>
+
+  <section class="report-card full">
+    <h2>Lançamentos do mês</h2>
+    <table><thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Status</th><th>Valor</th></tr></thead><tbody>
+      {% for row in lancamentos %}<tr><td>{{ row['transaction_date'] or row['due_date'] }}</td><td>{{ row['type'] }}</td><td>{{ row['description'] }}</td><td>{{ row['category'] or 'Sem categoria' }}</td><td>{{ row['status'] }}</td><td>R$ {{ '%.2f'|format(row['amount'] or 0)|replace('.', ',') }}</td></tr>
+      {% else %}<tr><td colspan="6">Nenhum lançamento no mês.</td></tr>{% endfor %}
+    </tbody></table>
+  </section>
+</div>
+{% endblock %}

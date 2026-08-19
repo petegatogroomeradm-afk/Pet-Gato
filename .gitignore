@@ -36,3 +36,5 @@ Desktop.ini
 # Banco e dados locais
 instance/
 uploads/
+
+*.log.*

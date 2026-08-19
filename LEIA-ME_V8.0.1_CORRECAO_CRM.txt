@@ -1,0 +1,17 @@
+PET & GATÔ BUSINESS V8.0.1 - ESTABILIZAÇÃO DO CRM
+
+Correções realizadas:
+- Corrigido IndexError na tela CRM > Resumo diário no PostgreSQL.
+- Corrigido erro de sintaxe na tela CRM > Relatórios CRM.
+- Corrigida a migração de banco para não repetir ALTER TABLE em toda inicialização.
+- Mantido debug=False no main.py.
+
+Instalação:
+1. Faça backup da pasta atual.
+2. Extraia todo o conteúdo deste pacote sobre a pasta do projeto.
+3. Confirme a substituição dos arquivos.
+4. Apague as pastas __pycache__ e execute: py main.py
+
+Telas para validar:
+- /crm/resumo-diario
+- /crm/relatorios

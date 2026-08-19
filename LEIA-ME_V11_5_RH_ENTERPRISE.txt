@@ -1,0 +1,20 @@
+PET & GATÔ BUSINESS ENTERPRISE V11.5.1 — RH ENTERPRISE
+
+Principais novidades:
+- Registro e exclusão de faltas, atestados, folgas, licenças e afastamentos.
+- Gestão de férias com status e exclusão.
+- Adiantamentos, descontos, vales, bônus e acréscimos com controle de status.
+- Folha mensal estimada por funcionário.
+- Integração das comissões com a apuração do RH.
+- Fechamento e reabertura mensal.
+- Banco de horas consolidado.
+- Exportação mensal em CSV compatível com Excel.
+
+Instalação:
+1. Faça backup da pasta atual.
+2. Substitua os arquivos, preservando .env, instance e logs.
+3. Execute:
+   py scripts/migrate_database.py
+   py scripts/check_db_compat.py
+   py scripts/check_release.py
+   py main.py

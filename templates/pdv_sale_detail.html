@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Venda {{ venda.sale_number }}{% endblock %}
+{% block page_title %}Detalhes da venda{% endblock %}
+{% block page_subtitle %}Consulta completa, pagamentos e comprovante{% endblock %}
+{% block content %}
+<div class="sale-detail-grid">
+  <section class="card sale-main">
+    <div class="detail-head">
+      <div><span class="eyebrow">VENDA</span><h2>{{ venda.sale_number }}</h2><p>{{ venda.created_at }} · {{ venda.created_by }}</p></div>
+      <span class="status-pill">{{ venda.status }}</span>
+    </div>
+    <div class="detail-meta">
+      <div><span>Cliente</span><strong>{{ venda.cliente_nome or 'Consumidor final' }}</strong></div>
+      <div><span>Telefone</span><strong>{{ venda.cliente_telefone or '—' }}</strong></div>
+      <div><span>Caixa</span><strong>#{{ venda.cash_session_id }}</strong></div>
+    </div>
+    <h3>Itens</h3>
+    <div class="detail-table">
+      <div class="detail-row detail-header"><span>Descrição</span><span>Qtd.</span><span>Unitário</span><span>Total</span></div>
+      {% for i in itens %}<div class="detail-row"><span>{{ i.description }}</span><span>{{ i.quantity }}</span><span>R$ {{ '%.2f'|format(i.unit_price or 0) }}</span><strong>R$ {{ '%.2f'|format(i.total_price or 0) }}</strong></div>{% endfor %}
+    </div>
+    {% if venda.notes %}<div class="notes-box"><span>Observações</span><p>{{ venda.notes }}</p></div>{% endif %}
+  </section>
+  <aside class="card sale-summary">
+    <h2>Resumo</h2>
+    <div class="summary-line"><span>Subtotal</span><strong>R$ {{ '%.2f'|format(venda.subtotal or 0) }}</strong></div>
+    <div class="summary-line"><span>Desconto</span><strong>- R$ {{ '%.2f'|format(venda.discount_amount or 0) }}</strong></div>
+    <div class="summary-line total"><span>Total</span><strong>R$ {{ '%.2f'|format(venda.total_amount or 0) }}</strong></div>
+    <h3>Pagamentos</h3>
+    {% for p in pagamentos %}<div class="summary-line"><span>{{ p.payment_method }}</span><strong>R$ {{ '%.2f'|format(p.amount or 0) }}</strong></div>{% endfor %}
+    <div class="detail-actions">
+      <a class="btn primary" href="{{ url_for('pdv.comprovante',sale_id=venda.id) }}" target="_blank">🖨️ Imprimir comprovante</a>
+      <a class="btn secondary" href="{{ url_for('pdv.pdv') }}">← Voltar ao PDV</a>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+{% block extra_css %}<style>
+.sale-detail-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,.6fr);gap:18px}.detail-head{display:flex;justify-content:space-between;align-items:flex-start}.detail-head h2{margin:4px 0}.detail-head p{opacity:.65;margin:0}.eyebrow{font-size:.7rem;letter-spacing:.13em;color:#a78bfa;font-weight:800}.status-pill{padding:7px 11px;border-radius:999px;background:rgba(52,211,153,.12);color:#34d399}.detail-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0}.detail-meta>div,.notes-box{padding:13px;border-radius:12px;background:rgba(255,255,255,.035)}.detail-meta span,.notes-box span{display:block;font-size:.72rem;opacity:.65;margin-bottom:5px}.detail-table{border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden}.detail-row{display:grid;grid-template-columns:1fr 80px 120px 120px;gap:10px;padding:12px;border-bottom:1px solid rgba(255,255,255,.07)}.detail-row:last-child{border-bottom:0}.detail-row span:nth-child(n+2),.detail-row strong{text-align:right}.detail-header{background:rgba(139,92,246,.09);font-size:.75rem;font-weight:800}.notes-box{margin-top:15px}.notes-box p{margin:0}.sale-summary{height:max-content;position:sticky;top:18px}.summary-line{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07)}.summary-line.total{font-size:1.25rem;padding:16px 0}.detail-actions{display:grid;gap:9px;margin-top:18px}.detail-actions .btn{text-align:center;text-decoration:none}@media(max-width:850px){.sale-detail-grid{grid-template-columns:1fr}.sale-summary{position:static}.detail-meta{grid-template-columns:1fr}.detail-row{grid-template-columns:1fr 55px 90px 90px}}
+</style>{% endblock %}

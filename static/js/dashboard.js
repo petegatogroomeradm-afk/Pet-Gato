@@ -5,6 +5,7 @@
     const apiUrl = root.dataset.api;
     const refreshButton = document.getElementById("refresh-dashboard");
     const updatedLabel = document.getElementById("dashboard-updated");
+    const connectionStatus = document.getElementById("dashboard-connection-status");
 
     const currency = new Intl.NumberFormat("pt-BR", {
         style: "currency",
@@ -122,12 +123,16 @@
             });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
+            if (connectionStatus) connectionStatus.textContent = "Sistema atualizado";
+            root.classList.remove("dashboard-offline");
             updateSimpleValues(data);
             drawChart(data.grafico_financeiro);
             drawBarChart("monthly-revenue-chart", data.grafico_receita_mensal, (value) => currency.format(value));
             drawBarChart("customer-growth-chart", data.grafico_clientes, (value) => String(Math.round(value)));
         } catch (error) {
             console.error("Falha ao atualizar dashboard:", error);
+            if (connectionStatus) connectionStatus.textContent = "Falha na atualização";
+            root.classList.add("dashboard-offline");
         } finally {
             root.classList.remove("dashboard-loading");
         }

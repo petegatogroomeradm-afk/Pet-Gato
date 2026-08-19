@@ -1,0 +1,10 @@
+PET & GATÔ BUSINESS 10.0.0-beta.1
+
+NOVO: PDV E CAIXA
+1. Abra o menu PDV e Caixa.
+2. Abra o caixa com o valor inicial.
+3. Adicione produtos e pagamentos.
+4. Conclua a venda. O estoque e o financeiro serão atualizados.
+5. Ao final do expediente, confira o dinheiro e feche o caixa.
+
+Antes de instalar, faça backup da pasta instance.

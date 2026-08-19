@@ -1,0 +1,12 @@
+PET & GATÔ BUSINESS V8.2 - FLUXO DE CAIXA PROJETADO
+
+Novidades:
+- Projeção de caixa para 30, 60 ou 90 dias.
+- Filtro por conta/caixa.
+- Saldo atual, entradas e saídas previstas.
+- Menor saldo e quantidade de dias negativos.
+- Inclusão dos vencidos no primeiro dia da projeção.
+- Gráfico diário e detalhamento dos compromissos.
+- Exportação CSV compatível com Excel.
+
+Instalação: extraia sobre a pasta atual, substitua os arquivos e execute py main.py.

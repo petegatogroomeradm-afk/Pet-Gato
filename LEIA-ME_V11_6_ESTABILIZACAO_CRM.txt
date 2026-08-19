@@ -1,0 +1,14 @@
+PET & GATÔ BUSINESS 11.6.0
+
+FOCO DESTA ENTREGA
+- Estabilização geral antes do uso em produção.
+- Correção das rotas ausentes do CRM que poderiam gerar Erro 500.
+- Agenda CRM por 7, 14 ou 30 dias.
+- Resumo diário CRM.
+- Relatórios CRM e exportação CSV.
+- Adiamento de tarefas CRM.
+- Validador automático de todos os url_for dos templates.
+
+VALIDAÇÃO
+Execute: py scripts\check_release.py
+O resultado esperado é: Release 11.6.0 validada: Python, templates e rotas conferidos.

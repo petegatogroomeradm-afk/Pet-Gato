@@ -1,0 +1,10 @@
+PET & GATÔ BUSINESS V10.0.0 ALPHA 7
+
+NOVIDADES
+- Estoque > Consumo por serviço.
+- Cadastre uma receita usando exatamente o nome do serviço.
+- Vincule produtos e quantidades consumidas por atendimento.
+- Ao finalizar ou reprocessar, o sistema inclui e baixa os itens uma única vez.
+
+IMPORTANTE
+Faça backup da pasta instance antes da atualização.

@@ -1,0 +1,26 @@
+PET & GATÔ BUSINESS V10.0.0 ALPHA 5
+=====================================
+
+ENTREGA: DASHBOARD EXECUTIVO INTEGRADO
+
+Esta versão consolida o Dashboard Enterprise já presente na base atual e adiciona:
+- identificação centralizada da versão do sistema;
+- versão exibida no Dashboard e na barra lateral;
+- versão retornada pelo endpoint /health;
+- atualização automática do Dashboard a cada 60 segundos;
+- aviso visual quando a atualização em tempo real falhar;
+- indicadores de Financeiro, Agenda, Banho e Tosa, CRM, Fidelidade, Estoque, Táxi Pet e Equipe;
+- gráficos anuais e financeiros;
+- alertas inteligentes;
+- rankings e linha do tempo de auditoria;
+- testes de contrato para /dashboard e /api/dashboard.
+
+INSTALAÇÃO
+1. Pare o sistema com Ctrl+C.
+2. Faça backup da pasta instance.
+3. Extraia este pacote sobre a pasta atual e confirme a substituição.
+4. Limpe pastas __pycache__.
+5. Execute: py main.py
+6. Abra: http://127.0.0.1:5000/dashboard
+
+VERSÃO: 10.0.0-alpha.5

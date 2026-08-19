@@ -1,0 +1,9 @@
+Pet & Gatô Business 11.13.0-RC24 — Pet 360°
+
+- prontuário premium consolidado
+- próximos agendamentos
+- serviço favorito
+- atalhos para agendamento e atendimento já preenchidos
+- impressão/salvamento em PDF pelo navegador
+- ações rápidas de saúde, peso, observações e galeria
+- preserva Cliente 360°, Agenda Enterprise e demais módulos

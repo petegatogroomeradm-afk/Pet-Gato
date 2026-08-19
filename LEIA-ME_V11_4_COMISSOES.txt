@@ -1,0 +1,17 @@
+PET & GATÔ BUSINESS ENTERPRISE V11.4.0 — COMISSÕES
+
+Novidades:
+- Menu Comissões em Gestão e dentro do Financeiro.
+- Comissão automática por atendimento finalizado.
+- Filtros por mês, funcionário, status e busca.
+- Aprovação, pagamento, cancelamento e alteração em lote.
+- Ranking mensal por profissional.
+- Edição rápida da taxa padrão de cada funcionário.
+- Ajustes manuais de bônus, desconto e correção.
+- Exportação CSV compatível com Excel.
+
+Após substituir os arquivos, execute:
+py scripts/migrate_database.py
+py scripts/check_db_compat.py
+py scripts/check_release.py
+py main.py

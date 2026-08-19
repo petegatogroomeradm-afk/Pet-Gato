@@ -67,7 +67,7 @@ def navegar_referencia(modo: str, referencia: date, direcao: int):
 
 def listar_agendamentos(inicio, fim, status="", busca="", employee_id=""):
     sql = """
-        SELECT a.*, c.nome AS cliente_nome, c.whatsapp,
+        SELECT a.*, c.nome AS cliente_nome, COALESCE(NULLIF(c.whatsapp,''), NULLIF(c.telefone,''), '') AS whatsapp,
                p.nome AS pet_nome, e.name AS funcionario_nome
         FROM appointments a
         LEFT JOIN clients c ON c.id = a.client_id

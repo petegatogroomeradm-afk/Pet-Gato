@@ -1,0 +1,8 @@
+PET & GATÔ BUSINESS V10.0.0 ALPHA 2
+
+Correções:
+- Restauração de todas as divisões do Financeiro V9.0.
+- Restauração de todos os módulos internos do CRM.
+- Manutenção da tela Status do Sistema da V10 Alpha.
+- Correção da tela Configurações, que exibia formulários duplicados.
+- Preservação das rotas, banco de dados e funcionalidades existentes.

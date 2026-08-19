@@ -349,6 +349,7 @@ def _build_dashboard():
     receita_ano = _sum_transactions(year_start, next_year)
     saidas_mes = _sum_transactions(month_start, next_month, "Saída")
     saldo_mes = receita_mes - saidas_mes
+    margem_mes = (saldo_mes / receita_mes * 100) if receita_mes else 0
 
     atendimentos_mes = int(
         _scalar(
@@ -552,6 +553,37 @@ def _build_dashboard():
     customer_growth = _build_customer_growth(today, 12)
     alerts = _build_alerts(today)
 
+    operation_status = {
+        "aguardando": int(_scalar("SELECT COUNT(*) AS total FROM grooming_services WHERE status IN ('Recepção','Aguardando')")),
+        "banho": int(_scalar("SELECT COUNT(*) AS total FROM grooming_services WHERE status IN ('Banho iniciado','Banho')")),
+        "secagem": int(_scalar("SELECT COUNT(*) AS total FROM grooming_services WHERE status='Secagem'")),
+        "tosa": int(_scalar("SELECT COUNT(*) AS total FROM grooming_services WHERE status IN ('Tosa iniciada','Tosa')")),
+        "prontos": int(_scalar("SELECT COUNT(*) AS total FROM grooming_services WHERE status IN ('Pagamento','Em entrega','Pronto')")),
+    }
+    contas_vencidas = int(_scalar(
+        """SELECT COUNT(*) AS total FROM financial_transactions
+        WHERE status IN ('Pendente','Vencido') AND due_date IS NOT NULL AND due_date <> '' AND due_date < ?""",
+        (_iso(today),),
+    ))
+    valor_vencido = float(_scalar(
+        """SELECT COALESCE(SUM(amount),0) AS total FROM financial_transactions
+        WHERE status IN ('Pendente','Vencido') AND due_date IS NOT NULL AND due_date <> '' AND due_date < ?""",
+        (_iso(today),),
+    ))
+    contas_hoje = int(_scalar(
+        """SELECT COUNT(*) AS total FROM financial_transactions
+        WHERE status IN ('Pendente','Vencido') AND due_date = ?""",
+        (_iso(today),),
+    ))
+    prioridades = {
+        "contas_vencidas": contas_vencidas,
+        "valor_vencido": valor_vencido,
+        "contas_hoje": contas_hoje,
+        "crm_atrasadas": int(_scalar("SELECT COUNT(*) AS total FROM crm_tasks WHERE status='Pendente' AND due_date IS NOT NULL AND due_date <> '' AND due_date < ?", (_iso(today),))),
+        "estoque_critico": estoque_critico,
+        "vacinas_alerta": vacinas_alerta,
+    }
+
     loyalty = {
         "members": int(_scalar("SELECT COUNT(*) AS total FROM loyalty_accounts")),
         "points": int(_scalar("SELECT COALESCE(SUM(points_balance),0) AS total FROM loyalty_accounts")),
@@ -603,6 +635,7 @@ def _build_dashboard():
             "receita_ano": receita_ano,
             "saidas_mes": saidas_mes,
             "saldo_mes": saldo_mes,
+            "margem_mes": margem_mes,
             "ticket_medio": ticket_medio,
             "meta_mensal": monthly_goal,
             "meta_percentual": min(goal_pct, 999.0),
@@ -625,6 +658,14 @@ def _build_dashboard():
         "crm": crm,
         "crm_tasks": crm_tasks,
         "alertas": alerts,
+        "operation_status": operation_status,
+        "prioridades": prioridades,
+        "operacao_resumo": {
+            "pendencias_criticas": prioridades["contas_vencidas"] + prioridades["crm_atrasadas"] + prioridades["estoque_critico"] + prioridades["vacinas_alerta"],
+            "equipe_percentual": (presentes / funcionarios * 100) if funcionarios else 0,
+            "resultado_mes": saldo_mes,
+            "ticket_medio": ticket_medio,
+        },
         "gerado_em": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
         "saudacao": (
             "Bom dia"

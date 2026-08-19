@@ -1,0 +1,12 @@
+PET & GATÔ BUSINESS 11.9.5-RC17
+
+ESTABILIDADE OPERACIONAL
+
+- Mantém integralmente a base Enterprise da RC16.
+- Corrige definitivamente o erro 500 da Previsão de Fluxo de Caixa causado pelo conflito r.items do Jinja.
+- Busca global e notificações agora toleram bancos antigos ou migrações parciais sem derrubar a tela.
+- Ctrl+K passa a mostrar os módulos acessados recentemente.
+- Nenhum módulo, rota ou template Enterprise foi removido.
+
+Instalação: preservar .env, instance, uploads, backups e logs.
+Após atualizar, executar py scripts\check_release.py e py main.py.

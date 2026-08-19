@@ -1,0 +1,19 @@
+PET & GATÔ BUSINESS 11.9.3-RC15
+
+Esta versão foi reconstruída usando a base Enterprise enviada pelo usuário.
+Ela preserva os módulos e melhorias que haviam desaparecido na RC14:
+- PDV e Caixa
+- Comunicação
+- Auditoria
+- Comissões
+- Central de Integrações
+- Financeiro completo
+- CRM avançado
+- Saúde dos Pets
+- Configurações Enterprise
+
+Foram incorporadas somente as melhorias operacionais do Banho & Tosa da RC13,
+sem aplicar a camada visual RC14 que substituiu arquivos da base anterior.
+
+Preservar durante a instalação:
+.env, instance, uploads, backups e logs.

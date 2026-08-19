@@ -14,6 +14,17 @@ class SmokeTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()['status'], 'ok')
 
+
+    def test_health_exposes_version(self):
+        response = self.client.get('/health')
+        payload = response.get_json()
+        self.assertEqual(payload['version'], main.APP_VERSION)
+
+    def test_dashboard_contract_is_registered(self):
+        rules = {rule.rule for rule in main.app.url_map.iter_rules()}
+        self.assertIn('/dashboard', rules)
+        self.assertIn('/api/dashboard', rules)
+
     def test_readiness(self):
         response = self.client.get('/readiness')
         self.assertEqual(response.status_code, 200)

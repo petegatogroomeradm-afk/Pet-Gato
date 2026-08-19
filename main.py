@@ -1,10 +1,11 @@
 import os
 import logging
+import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
 from functools import wraps
 
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, g, send_file
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -26,11 +27,18 @@ from modules.motorista import motorista_bp
 from modules.configuracoes import configuracoes_bp
 from modules.relatorios import relatorios_bp
 from modules.portal_cliente import portal_cliente_bp
+from modules.pdv import pdv_bp
+from modules.comunicacao import comunicacao_bp
+from modules.auditoria import auditoria_bp
+from modules.comissoes import comissoes_bp
 from services.dashboard_service import obter_dashboard
 from services.global_service import buscar_global, obter_notificacoes
 from services.event_subscribers import register_default_subscribers
+from services.integration_service import obter_integridade_integracoes, reprocessar_atendimento, reprocessar_pendencias
 from core.logging_config import configure_logging
-from core.permissions import has_permission, module_for_request, deny_access, ROLE_LABELS
+from core.permissions import has_permission, module_for_request, deny_access, ROLE_LABELS, is_superadmin
+from core.version import APP_VERSION
+from services.auditoria_service import registrar_auditoria
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -74,6 +82,16 @@ app.register_blueprint(motorista_bp)
 app.register_blueprint(configuracoes_bp)
 app.register_blueprint(relatorios_bp)
 app.register_blueprint(portal_cliente_bp)
+app.register_blueprint(pdv_bp)
+app.register_blueprint(comunicacao_bp)
+app.register_blueprint(auditoria_bp)
+app.register_blueprint(comissoes_bp)
+
+
+@app.context_processor
+def inject_app_metadata():
+    """Disponibiliza a versão atual para todas as telas sem duplicação."""
+    return {"app_version": APP_VERSION}
 
 
 PUBLIC_ENDPOINTS = {"login", "health", "readiness", "static", "alterar_senha_primeiro_acesso"}
@@ -101,6 +119,15 @@ def proteger_rotas_globalmente():
 
 @app.after_request
 def cabecalhos_seguranca(response):
+    if (request.method in {"POST", "PUT", "PATCH", "DELETE"}
+            and response.status_code < 400
+            and session.get("user_id")
+            and not getattr(g, "audit_recorded", False)
+            and request.endpoint not in {"login", "logout", "static"}):
+        try:
+            registrar_auditoria(session.get("user_name"), "alteracao_sistema", request.blueprint or "sistema", None, f"{request.method} {request.path}")
+        except Exception:
+            logger.exception("Falha ao registrar auditoria automática")
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
@@ -112,7 +139,7 @@ def cabecalhos_seguranca(response):
 
 @app.route("/health")
 def health():
-    return jsonify({"status": "ok", "app": "petegato-business"}), 200
+    return jsonify({"status": "ok", "app": "petegato-business", "version": APP_VERSION}), 200
 
 
 @app.route("/readiness")
@@ -241,6 +268,96 @@ def api_busca_global():
 def api_notificacoes():
     itens = obter_notificacoes()
     return jsonify({"total": len(itens), "itens": itens})
+
+
+@app.route("/sistema/integracoes")
+@login_required
+def central_integracoes():
+    dados = obter_integridade_integracoes()
+    return render_template("central_integracoes.html", **dados)
+
+
+@app.route("/sistema/integracoes/reprocessar/<int:atendimento_id>", methods=["POST"])
+@login_required
+def reprocessar_integracao(atendimento_id):
+    resultado = reprocessar_atendimento(atendimento_id, session.get("user_name", "Sistema"))
+    flash(resultado["mensagem"], "success" if resultado["ok"] else "danger")
+    return redirect(url_for("central_integracoes"))
+
+
+@app.route("/sistema/integracoes/reprocessar-pendencias", methods=["POST"])
+@login_required
+def reprocessar_integracoes_pendentes():
+    resultado = reprocessar_pendencias(session.get("user_name", "Sistema"))
+    flash(f"{resultado['processados']} atendimento(s) verificado(s) e {resultado['corrigidos']} corrigido(s).", "success")
+    return redirect(url_for("central_integracoes"))
+
+
+def _sqlite_database_path():
+    path = BASE_DIR / "instance" / "petegato_business_v3.db"
+    return path if path.exists() else None
+
+
+def _backup_directory():
+    path = BASE_DIR / "backups" / "database"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+@app.route("/sistema/backup/criar", methods=["POST"])
+@login_required
+def criar_backup_sistema():
+    if not has_permission("configuracoes"):
+        return deny_access()
+    db_path = _sqlite_database_path()
+    if not db_path:
+        flash("Backup manual local está disponível para a base SQLite. Em PostgreSQL use o backup gerenciado do provedor.", "warning")
+        return redirect(url_for("central_integracoes"))
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    destino = _backup_directory() / f"petegato_business_v3_manual_{timestamp}.db"
+    shutil.copy2(db_path, destino)
+    registrar_auditoria(session.get("user_name"), "backup_criado", "sistema", None, destino.name)
+    flash(f"Backup criado com sucesso: {destino.name}", "success")
+    return redirect(url_for("central_integracoes"))
+
+
+@app.route("/sistema/backup/baixar/<path:nome>")
+@login_required
+def baixar_backup_sistema(nome):
+    if not has_permission("configuracoes"):
+        return deny_access()
+    seguro = Path(nome).name
+    arquivo = _backup_directory() / seguro
+    if not arquivo.exists() or arquivo.suffix.lower() != ".db":
+        flash("Backup não encontrado.", "danger")
+        return redirect(url_for("central_integracoes"))
+    return send_file(arquivo, as_attachment=True, download_name=arquivo.name)
+
+
+@app.route("/sistema/backup/restaurar/<path:nome>", methods=["POST"])
+@login_required
+def restaurar_backup_sistema(nome):
+    if not is_superadmin():
+        flash("Somente o Super Administrador pode restaurar o banco local.", "danger")
+        return redirect(url_for("central_integracoes"))
+    db_path = _sqlite_database_path()
+    if not db_path:
+        flash("Restauração local é permitida somente para SQLite.", "warning")
+        return redirect(url_for("central_integracoes"))
+    seguro = Path(nome).name
+    origem = _backup_directory() / seguro
+    if not origem.exists() or origem.suffix.lower() != ".db":
+        flash("Arquivo de backup não encontrado.", "danger")
+        return redirect(url_for("central_integracoes"))
+    if request.form.get("confirmacao", "").strip().upper() != "RESTAURAR":
+        flash("Confirmação inválida. Digite RESTAURAR para executar a operação.", "danger")
+        return redirect(url_for("central_integracoes"))
+    seguranca = _backup_directory() / f"petegato_business_v3_antes_restore_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
+    shutil.copy2(db_path, seguranca)
+    shutil.copy2(origem, db_path)
+    registrar_auditoria(session.get("user_name"), "backup_restaurado", "sistema", None, f"Origem: {origem.name}; segurança: {seguranca.name}")
+    flash("Banco restaurado. Reinicie o sistema antes de continuar utilizando.", "warning")
+    return redirect(url_for("central_integracoes"))
 
 @app.route("/logout")
 def logout():

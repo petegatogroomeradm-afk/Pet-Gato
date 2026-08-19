@@ -1,0 +1,13 @@
+PET & GATÔ BUSINESS V10.0.0 BETA 8
+
+Integração Banho e Tosa + Comunicação.
+
+Novidades:
+- mensagens de atendimento em andamento;
+- aviso de atraso;
+- aviso de pet pronto;
+- pedido de avaliação;
+- cancelamento;
+- registro em communication_logs e histórico do CRM;
+- uso automático do WhatsApp ou telefone do tutor;
+- compatível com PostgreSQL e SQLite.

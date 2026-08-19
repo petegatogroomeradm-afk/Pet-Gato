@@ -1,0 +1,9 @@
+PET & GATÔ BUSINESS 11.9.8-RC20
+
+- Tela de conferência antes de finalizar atendimento.
+- Confirmação de valor, forma de pagamento e observações.
+- Financeiro, Estoque e Comissão processados separadamente e com proteção contra duplicidade.
+- Atendimento pode ser finalizado mesmo se uma integração opcional ficar pendente.
+- Botão para reprocessar somente integrações pendentes.
+- Registro no histórico, eventos do sistema e auditoria.
+- Aviso ao tutor após conclusão.

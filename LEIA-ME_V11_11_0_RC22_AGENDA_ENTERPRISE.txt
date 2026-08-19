@@ -1,0 +1,9 @@
+PET & GATÔ BUSINESS 11.11.0-RC22
+
+Agenda Enterprise:
+- sugestões de horários livres
+- reagendamento rápido com troca de profissional
+- destaque de conflitos
+- cores por tipo de serviço
+- indicação do horário atual
+- preservação das integrações existentes

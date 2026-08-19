@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Painel Financeiro Gerencial{% endblock %}
+{% block page_title %}Painel Financeiro Gerencial{% endblock %}
+{% block page_subtitle %}Resumo executivo, alertas e prioridades do caixa{% endblock %}
+{% block content %}
+<div class="actions-row page-actions">
+  <a class="small-button" href="{{ url_for('financeiro.financeiro') }}">← Voltar ao Financeiro</a>
+  <a class="small-button" href="{{ url_for('financeiro.painel_gerencial_financeiro', mes=mes_anterior) }}">← Mês anterior</a>
+  <strong>{{ mes_titulo }}</strong>
+  <a class="small-button" href="{{ url_for('financeiro.painel_gerencial_financeiro', mes=proximo_mes) }}">Próximo mês →</a>
+  <button class="small-button" onclick="window.print()">Imprimir</button>
+</div>
+
+<section class="finance-kpis">
+  <article><span>Receitas realizadas</span><strong>R$ {{ '%.2f'|format(receita) }}</strong><small>Entradas pagas no mês</small></article>
+  <article><span>Despesas realizadas</span><strong>R$ {{ '%.2f'|format(despesas) }}</strong><small>Saídas pagas no mês</small></article>
+  <article class="{{ 'positive' if resultado >= 0 else 'negative' }}"><span>Resultado</span><strong>R$ {{ '%.2f'|format(resultado) }}</strong><small>Margem de {{ '%.1f'|format(margem) }}%</small></article>
+  <article><span>A receber</span><strong>R$ {{ '%.2f'|format(resumo.receivable or 0) }}</strong><small>Entradas ainda abertas</small></article>
+  <article><span>A pagar</span><strong>R$ {{ '%.2f'|format(resumo.payable or 0) }}</strong><small>Compromissos em aberto</small></article>
+  <article class="{{ 'negative' if (resumo.overdue or 0) > 0 else 'positive' }}"><span>Vencido</span><strong>R$ {{ '%.2f'|format(resumo.overdue or 0) }}</strong><small>{{ resumo.open_count or 0 }} contas abertas</small></article>
+</section>
+
+<section class="finance-grid">
+  <article class="card">
+    <header class="section-header"><div><h2>Prioridades dos próximos 7 dias</h2><p>Contas vencidas e próximas do vencimento</p></div><span class="badge warning">{{ proximos|length }}</span></header>
+    <div class="priority-list">
+    {% for l in proximos %}
+      <div class="priority-item {{ 'overdue' if l.status=='Vencido' }}">
+        <div><strong>{{ l.description }}</strong><small>{{ l.due_date }} · {{ l.category or 'Sem categoria' }}</small></div>
+        <div class="right"><strong>R$ {{ '%.2f'|format(l.amount or 0) }}</strong><span class="badge {{ 'danger' if l.type=='Saída' else 'success' }}">{{ 'Pagar' if l.type=='Saída' else 'Receber' }}</span></div>
+        <a class="small-button" href="{{ url_for('financeiro.editar_lancamento', lancamento_id=l.id) }}">Abrir</a>
+      </div>
+    {% else %}<p>Nenhuma prioridade financeira nos próximos dias.</p>{% endfor %}
+    </div>
+  </article>
+
+  <article class="card">
+    <header class="section-header"><div><h2>Alertas de orçamento</h2><p>Categorias acima de 80% do limite</p></div><span class="badge {{ 'danger' if alertas_orcamento else 'success' }}">{{ alertas_orcamento|length }}</span></header>
+    {% for a in alertas_orcamento %}
+      <div class="budget-alert"><div><strong>{{ a.category }}</strong><small>R$ {{ '%.2f'|format(a.total) }} de R$ {{ '%.2f'|format(a.planned) }}</small></div><span class="badge {{ 'danger' if a.status=='Estourado' else 'warning' }}">{{ '%.0f'|format(a.percent) }}% · {{ a.status }}</span></div>
+    {% else %}<p>Nenhuma categoria em alerta. Cadastre limites no Orçamento mensal para acompanhar.</p>{% endfor %}
+    <a class="small-button" href="{{ url_for('financeiro.orcamento_mensal', mes=mes) }}">Ver orçamento mensal</a>
+  </article>
+</section>
+
+<section class="finance-grid">
+  <article class="card">
+    <header class="section-header"><div><h2>Maiores categorias de despesa</h2><p>Pago + comprometido no mês</p></div></header>
+    <div class="summary-list">
+    {% for c in categorias %}<p><span>{{ c.category }}</span><strong>R$ {{ '%.2f'|format((c.paid or 0)+(c.committed or 0)) }}</strong></p>{% else %}<p>Sem despesas no período.</p>{% endfor %}
+    </div>
+  </article>
+  <article class="card">
+    <header class="section-header"><div><h2>Movimento diário</h2><p>Entradas e saídas realizadas</p></div></header>
+    <div class="table-responsive"><table><thead><tr><th>Data</th><th>Entradas</th><th>Saídas</th><th>Resultado</th></tr></thead><tbody>
+    {% for d in diario %}<tr><td>{{ d.movement_date }}</td><td class="positive">R$ {{ '%.2f'|format(d.entries or 0) }}</td><td class="negative">R$ {{ '%.2f'|format(d.exits or 0) }}</td><td><strong>R$ {{ '%.2f'|format((d.entries or 0)-(d.exits or 0)) }}</strong></td></tr>{% else %}<tr><td colspan="4">Sem movimentação paga no mês.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </article>
+</section>
+<style>
+.priority-list{display:grid;gap:10px}.priority-item{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:12px;border:1px solid var(--border,#343044);border-radius:12px}.priority-item.overdue{border-left:4px solid #e74c5b}.priority-item small,.budget-alert small{display:block;opacity:.7;margin-top:3px}.priority-item .right{text-align:right}.budget-alert{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border,#343044)}.positive{color:#35c98a}.negative{color:#ff6b7a}@media(max-width:800px){.priority-item{grid-template-columns:1fr}.priority-item .right{text-align:left}.budget-alert{align-items:flex-start;flex-direction:column}}@media print{.page-actions,.sidebar,.topbar{display:none!important}}
+</style>
+{% endblock %}

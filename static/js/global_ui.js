@@ -13,6 +13,38 @@
 
     let searchTimer = null;
 
+    const RECENT_KEY = "petegato_recent_pages_v1";
+
+    function rememberCurrentPage() {
+        const active = document.querySelector(".menu a.active");
+        if (!active || !active.href) return;
+        const current = {
+            title: active.querySelector(".menu-label")?.textContent?.trim() || document.title,
+            icon: active.querySelector(".menu-icon")?.textContent?.trim() || "↗",
+            url: active.getAttribute("href")
+        };
+        let recent = [];
+        try { recent = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch (_) {}
+        recent = [current, ...recent.filter((item) => item.url !== current.url)].slice(0, 6);
+        localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
+    }
+
+    function renderRecentPages() {
+        if (!results) return;
+        let recent = [];
+        try { recent = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch (_) {}
+        if (!recent.length) {
+            results.innerHTML = '<p class="empty-state">Digite pelo menos duas letras para pesquisar.</p>';
+            return;
+        }
+        results.innerHTML = '<div class="global-search-section-title">Acessados recentemente</div>' + recent.map((item) => `
+            <a class="global-result" href="${escapeHtml(item.url)}">
+                <span class="global-result-icon">${escapeHtml(item.icon)}</span>
+                <span><strong>${escapeHtml(item.title)}</strong><small>Abrir módulo</small></span>
+                <span class="global-result-type">Recente</span>
+            </a>`).join("");
+    }
+
     function escapeHtml(value) {
         const div = document.createElement("div");
         div.textContent = value ?? "";
@@ -22,6 +54,7 @@
     function openSearch() {
         if (!modal) return;
         modal.hidden = false;
+        renderRecentPages();
         window.setTimeout(() => input?.focus(), 20);
     }
 
@@ -30,8 +63,7 @@
         modal.hidden = true;
         if (input) input.value = "";
         if (results) {
-            results.innerHTML =
-                '<p class="empty-state">Digite pelo menos duas letras para pesquisar.</p>';
+            renderRecentPages();
         }
     }
 
@@ -164,6 +196,7 @@
         }
     });
 
+    rememberCurrentPage();
     loadNotifications();
     window.setInterval(loadNotifications, 60000);
 })();

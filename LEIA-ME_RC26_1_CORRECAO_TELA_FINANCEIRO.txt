@@ -1,0 +1,9 @@
+PET & GATÔ BUSINESS 11.15.1-RC26.1
+
+Correção aplicada:
+- impede o gráfico do Financeiro de aumentar a altura continuamente;
+- remove o conflito entre min-height do canvas e redimensionamento automático do Chart.js;
+- fixa o gráfico dentro de um contêiner responsivo;
+- reduz oscilações de layout durante o carregamento.
+
+Não há alteração no banco de dados.

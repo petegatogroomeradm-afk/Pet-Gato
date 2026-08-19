@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timedelta
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
 
@@ -25,6 +25,7 @@ from services.agenda_service import (
 )
 
 from services.appointment_grooming_sync import sincronizar_agendamento_com_banho
+from modules.comunicacao import preparar_whatsapp_agendamento
 
 agenda_bp = Blueprint("agenda", __name__)
 
@@ -79,6 +80,48 @@ def _pet_pertence_ao_cliente(pet_id, client_id):
         (pet_id, client_id),
         one=True,
     ))
+
+
+
+def _marcar_conflitos_visuais(agendamentos):
+    """Marca conflitos reais por profissional para destacar na agenda.
+
+    ``query_db`` retorna ``sqlite3.Row`` no SQLite. Esse tipo permite leitura
+    por chave, mas não possui ``get`` e também não aceita atribuição. Por isso,
+    normalizamos cada registro para ``dict`` antes de acrescentar o campo
+    calculado ``tem_conflito``. A mesma rotina continua compatível com os
+    dicionários retornados pelo PostgreSQL.
+    """
+    registros = [dict(item) for item in (agendamentos or [])]
+    grupos = {}
+
+    for item in registros:
+        item["tem_conflito"] = False
+        try:
+            data = str(item.get("data_agendamento") or "")
+            profissional = str(item.get("employee_id") or "sem-profissional")
+            horario = str(item.get("horario") or "00:00")[:5]
+            duracao = int(item.get("duration_minutes") or 60)
+
+            chave = (data, profissional)
+            inicio = datetime.strptime(f"{data} {horario}", "%Y-%m-%d %H:%M")
+            fim = inicio + timedelta(minutes=duracao)
+        except (TypeError, ValueError):
+            continue
+
+        grupos.setdefault(chave, []).append((inicio, fim, item))
+
+    for eventos in grupos.values():
+        eventos.sort(key=lambda evento: evento[0])
+        for indice, (inicio, fim, item) in enumerate(eventos):
+            for outro_inicio, outro_fim, outro in eventos[indice + 1:]:
+                if outro_inicio >= fim:
+                    break
+                if inicio < outro_fim and outro_inicio < fim:
+                    item["tem_conflito"] = True
+                    outro["tem_conflito"] = True
+
+    return registros
 
 
 def _dados_base():
@@ -155,7 +198,7 @@ def agenda():
     busca = request.args.get("busca", "").strip()
     employee_id = request.args.get("employee_id", "").strip()
 
-    agendamentos = listar_agendamentos(inicio, fim, status, busca, employee_id)
+    agendamentos = _marcar_conflitos_visuais(listar_agendamentos(inicio, fim, status, busca, employee_id))
     bloqueios = listar_bloqueios(inicio, fim)
     calendario = montar_calendario(modo, inicio, fim, agendamentos, bloqueios)
     base = _dados_base()
@@ -184,6 +227,8 @@ def agenda():
         capacidade_config=obter_configuracao_capacidade(),
         ocupacao_slots=mapa_ocupacao(agendamentos),
         pode_encaixar=pode_fazer_encaixe(session.get("role")),
+        prefill_client_id=request.args.get("client_id", ""),
+        prefill_pet_id=request.args.get("pet_id", ""),
     )
 
 
@@ -306,6 +351,45 @@ def mover_agendamento(agendamento_id):
     )
     sincronizar_agendamento_com_banho(agendamento_id)
     return jsonify({"ok": True, "message": "Agendamento reagendado."})
+
+
+
+@agenda_bp.route("/agenda/api/disponibilidade")
+def disponibilidade_agenda():
+    """Sugere os próximos horários livres para o formulário de agendamento."""
+    data_ref = (request.args.get("date") or date.today().isoformat()).strip()
+    employee_id = (request.args.get("employee_id") or "").strip() or None
+    try:
+        duracao = _duracao_valida(request.args.get("duration", 60))
+        dia = datetime.strptime(data_ref, "%Y-%m-%d").date()
+    except ValueError:
+        return jsonify({"ok": False, "message": "Data inválida."}), 400
+
+    cfg = obter_configuracao_capacidade()
+    capacidade = max(1, int(cfg.get("default_capacity") or 3))
+    sugestoes = []
+    for hora in HORAS_AGENDA:
+        if len(sugestoes) >= 8:
+            break
+        if dia == date.today():
+            try:
+                instante = datetime.combine(dia, datetime.strptime(hora, "%H:%M").time())
+                if instante < datetime.now() + timedelta(minutes=15):
+                    continue
+            except ValueError:
+                pass
+        if conflito_horario(data_ref, hora, duracao, employee_id):
+            continue
+        ocupados = ocupacao_horario(data_ref, hora)
+        if ocupados >= capacidade:
+            continue
+        sugestoes.append({
+            "time": hora,
+            "label": f"{hora} · {capacidade - ocupados} vaga(s)",
+            "occupied": ocupados,
+            "capacity": capacidade,
+        })
+    return jsonify({"ok": True, "date": data_ref, "suggestions": sugestoes})
 
 
 @agenda_bp.route("/agenda/<int:agendamento_id>/checkin-inteligente", methods=["POST"])
@@ -608,3 +692,14 @@ def recusar_solicitacao_online(agendamento_id):
     )
     flash("Solicitação recusada. O cliente verá o motivo no portal.", "success")
     return redirect(url_for("agenda.solicitacoes_online"))
+
+
+@agenda_bp.route("/agenda/<int:agendamento_id>/whatsapp/<action>")
+def whatsapp_agendamento(agendamento_id, action):
+    try:
+        return redirect(preparar_whatsapp_agendamento(agendamento_id, action))
+    except ValueError as exc:
+        flash(str(exc), "danger")
+    except Exception:
+        flash("Não foi possível preparar a mensagem do WhatsApp.", "danger")
+    return redirect(request.referrer or url_for("agenda.agenda"))

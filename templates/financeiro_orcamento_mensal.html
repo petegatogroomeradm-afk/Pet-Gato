@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Orçamento mensal{% endblock %}
+{% block page_title %}Orçamento mensal{% endblock %}
+{% block page_subtitle %}Planejamento de despesas por categoria e alertas de limite{% endblock %}
+{% block content %}
+<style>
+.actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem}.filter,.budget-form{display:flex;gap:.65rem;align-items:end;flex-wrap:wrap;padding:1rem;border:1px solid var(--border);border-radius:16px;background:var(--card);margin-bottom:1rem}.filter label,.budget-form label{display:grid;gap:.35rem}.metrics{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:.8rem;margin:1rem 0}.metric,.card{padding:1rem;border:1px solid var(--border);border-radius:16px;background:var(--card)}.metric small{display:block;opacity:.7}.metric strong{font-size:1.2rem}.table-wrap{overflow:auto}.budget-table{width:100%;border-collapse:collapse}.budget-table th,.budget-table td{padding:.75rem;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}.progress{min-width:180px;height:10px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden}.progress span{display:block;height:100%;background:linear-gradient(90deg,#8b5cf6,#d946ef)}.badge{padding:.3rem .55rem;border-radius:999px;font-size:.78rem}.ok{background:rgba(57,217,138,.16);color:#39d98a}.warn{background:rgba(255,193,7,.16);color:#ffc107}.danger{background:rgba(255,107,122,.16);color:#ff6b7a}.positive{color:#39d98a}.negative{color:#ff6b7a}@media(max-width:1100px){.metrics{grid-template-columns:repeat(3,1fr)}}@media(max-width:720px){.metrics{grid-template-columns:1fr 1fr}}
+</style>
+<div class="actions">
+  <a class="small-button" href="{{ url_for('financeiro.financeiro') }}">← Financeiro</a>
+  <a class="small-button" href="{{ url_for('financeiro.orcamento_mensal', mes=mes_anterior) }}">◀ Mês anterior</a>
+  <a class="small-button" href="{{ url_for('financeiro.orcamento_mensal', mes=proximo_mes) }}">Próximo mês ▶</a>
+</div>
+<form class="filter" method="get"><label>Mês<input type="month" name="mes" value="{{ mes }}"></label><button class="button">Atualizar</button></form>
+<div class="metrics">
+  <div class="metric"><small>Total planejado</small><strong>R$ {{ '%.2f'|format(total_planejado)|replace('.', ',') }}</strong></div>
+  <div class="metric"><small>Pago no mês</small><strong class="negative">R$ {{ '%.2f'|format(total_realizado)|replace('.', ',') }}</strong></div>
+  <div class="metric"><small>Contas pendentes</small><strong>R$ {{ '%.2f'|format(total_comprometido)|replace('.', ',') }}</strong></div>
+  <div class="metric"><small>Despesa projetada</small><strong>R$ {{ '%.2f'|format(total_projetado)|replace('.', ',') }}</strong></div>
+  <div class="metric"><small>Saldo do orçamento</small><strong class="{{ 'positive' if total_disponivel >= 0 else 'negative' }}">R$ {{ '%.2f'|format(total_disponivel)|replace('.', ',') }}</strong></div>
+</div>
+<form class="budget-form" method="post">
+  <input type="hidden" name="mes" value="{{ mes }}">
+  <label>Categoria<input name="category" list="category-list" required placeholder="Ex.: Aluguel"></label>
+  <datalist id="category-list">{% for c in categorias %}<option value="{{ c }}">{% endfor %}</datalist>
+  <label>Limite mensal<input name="planned_amount" required placeholder="R$ 0,00"></label>
+  <label>Observação<input name="notes" placeholder="Opcional"></label>
+  <button class="button" type="submit">Salvar orçamento</button>
+</form>
+<section class="card table-wrap">
+<table class="budget-table"><thead><tr><th>Categoria</th><th>Planejado</th><th>Pago</th><th>Pendente</th><th>Projetado</th><th>Disponível</th><th>Uso</th><th>Status</th><th></th></tr></thead><tbody>
+{% for row in orcamentos %}
+<tr>
+<td><strong>{{ row['category'] }}</strong>{% if row['notes'] %}<br><small>{{ row['notes'] }}</small>{% endif %}</td>
+<td>R$ {{ '%.2f'|format(row['planned_amount'] or 0)|replace('.', ',') }}</td>
+<td>R$ {{ '%.2f'|format(row['realized_amount'] or 0)|replace('.', ',') }}</td>
+<td>R$ {{ '%.2f'|format(row['committed_amount'] or 0)|replace('.', ',') }}</td>
+<td>R$ {{ '%.2f'|format(row['projected_amount'] or 0)|replace('.', ',') }}</td>
+<td class="{{ 'positive' if row['remaining_amount'] >= 0 else 'negative' }}">R$ {{ '%.2f'|format(row['remaining_amount'])|replace('.', ',') }}</td>
+<td><div class="progress"><span style="width:{{ [row['percent_used'],100]|min }}%"></span></div><small>{{ '%.1f'|format(row['percent_used']) }}%</small></td>
+<td><span class="badge {{ 'danger' if row['status_label']=='Estourado' else ('warn' if row['status_label']=='Atenção' else 'ok') }}">{{ row['status_label'] }}</span></td>
+<td><form method="post" action="{{ url_for('financeiro.excluir_orcamento_mensal', budget_id=row['id']) }}" onsubmit="return confirm('Remover este orçamento?')"><input type="hidden" name="mes" value="{{ mes }}"><button class="small-button" type="submit">Excluir</button></form></td>
+</tr>
+{% else %}<tr><td colspan="9">Nenhum limite cadastrado para este mês.</td></tr>{% endfor %}
+</tbody></table>
+</section>
+{% endblock %}

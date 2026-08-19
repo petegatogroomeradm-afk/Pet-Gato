@@ -1,0 +1,17 @@
+PET & GATÔ BUSINESS 11.14.0-RC25 — FINANCEIRO EXECUTIVO
+
+Novidades:
+- Saldo consolidado de todas as movimentações pagas.
+- Resultado de hoje, semana e mês.
+- Central de prioridades com contas vencidas e próximos 7 dias.
+- Resumo das movimentações por origem (PDV, Banho e Tosa, Manual etc.).
+- Lista das últimas movimentações.
+- Sincronização automática do status de contas vencidas ao abrir o Financeiro.
+- Compatibilidade mantida com SQLite e PostgreSQL.
+
+Instalação:
+1. Faça backup da pasta atual.
+2. Extraia sobre a pasta do projeto, preservando .env, instance, uploads, backups e logs.
+3. Execute: py scripts\check_release.py
+4. Execute: py main.py
+5. Pressione Ctrl+F5 no navegador.

@@ -1,0 +1,16 @@
+PET & GATÔ BUSINESS — V10.0.0 ALPHA 6
+
+NOVIDADES
+- Central de Integrações no menu lateral.
+- Diagnóstico de receitas, estoque e comissões pendentes.
+- Reprocessamento seguro sem duplicar lançamentos existentes.
+- Visibilidade dos últimos eventos internos do sistema.
+
+ACESSO
+Menu lateral > Integrações
+ou http://127.0.0.1:5000/sistema/integracoes
+
+SEGURANÇA
+A baixa de estoque automática só é reprocessada quando existem produtos de consumo
+explicitamente vinculados ao atendimento. O sistema não cria consumo genérico durante
+o reparo em lote.

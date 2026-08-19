@@ -22,6 +22,8 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      resizeDelay: 120,
+      animation: false,
       interaction: {mode: "index", intersect: false},
       plugins: {legend: {position: "bottom"}},
       scales: {

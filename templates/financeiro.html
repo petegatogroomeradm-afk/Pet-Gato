@@ -4,6 +4,84 @@
 {% block page_subtitle %}Fluxo de caixa, DRE, metas, recorrências e fechamento diário{% endblock %}
 {% block content %}
 
+<nav class="finance-module-nav" aria-label="Navegação financeira">
+  <a class="active" href="{{ url_for('financeiro.financeiro') }}">📊 Visão geral</a>
+  <a href="{{ url_for('financeiro.contas_pagar_receber') }}">🧾 Contas a pagar/receber</a>
+  <a href="{{ url_for('financeiro.previsao_fluxo_caixa') }}">📈 Fluxo projetado</a>
+  <a href="{{ url_for('financeiro.despesas_loja') }}">🏪 Despesas fixas</a>
+  <a href="{{ url_for('comissoes.painel') }}">👥 Comissões</a>
+  <a href="{{ url_for('financeiro.conciliacao_financeira') }}">🏦 Conciliação</a>
+  <a href="{{ url_for('financeiro.relatorio_mensal') }}">📄 Relatório mensal</a>
+  <a href="{{ url_for('financeiro.orcamento_mensal') }}">🎯 Orçamento</a>
+  <a href="{{ url_for('financeiro.calendario_financeiro') }}">📅 Calendário</a>
+  <a href="{{ url_for('financeiro.painel_gerencial_financeiro') }}">🧭 Painel gerencial</a>
+  <a href="{{ url_for('financeiro.comparativo_financeiro') }}">⚖️ Comparativo</a>
+</nav>
+
+<section class="finance-command-center">
+  <article class="finance-exec-card finance-exec-primary">
+    <span>Saldo consolidado</span>
+    <strong>R$ {{ '%.2f'|format(executivo.cash_balance) }}</strong>
+    <small>Movimentações pagas de todas as origens</small>
+  </article>
+  <article class="finance-exec-card">
+    <span>Resultado de hoje</span>
+    <strong class="{{ 'positive-text' if executivo.result_today >= 0 else 'negative-text' }}">R$ {{ '%.2f'|format(executivo.result_today) }}</strong>
+    <small>Entradas R$ {{ '%.2f'|format(executivo.revenue_today) }} · Saídas R$ {{ '%.2f'|format(executivo.expense_today) }}</small>
+  </article>
+  <article class="finance-exec-card">
+    <span>Resultado da semana</span>
+    <strong class="{{ 'positive-text' if executivo.result_week >= 0 else 'negative-text' }}">R$ {{ '%.2f'|format(executivo.result_week) }}</strong>
+    <small>{{ semana_inicio }} até {{ semana_fim }}</small>
+  </article>
+  <article class="finance-exec-card">
+    <span>Resultado do mês atual</span>
+    <strong class="{{ 'positive-text' if executivo.result_month >= 0 else 'negative-text' }}">R$ {{ '%.2f'|format(executivo.result_month) }}</strong>
+    <small>Receitas R$ {{ '%.2f'|format(executivo.revenue_month) }} · Despesas R$ {{ '%.2f'|format(executivo.expense_month) }}</small>
+  </article>
+</section>
+
+<section class="finance-priority-grid">
+  <article class="card finance-priority-card {{ 'has-alert' if (prioridades['overdue_count'] or 0) > 0 else '' }}">
+    <header class="section-header"><div><h2>Prioridades financeiras</h2><p>O que precisa de atenção imediata</p></div></header>
+    <a class="finance-priority-line" href="{{ url_for('financeiro.contas_pagar_receber', status='Vencido') }}">
+      <span><b>Contas vencidas</b><small>{{ prioridades['overdue_count'] or 0 }} lançamento(s)</small></span>
+      <strong>R$ {{ '%.2f'|format(prioridades['overdue_amount'] or 0) }}</strong>
+    </a>
+    <a class="finance-priority-line" href="{{ url_for('financeiro.contas_pagar_receber', inicio=hoje) }}">
+      <span><b>Próximos 7 dias</b><small>{{ prioridades['next_7_count'] or 0 }} compromisso(s)</small></span>
+      <strong>R$ {{ '%.2f'|format(prioridades['next_7_amount'] or 0) }}</strong>
+    </a>
+    <div class="finance-priority-actions">
+      <a class="small-button" href="{{ url_for('financeiro.calendario_financeiro') }}">Abrir calendário</a>
+      <a class="small-button" href="{{ url_for('financeiro.previsao_fluxo_caixa') }}">Ver previsão</a>
+    </div>
+  </article>
+
+  <article class="card finance-source-card">
+    <header class="section-header"><div><h2>Origem das movimentações</h2><p>Entradas e saídas do mês atual</p></div></header>
+    <div class="finance-source-list">
+      {% for item in resumo_origens %}
+      <div><span><strong>{{ item.source_name }}</strong><small>Entradas R$ {{ '%.2f'|format(item.entries or 0) }}</small></span><b>Saídas R$ {{ '%.2f'|format(item.exits or 0) }}</b></div>
+      {% else %}<p class="muted">Nenhuma movimentação no mês atual.</p>{% endfor %}
+    </div>
+  </article>
+</section>
+
+<article class="card finance-latest-card">
+  <header class="section-header"><div><h2>Últimas movimentações</h2><p>Atendimentos, PDV, recorrências e lançamentos manuais</p></div><a class="small-button" href="#lancamentos-financeiros">Ver todos</a></header>
+  <div class="finance-latest-list">
+    {% for item in ultimos_lancamentos %}
+    <div class="finance-latest-item">
+      <span class="finance-latest-icon {{ 'entry' if item.type == 'Entrada' else 'exit' }}">{{ '↗' if item.type == 'Entrada' else '↘' }}</span>
+      <span class="finance-latest-main"><strong>{{ item.description }}</strong><small>{{ item.transaction_date or item.due_date or '-' }} · {{ item.source_type or 'Manual' }} · {{ item.payment_method or 'A definir' }}</small></span>
+      <span class="badge status-{{ (item.status or 'pendente')|lower }}">{{ item.status or 'Pendente' }}</span>
+      <strong class="{{ 'positive-text' if item.type == 'Entrada' else 'negative-text' }}">{{ '+' if item.type == 'Entrada' else '-' }} R$ {{ '%.2f'|format(item.amount or 0) }}</strong>
+    </div>
+    {% else %}<p class="muted">Nenhuma movimentação registrada.</p>{% endfor %}
+  </div>
+</article>
+
 <section class="finance-kpis">
   <article><span>Entradas realizadas</span><strong>R$ {{ '%.2f'|format(entradas) }}</strong><small>{{ totais.total_transactions }} lançamentos filtrados</small></article>
   <article><span>Saídas realizadas</span><strong>R$ {{ '%.2f'|format(saidas) }}</strong><small>Despesas pagas no período</small></article>
@@ -16,7 +94,7 @@
 <section class="finance-grid finance-overview">
   <article class="card finance-chart-card">
     <header class="section-header"><div><h2>Fluxo de caixa diário</h2><p>Entradas, saídas e resultado do mês</p></div><span class="badge info">{{ mes }}</span></header>
-    <canvas id="cash-flow-chart" height="120"></canvas>
+    <div class="finance-chart-wrap"><canvas id="cash-flow-chart"></canvas></div>
   </article>
 
   <article class="card dre-card">
@@ -80,7 +158,7 @@
 </section>
 
 <section class="finance-grid">
-  <article class="card">
+  <article class="card" id="recorrencias">
     <h2>Conta recorrente</h2>
     <form method="post" action="{{ url_for('financeiro.adicionar_recorrencia') }}" class="form">
       <div class="form-row"><select name="transaction_type" required><option value="">Tipo</option><option>Entrada</option><option>Saída</option></select><input name="category" placeholder="Categoria"></div>
@@ -115,7 +193,7 @@
   </article>
 </section>
 
-<article class="card table-card">
+<article class="card table-card" id="lancamentos-financeiros">
   <header class="section-header"><div><h2>Lançamentos</h2><p>Contas a pagar, receber e movimentações realizadas</p></div></header>
   <div class="table-responsive"><table><thead><tr><th>Data</th><th>Tipo</th><th>Status</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th>Conta</th><th>Parcela</th><th>Ações</th></tr></thead><tbody>
   {% for l in lancamentos %}<tr>

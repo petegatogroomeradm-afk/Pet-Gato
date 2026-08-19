@@ -78,14 +78,14 @@
                 <div class="calendar-block" title="{{ b.title or b.block_type }}">🔒 {{ b.start_time }} {{ b.title or b.block_type }}</div>
               {% endfor %}
               {% for a in dia.events[:4] %}
-                <article class="calendar-event event-{{ a.status|lower|replace(' ','-')|replace('ã','a')|replace('ç','c') }} {% if a.capacity_override %}event-overbook{% endif %}" draggable="true"
+                <article class="calendar-event event-{{ a.status|lower|replace(' ','-')|replace('ã','a')|replace('ç','c') }} {% if a.capacity_override %}event-overbook{% endif %} {% if a.tem_conflito %}event-conflict{% endif %}" draggable="true"
                   data-id="{{ a.id }}" data-duration="{{ a.duration_minutes or 60 }}" data-pet="{{ a.pet_nome }}"
                   data-tutor="{{ a.cliente_nome }}" data-phone="{{ a.whatsapp or '' }}" data-service="{{ a.servico }}"
                   data-status="{{ a.status }}" data-time="{{ a.horario }}" data-date="{{ a.data_agendamento }}"
-                  data-employee="{{ a.funcionario_nome or 'Sem profissional' }}" data-transport="{{ 'Sim' if a.transport_required else 'Não' }}">
+                  data-employee-id="{{ a.employee_id or '' }}" data-employee="{{ a.funcionario_nome or 'Sem profissional' }}" data-transport="{{ 'Sim' if a.transport_required else 'Não' }}">
                   <strong>{{ a.horario }} · {{ a.pet_nome }}</strong>
                   <small>{{ a.servico }}{% if a.funcionario_nome %} · {{ a.funcionario_nome }}{% endif %}</small>
-                  {% if a.capacity_override %}<em class="event-badge-overbook">Encaixe</em>{% endif %}
+                  {% if a.capacity_override %}<em class="event-badge-overbook">Encaixe</em>{% endif %}{% if a.tem_conflito %}<em class="event-badge-conflict">Conflito</em>{% endif %}
                 </article>
               {% endfor %}
               {% if dia.events|length > 4 %}<a class="more-events" href="{{ url_for('agenda.agenda', modo='dia', referencia=dia.iso) }}">+{{ dia.events|length - 4 }} mais</a>{% endif %}
@@ -113,15 +113,15 @@
                 <div class="calendar-block" title="{{ b.notes or '' }}">🔒 {{ b.title or b.block_type }}</div>
               {% endfor %}
               {% for a in dia.events if a.horario[:2] == hora[:2] %}
-                <article class="calendar-event event-{{ a.status|lower|replace(' ','-')|replace('ã','a')|replace('ç','c') }} {% if a.capacity_override %}event-overbook{% endif %}" draggable="true"
+                <article class="calendar-event event-{{ a.status|lower|replace(' ','-')|replace('ã','a')|replace('ç','c') }} {% if a.capacity_override %}event-overbook{% endif %} {% if a.tem_conflito %}event-conflict{% endif %}" draggable="true"
                   data-id="{{ a.id }}" data-duration="{{ a.duration_minutes or 60 }}" data-pet="{{ a.pet_nome }}"
                   data-tutor="{{ a.cliente_nome }}" data-phone="{{ a.whatsapp or '' }}" data-service="{{ a.servico }}"
                   data-status="{{ a.status }}" data-time="{{ a.horario }}" data-date="{{ a.data_agendamento }}"
-                  data-employee="{{ a.funcionario_nome or 'Sem profissional' }}" data-transport="{{ 'Sim' if a.transport_required else 'Não' }}">
+                  data-employee-id="{{ a.employee_id or '' }}" data-employee="{{ a.funcionario_nome or 'Sem profissional' }}" data-transport="{{ 'Sim' if a.transport_required else 'Não' }}">
                   <div class="event-card-head"><strong>{{ a.horario }} · {{ a.pet_nome }}</strong>{% if a.transport_required %}<span title="Táxi Dog">🚐</span>{% endif %}</div>
                   <small>{{ a.servico }} · {{ a.duration_minutes or 60 }} min</small>
                   <small>{{ a.funcionario_nome or 'Sem profissional' }}</small>
-                  {% if a.capacity_override %}<em class="event-badge-overbook">Encaixe</em>{% endif %}
+                  {% if a.capacity_override %}<em class="event-badge-overbook">Encaixe</em>{% endif %}{% if a.tem_conflito %}<em class="event-badge-conflict">Conflito</em>{% endif %}
                   <div class="calendar-event-actions">
                     {% if a.status in ['Agendado','Confirmado','Reagendado','Aguardando aprovação'] %}
                     <form method="post" class="js-smart-checkin" action="{{ url_for('agenda.checkin_inteligente', agendamento_id=a.id) }}"><button title="Registrar chegada e iniciar o tempo total">✓ Chegou</button></form>
@@ -133,6 +133,17 @@
                     <form method="post" action="{{ url_for('agenda.atualizar_status_rapido', agendamento_id=a.id) }}"><input type="hidden" name="status" value="Entregue"><button>Entregue</button></form>
                     {% endif %}
                     <a href="{{ url_for('agenda.editar_agendamento', agendamento_id=a.id) }}">Editar</a>
+                    <details class="agenda-whatsapp-menu">
+                      <summary>WhatsApp</summary>
+                      <div>
+                        <a target="_blank" href="{{ url_for('agenda.whatsapp_agendamento', agendamento_id=a.id, action='confirmacao') }}">Confirmar</a>
+                        <a target="_blank" href="{{ url_for('agenda.whatsapp_agendamento', agendamento_id=a.id, action='lembrete') }}">Lembrete</a>
+                        <a target="_blank" href="{{ url_for('agenda.whatsapp_agendamento', agendamento_id=a.id, action='atraso') }}">Atraso</a>
+                        <a target="_blank" href="{{ url_for('agenda.whatsapp_agendamento', agendamento_id=a.id, action='pronto') }}">Pet pronto</a>
+                        <a target="_blank" href="{{ url_for('agenda.whatsapp_agendamento', agendamento_id=a.id, action='cancelamento') }}">Cancelamento</a>
+                        <a target="_blank" href="{{ url_for('agenda.whatsapp_agendamento', agendamento_id=a.id, action='avaliacao') }}">Avaliação</a>
+                      </div>
+                    </details>
                   </div>
                 </article>
               {% endfor %}
@@ -207,14 +218,14 @@
     <div><span class="eyebrow">Agenda</span><h2>Novo agendamento</h2><p>Preencha os dados do tutor, pet e serviço.</p></div>
   </div>
   <form method="post" class="form agenda-new-form" id="new-appointment-form">
-    <label>Tutor<select name="client_id" id="agenda-client" required><option value="">Selecione o tutor</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nome }}</option>{% endfor %}</select></label>
-    <label>Pet<select name="pet_id" id="agenda-pet" required><option value="">Selecione o pet</option>{% for p in pets %}<option value="{{ p.id }}" data-client="{{ p.client_id }}">{{ p.nome }} — {{ p.cliente_nome }}</option>{% endfor %}</select></label>
+    <label>Tutor<select name="client_id" id="agenda-client" required><option value="">Selecione o tutor</option>{% for c in clientes %}<option value="{{ c.id }}" {% if prefill_client_id|string == c.id|string %}selected{% endif %}>{{ c.nome }}</option>{% endfor %}</select></label>
+    <label>Pet<select name="pet_id" id="agenda-pet" required><option value="">Selecione o pet</option>{% for p in pets %}<option value="{{ p.id }}" data-client="{{ p.client_id }}" {% if prefill_pet_id|string == p.id|string %}selected{% endif %}>{{ p.nome }} — {{ p.cliente_nome }}</option>{% endfor %}</select></label>
     <label>Data<input type="date" name="data" value="{{ referencia }}" required></label>
-    <label>Horário<input type="time" name="hora" required></label>
+    <label>Horário<div class="agenda-time-row"><input type="time" name="hora" id="agenda-time" required><button type="button" class="secondary-button agenda-suggest-button" id="suggest-times">Sugerir horários</button></div><div id="suggested-times" class="suggested-times" aria-live="polite"></div></label>
     <label>Serviço<select name="servico" required><option value="">Selecione o serviço</option>{% for s in servicos %}<option>{{ s }}</option>{% endfor %}</select></label>
-    <label>Duração (minutos)<input type="number" name="duration_minutes" value="60" min="15" step="15"></label>
+    <label>Duração (minutos)<input type="number" id="agenda-duration" name="duration_minutes" value="60" min="15" step="15"></label>
     <label>Valor<input name="valor" placeholder="R$ 0,00"></label>
-    <label>Profissional<select name="employee_id"><option value="">Sem profissional definido</option>{% for e in funcionarios %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select></label>
+    <label>Profissional<select name="employee_id" id="agenda-employee"><option value="">Sem profissional definido</option>{% for e in funcionarios %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select></label>
     <label>Status<select name="status">{% for s in status_lista %}<option>{{ s }}</option>{% endfor %}</select></label>
     <div class="agenda-new-checks">
       <label class="check-inline"><input type="checkbox" name="transport_required"> Necessita Táxi Dog</label>
@@ -238,11 +249,20 @@
     <div><span>Data e horário</span><strong id="dialog-datetime">—</strong></div>
     <div><span>Táxi Dog</span><strong id="dialog-transport">—</strong></div>
   </div>
+  <div class="agenda-reschedule-box">
+    <h3>Reagendamento rápido</h3>
+    <div class="agenda-reschedule-grid">
+      <label>Data<input type="date" id="dialog-move-date"></label>
+      <label>Horário<input type="time" id="dialog-move-time"></label>
+      <label>Profissional<select id="dialog-move-employee"><option value="">Manter profissional atual</option>{% for e in funcionarios %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select></label>
+      <button type="button" id="dialog-move-save">Salvar reagendamento</button>
+    </div>
+  </div>
   <div class="dialog-actions" id="dialog-actions"></div>
 </dialog>
 
 <div id="agenda-toast" class="agenda-toast" role="status"></div>
-<script>window.AGENDA_MOVE_URL = "{{ url_for('agenda.mover_agendamento', agendamento_id=0) }}";</script>
+<script>window.AGENDA_MOVE_URL = "{{ url_for('agenda.mover_agendamento', agendamento_id=0) }}"; window.AGENDA_AVAILABILITY_URL = "{{ url_for('agenda.disponibilidade_agenda') }}";</script>
 <script>
 (() => {
   const dialog = document.getElementById('new-appointment-dialog');

@@ -1,0 +1,15 @@
+PET & GATÔ BUSINESS ENTERPRISE V11.5.1
+
+Correção aplicada:
+- Corrigido Erro 500 ao abrir Gestão de RH (/rh/gestao).
+- A causa era a utilização das variáveis first e last antes da definição no serviço de RH.
+- O intervalo do mês agora é calculado antes das consultas de ausências, férias e fechamentos.
+
+Instalação:
+1. Substitua os arquivos da versão anterior.
+2. Preserve .env, instance e logs.
+3. Execute:
+   py scripts\migrate_database.py
+   py scripts\check_db_compat.py
+   py scripts\check_release.py
+   py main.py

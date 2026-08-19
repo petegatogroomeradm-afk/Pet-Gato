@@ -251,12 +251,23 @@ def init_db():
             rate REAL DEFAULT 0, amount REAL DEFAULT 0, status TEXT DEFAULT 'Pendente',
             created_at TEXT, updated_at TEXT
         )""",
+        f"""CREATE TABLE IF NOT EXISTS employee_commission_adjustments (
+            id {serial}, employee_id INTEGER NOT NULL, reference_month TEXT NOT NULL,
+            adjustment_type TEXT DEFAULT 'Bônus', description TEXT NOT NULL,
+            amount REAL DEFAULT 0, status TEXT DEFAULT 'Pendente', notes TEXT,
+            approved_at TEXT, paid_at TEXT, created_by TEXT, created_at TEXT, updated_at TEXT
+        )""",
         f"""CREATE TABLE IF NOT EXISTS financial_transactions (
             id {serial}, type TEXT NOT NULL, category TEXT, description TEXT,
             amount REAL DEFAULT 0, payment_method TEXT, transaction_date TEXT,
             due_date TEXT, status TEXT DEFAULT 'Pago', reference TEXT, account TEXT DEFAULT 'Caixa',
             notes TEXT, source_type TEXT DEFAULT 'Manual', source_id INTEGER, created_by TEXT,
             created_at TEXT, updated_at TEXT
+        )""",
+        f"""CREATE TABLE IF NOT EXISTS financial_payments (
+            id {serial}, transaction_id INTEGER NOT NULL, amount REAL DEFAULT 0,
+            payment_date TEXT NOT NULL, payment_method TEXT, account TEXT DEFAULT 'Caixa',
+            notes TEXT, created_by TEXT, created_at TEXT
         )""",
         f"""CREATE TABLE IF NOT EXISTS financial_categories (
             id {serial}, name TEXT NOT NULL, transaction_type TEXT NOT NULL,
@@ -271,6 +282,12 @@ def init_db():
             revenue_goal REAL DEFAULT 0, expense_limit REAL DEFAULT 0,
             created_at TEXT, updated_at TEXT
         )""",
+        f"""CREATE TABLE IF NOT EXISTS financial_category_budgets (
+            id {serial}, reference_month TEXT NOT NULL, category TEXT NOT NULL,
+            planned_amount REAL NOT NULL DEFAULT 0, notes TEXT,
+            created_at TEXT, updated_at TEXT,
+            UNIQUE(reference_month, category)
+        )""",
         f"""CREATE TABLE IF NOT EXISTS financial_recurrences (
             id {serial}, transaction_type TEXT NOT NULL, category TEXT,
             description TEXT NOT NULL, amount REAL DEFAULT 0, payment_method TEXT,
@@ -284,6 +301,29 @@ def init_db():
             expected_balance REAL DEFAULT 0, counted_balance REAL DEFAULT 0,
             difference REAL DEFAULT 0, notes TEXT, closed_by TEXT, created_at TEXT
         )""",
+        f"""CREATE TABLE IF NOT EXISTS cash_register_sessions (
+            id {serial}, opened_at TEXT NOT NULL, closed_at TEXT, opening_amount REAL DEFAULT 0,
+            expected_amount REAL DEFAULT 0, counted_amount REAL DEFAULT 0, difference REAL DEFAULT 0,
+            status TEXT DEFAULT 'Aberto', opened_by TEXT, closed_by TEXT, notes TEXT
+        )""",
+        f"""CREATE TABLE IF NOT EXISTS pos_sales (
+            id {serial}, sale_number TEXT UNIQUE NOT NULL, client_id INTEGER, cash_session_id INTEGER,
+            subtotal REAL DEFAULT 0, discount_amount REAL DEFAULT 0, total_amount REAL DEFAULT 0,
+            status TEXT DEFAULT 'Concluída', notes TEXT, created_by TEXT, created_at TEXT, cancelled_at TEXT
+        )""",
+        f"""CREATE TABLE IF NOT EXISTS pos_sale_items (
+            id {serial}, sale_id INTEGER NOT NULL, item_type TEXT DEFAULT 'Produto', product_id INTEGER,
+            description TEXT NOT NULL, quantity REAL DEFAULT 1, unit_price REAL DEFAULT 0, total_price REAL DEFAULT 0,
+            stock_applied INTEGER DEFAULT 0, created_at TEXT
+        )""",
+        f"""CREATE TABLE IF NOT EXISTS pos_payments (
+            id {serial}, sale_id INTEGER NOT NULL, payment_method TEXT NOT NULL, amount REAL DEFAULT 0,
+            created_at TEXT
+        )""",
+        f"""CREATE TABLE IF NOT EXISTS cash_register_movements (
+            id {serial}, cash_session_id INTEGER NOT NULL, movement_type TEXT NOT NULL, amount REAL DEFAULT 0,
+            description TEXT, created_by TEXT, created_at TEXT
+        )""",
         f"""CREATE TABLE IF NOT EXISTS stock_inventory_sessions (
             id {serial}, reference TEXT NOT NULL, status TEXT DEFAULT 'Aberto',
             notes TEXT, started_at TEXT, finished_at TEXT, created_by TEXT
@@ -292,6 +332,14 @@ def init_db():
             id {serial}, inventory_id INTEGER NOT NULL, product_id INTEGER NOT NULL,
             system_quantity REAL DEFAULT 0, counted_quantity REAL DEFAULT 0,
             difference REAL DEFAULT 0, adjusted INTEGER DEFAULT 0, created_at TEXT
+        )""",
+        f"""CREATE TABLE IF NOT EXISTS service_consumption_recipes (
+            id {serial}, service_name TEXT NOT NULL UNIQUE, active INTEGER DEFAULT 1,
+            notes TEXT, created_at TEXT, updated_at TEXT
+        )""",
+        f"""CREATE TABLE IF NOT EXISTS service_consumption_recipe_items (
+            id {serial}, recipe_id INTEGER NOT NULL, product_id INTEGER NOT NULL,
+            quantity REAL NOT NULL DEFAULT 0, unit TEXT, created_at TEXT
         )""",
         f"""CREATE TABLE IF NOT EXISTS stock_products (
             id {serial}, name TEXT NOT NULL, category TEXT, sku TEXT, barcode TEXT,
@@ -317,6 +365,18 @@ def init_db():
             payment_status TEXT DEFAULT 'Pendente', started_at TEXT, finished_at TEXT,
             observations TEXT, created_at TEXT, updated_at TEXT
         )""",
+        f"""CREATE TABLE IF NOT EXISTS message_templates (
+            id {serial}, name TEXT NOT NULL, category TEXT DEFAULT 'Geral',
+            content TEXT NOT NULL, active INTEGER DEFAULT 1,
+            created_by TEXT, created_at TEXT, updated_at TEXT
+        )""",
+        f"""CREATE TABLE IF NOT EXISTS communication_logs (
+            id {serial}, client_id INTEGER, pet_id INTEGER, template_id INTEGER,
+            channel TEXT DEFAULT 'WhatsApp', recipient TEXT, subject TEXT,
+            message TEXT NOT NULL, status TEXT DEFAULT 'Preparada',
+            user_name TEXT, created_at TEXT
+        )""",
+
         f"""CREATE TABLE IF NOT EXISTS settings (
             id {serial}, company_name TEXT, cnpj TEXT, phone TEXT, whatsapp TEXT,
             email TEXT, address TEXT, pix_key TEXT, notes TEXT, created_at TEXT
@@ -431,6 +491,7 @@ def init_db():
     conn.commit()
 
     migrations = {
+        "audit_logs": [("user_id", "INTEGER"), ("ip_address", "TEXT"), ("request_method", "TEXT"), ("request_path", "TEXT"), ("user_agent", "TEXT")],
         "users": [("cpf", "TEXT"), ("phone", "TEXT"), ("email", "TEXT"),
             ("job_title", "TEXT"), ("admission_date", "TEXT"), ("avatar_path", "TEXT"),
             ("must_change_password", "INTEGER DEFAULT 0"), ("failed_attempts", "INTEGER DEFAULT 0"),
@@ -438,7 +499,7 @@ def init_db():
             ("last_login_user_agent", "TEXT"), ("login_count", "INTEGER DEFAULT 0"),
             ("updated_at", "TEXT"), ("created_by", "TEXT")],
         "client_portal_accounts": [("terms_accepted_at", "TEXT")],
-        "clients": [("foto", "TEXT"), ("tags", "TEXT"), ("contato_emergencia", "TEXT"), ("data_nascimento", "TEXT"), ("origem_cadastro", "TEXT"), ("canal_preferido", "TEXT"), ("consentimento_marketing", "INTEGER DEFAULT 0"), ("ativo", "INTEGER DEFAULT 1")],
+        "clients": [("telefone", "TEXT"), ("whatsapp", "TEXT"), ("foto", "TEXT"), ("tags", "TEXT"), ("contato_emergencia", "TEXT"), ("data_nascimento", "TEXT"), ("origem_cadastro", "TEXT"), ("canal_preferido", "TEXT"), ("consentimento_marketing", "INTEGER DEFAULT 0"), ("ativo", "INTEGER DEFAULT 1")],
         "pets": [
             ("sexo", "TEXT"), ("cor", "TEXT"), ("peso", "REAL"),
             ("castrado", "INTEGER DEFAULT 0"), ("data_nascimento", "TEXT"),
@@ -447,6 +508,7 @@ def init_db():
             ("preferencia_tosa", "TEXT"), ("foto", "TEXT"), ("ativo", "INTEGER DEFAULT 1")
         ],
         "appointments": [("employee_id", "INTEGER"), ("duration_minutes", "INTEGER DEFAULT 60"), ("transport_required", "INTEGER DEFAULT 0"), ("reminder_sent", "INTEGER DEFAULT 0"), ("updated_at", "TEXT"), ("requested_online", "INTEGER DEFAULT 0"), ("approval_notes", "TEXT"), ("approved_at", "TEXT"), ("approved_by", "TEXT"), ("capacity_override", "INTEGER DEFAULT 0"), ("capacity_override_by", "TEXT"), ("capacity_override_at", "TEXT"), ("checkin_at", "TEXT"), ("ready_at", "TEXT"), ("delivered_at", "TEXT")],
+        "grooming_history": [("action", "TEXT")],
         "grooming_services": [("financeiro_lancado", "INTEGER DEFAULT 0"), ("estoque_baixado", "INTEGER DEFAULT 0"), ("payment_method", "TEXT DEFAULT 'A definir'"), ("started_at", "TEXT"), ("finished_at", "TEXT"), ("checked_in_at", "TEXT"), ("checked_out_at", "TEXT"), ("commission_lancada", "INTEGER DEFAULT 0"), ("updated_at", "TEXT")],
         "financial_transactions": [
             ("due_date", "TEXT"), ("status", "TEXT DEFAULT 'Pago'"),
@@ -455,7 +517,10 @@ def init_db():
             ("total_installments", "INTEGER DEFAULT 1"), ("recurrence_id", "INTEGER"),
             ("paid_at", "TEXT"), ("notes", "TEXT"),
             ("source_type", "TEXT DEFAULT 'Manual'"), ("source_id", "INTEGER"),
-            ("created_by", "TEXT"), ("updated_at", "TEXT")
+            ("created_by", "TEXT"), ("updated_at", "TEXT"),
+            ("paid_amount", "REAL DEFAULT 0"), ("last_payment_at", "TEXT"),
+            ("reconciliation_status", "TEXT DEFAULT 'Pendente'"),
+            ("reconciled_at", "TEXT"), ("bank_reference", "TEXT")
         ],
         "transport_services": [("appointment_id", "INTEGER"), ("grooming_id", "INTEGER"), ("driver_phone", "TEXT"), ("delivery_address", "TEXT"), ("expected_return_time", "TEXT"), ("fee", "REAL DEFAULT 0"), ("distance_km", "REAL DEFAULT 0"), ("payment_status", "TEXT DEFAULT 'Pendente'"), ("started_at", "TEXT"), ("finished_at", "TEXT"), ("updated_at", "TEXT")],
         "pet_photos": [("categoria", "TEXT")],
@@ -463,12 +528,37 @@ def init_db():
             ("brand", "TEXT"), ("max_quantity", "REAL DEFAULT 0"),
             ("cost_price", "REAL DEFAULT 0"), ("sale_price", "REAL DEFAULT 0"),
             ("location", "TEXT"), ("active", "INTEGER DEFAULT 1"), ("updated_at", "TEXT")],
+        "employee_commissions": [("approved_at", "TEXT"), ("paid_at", "TEXT"), ("notes", "TEXT"), ("approved_by", "TEXT"), ("paid_by", "TEXT")],
         "employees": [("cpf", "TEXT"), ("phone", "TEXT"), ("email", "TEXT"), ("role_name", "TEXT"), ("admission_date", "TEXT"), ("salary", "REAL DEFAULT 0"), ("schedule_id", "INTEGER"), ("commission_rate", "REAL DEFAULT 0"), ("notes", "TEXT"), ("updated_at", "TEXT")],
         "time_records": [("source", "TEXT DEFAULT 'Manual'"), ("notes", "TEXT"), ("updated_at", "TEXT")],
     }
     for table, columns in migrations.items():
         for column, definition in columns:
             add_column_if_not_exists(cur, conn, table, column, definition)
+
+    # Compatibilidade financeira para lançamentos antigos já liquidados.
+    try:
+        cur.execute("UPDATE financial_transactions SET paid_amount = amount WHERE status = 'Pago' AND COALESCE(paid_amount, 0) = 0")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
+    # Compatibilidade automática da conciliação financeira.
+    try:
+        cur.execute("UPDATE financial_transactions SET reconciliation_status = 'Pendente' WHERE reconciliation_status IS NULL OR TRIM(reconciliation_status) = ''")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_financial_budgets_reference_month ON financial_category_budgets(reference_month)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_financial_transactions_reconciliation ON financial_transactions(reconciliation_status)")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
+    # Compatibilidade automática do histórico: versões antigas usam "event";
+    # versões novas também expõem "action" para consultas operacionais.
+    try:
+        cur.execute("UPDATE grooming_history SET action = event WHERE (action IS NULL OR action = '') AND event IS NOT NULL")
+        conn.commit()
+    except Exception:
+        conn.rollback()
 
     cur.execute(adapt_query("SELECT id FROM users WHERE username = ?"), ("admin",))
     if not cur.fetchone():
@@ -479,8 +569,12 @@ def init_db():
         cur.execute(adapt_query("""
             INSERT INTO users (name, username, password_hash, role, active, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
-        """), ("Administrador", "admin", generate_password_hash(admin_password), "admin", 1, now_iso()))
+        """), ("Administrador", "admin", generate_password_hash(admin_password), "superadmin", 1, now_iso()))
         conn.commit()
+
+    # RC2: o proprietário principal possui acesso global e não pode ser rebaixado.
+    cur.execute(adapt_query("UPDATE users SET role = ? WHERE username = ?"), ("superadmin", "admin"))
+    conn.commit()
 
     cur.execute("SELECT id FROM loyalty_settings LIMIT 1")
     if not cur.fetchone():
@@ -512,6 +606,6 @@ def init_db():
 
 def registrar_historico(grooming_id, evento, usuario="Sistema"):
     execute_db("""
-        INSERT INTO grooming_history (grooming_id, event, user_name, created_at)
-        VALUES (?, ?, ?, ?)
-    """, (grooming_id, evento, usuario, now_iso()))
+        INSERT INTO grooming_history (grooming_id, event, action, user_name, created_at)
+        VALUES (?, ?, ?, ?, ?)
+    """, (grooming_id, evento, evento, usuario, now_iso()))

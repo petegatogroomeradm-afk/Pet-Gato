@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Fluxo de Caixa Projetado{% endblock %}
+{% block page_title %}Fluxo de Caixa Projetado{% endblock %}
+{% block page_subtitle %}Antecipe entradas, saídas e possíveis faltas de caixa{% endblock %}
+{% block content %}
+
+<div class="actions-row page-actions">
+  <a class="small-button" href="{{ url_for('financeiro.financeiro') }}">← Voltar ao Financeiro</a>
+  <a class="small-button" href="{{ url_for('financeiro.contas_pagar_receber') }}">Contas a pagar e receber</a>
+  <a class="small-button" href="{{ url_for('financeiro.despesas_loja') }}">Despesas da loja</a>
+  <a class="small-button" href="{{ url_for('financeiro.exportar_previsao_csv', dias=dias, conta=conta) }}">Exportar CSV</a>
+  <button class="small-button" onclick="window.print()">Imprimir</button>
+</div>
+
+<article class="card">
+  <header class="section-header"><div><h2>Período da previsão</h2><p>Os valores vencidos são considerados no primeiro dia da projeção.</p></div></header>
+  <form method="get" class="form">
+    <div class="form-row">
+      <select name="dias">
+        <option value="30" {{ 'selected' if dias==30 }}>Próximos 30 dias</option>
+        <option value="60" {{ 'selected' if dias==60 }}>Próximos 60 dias</option>
+        <option value="90" {{ 'selected' if dias==90 }}>Próximos 90 dias</option>
+      </select>
+      <select name="conta"><option value="">Todas as contas</option>{% for c in contas %}<option value="{{ c.account }}" {{ 'selected' if conta==c.account }}>{{ c.account }}</option>{% endfor %}</select>
+    </div>
+    <div class="actions-row"><button>Atualizar previsão</button><a class="small-button" href="{{ url_for('financeiro.previsao_fluxo_caixa') }}">Limpar</a></div>
+  </form>
+</article>
+
+<section class="finance-kpis">
+  <article><span>Saldo atual</span><strong>R$ {{ '%.2f'|format(saldo_atual) }}</strong><small>Movimentações pagas até hoje</small></article>
+  <article class="positive"><span>Entradas previstas</span><strong>R$ {{ '%.2f'|format(entradas_previstas) }}</strong><small>{{ inicio }} até {{ fim }}</small></article>
+  <article class="negative"><span>Saídas previstas</span><strong>R$ {{ '%.2f'|format(saidas_previstas) }}</strong><small>{{ inicio }} até {{ fim }}</small></article>
+  <article class="{{ 'positive' if saldo_final >= 0 else 'negative' }}"><span>Saldo final projetado</span><strong>R$ {{ '%.2f'|format(saldo_final) }}</strong><small>Após todos os compromissos</small></article>
+  <article class="{{ 'positive' if menor_saldo >= 0 else 'negative' }}"><span>Menor saldo</span><strong>R$ {{ '%.2f'|format(menor_saldo) }}</strong><small>Em {{ menor_saldo_data }}</small></article>
+  <article class="{{ 'negative' if dias_negativos else 'positive' }}"><span>Dias com saldo negativo</span><strong>{{ dias_negativos }}</strong><small>{{ 'Requer planejamento' if dias_negativos else 'Nenhum risco identificado' }}</small></article>
+</section>
+
+{% if vencido_receber or vencido_pagar %}
+<article class="card">
+  <header class="section-header"><div><h2>Pendências vencidas incluídas hoje</h2><p>Valores anteriores à data atual entram no primeiro dia da projeção.</p></div></header>
+  <div class="summary-list">
+    <p><span>A receber vencido</span><strong>R$ {{ '%.2f'|format(vencido_receber) }}</strong></p>
+    <p><span>A pagar vencido</span><strong>R$ {{ '%.2f'|format(vencido_pagar) }}</strong></p>
+  </div>
+</article>
+{% endif %}
+
+<article class="card">
+  <header class="section-header"><div><h2>Evolução projetada</h2><p>Entradas, saídas e saldo acumulado por dia</p></div></header>
+  <div style="height:360px"><canvas id="forecastChart"></canvas></div>
+</article>
+
+<article class="card table-card">
+  <header class="section-header"><div><h2>Agenda financeira diária</h2><p>Dias sem movimentação também aparecem para facilitar o planejamento.</p></div></header>
+  <div class="table-responsive"><table><thead><tr><th>Data</th><th>Entradas</th><th>Saídas</th><th>Resultado</th><th>Saldo projetado</th><th>Compromissos</th></tr></thead><tbody>
+  {% for r in rows %}
+    <tr class="{{ 'forecast-negative' if r.balance < 0 else '' }}">
+      <td><strong>{{ r.date_br }}</strong><small class="block">{{ r.weekday }}</small></td>
+      <td class="positive-text">R$ {{ '%.2f'|format(r.entries) }}</td>
+      <td class="negative-text">R$ {{ '%.2f'|format(r.exits) }}</td>
+      <td class="{{ 'positive-text' if r.net >= 0 else 'negative-text' }}"><strong>R$ {{ '%.2f'|format(r.net) }}</strong></td>
+      <td class="{{ 'positive-text' if r.balance >= 0 else 'negative-text' }}"><strong>R$ {{ '%.2f'|format(r.balance) }}</strong></td>
+      <td>
+        {% set lancamentos = r['items'] if r is mapping and 'items' in r else [] %}
+        {% if lancamentos %}
+          <details><summary>{{ lancamentos|length }} lançamento(s)</summary>
+            {% for item in lancamentos %}<div class="forecast-item"><span>{{ item.description }}</span><strong class="{{ 'positive-text' if item.type=='Entrada' else 'negative-text' }}">{{ '+' if item.type=='Entrada' else '-' }} R$ {{ '%.2f'|format(item.amount or 0) }}</strong></div>{% endfor %}
+          </details>
+        {% else %}<span class="muted">Sem movimentação</span>{% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody></table></div>
+</article>
+
+<style>
+.forecast-negative{background:rgba(239,68,68,.08)}
+.forecast-item{display:flex;justify-content:space-between;gap:16px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.muted{opacity:.65}
+@media print{.page-actions,form{display:none!important}.card{break-inside:avoid}}
+</style>
+<script id="forecast-data" type="application/json">{{ grafico_json|safe }}</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(() => {
+  const el = document.getElementById('forecast-data');
+  const canvas = document.getElementById('forecastChart');
+  if (!el || !canvas || typeof Chart === 'undefined') return;
+  const data = JSON.parse(el.textContent);
+  new Chart(canvas, {
+    data: {labels: data.labels, datasets: [
+      {type:'bar', label:'Entradas', data:data.entries},
+      {type:'bar', label:'Saídas', data:data.exits},
+      {type:'line', label:'Saldo projetado', data:data.balance, tension:.25, pointRadius:1, borderWidth:2}
+    ]},
+    options: {responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false}, plugins:{legend:{position:'bottom'}}, scales:{y:{ticks:{callback:v=>'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:0})}}}}
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,13 @@
+PET & GATÔ BUSINESS — SPRINT 7.8
+AGENDA CRM
+
+Novidades:
+- Nova tela Agenda CRM com visão de 7, 14 ou 30 dias.
+- Separação automática de tarefas atrasadas, de hoje, próximas e sem prazo.
+- Navegação por períodos anterior e seguinte.
+- Acesso direto ao WhatsApp e à Central de Tarefas.
+- Adiamento rápido diretamente pela agenda.
+- Priorização visual de tarefas urgentes, altas, médias e baixas.
+
+Nenhuma alteração estrutural no banco de dados é necessária.
+Os dados existentes são preservados.

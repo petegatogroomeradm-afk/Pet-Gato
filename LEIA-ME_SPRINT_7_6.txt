@@ -1,0 +1,11 @@
+PET & GATÔ BUSINESS — SPRINT 7.6
+
+RESULTADOS DAS CAMPANHAS CRM
+
+- Classificação do resultado ao concluir tarefas: Respondeu, Interessado, Agendou, Sem resposta ou Recusou.
+- Observação opcional registrada no histórico de contatos.
+- Indicadores por campanha: concluídas, pendentes, agendamentos, interessados, respostas, recusas e sem resposta.
+- Taxa de conversão em agendamento e taxa de resposta.
+- Reabrir tarefa limpa o resultado anterior para novo acompanhamento.
+
+A atualização mantém os dados existentes. A coluna outcome é criada automaticamente ao iniciar o sistema.

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Contas a Pagar e Receber
+<article class="card table-card">
+  <header class="section-header"><div><h2>Contas recorrentes</h2><p>Aluguel, água, energia, internet, salários e outros compromissos automáticos.</p></div><a class="small-button" href="{{ url_for('financeiro.financeiro') }}#recorrencias">Nova recorrência</a></header>
+  <div class="table-responsive"><table><thead><tr><th>Descrição</th><th>Tipo</th><th>Frequência</th><th>Próximo vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody>
+  {% for r in recorrencias %}<tr><td><strong>{{ r.description }}</strong><small class="block">{{ r.category or 'Sem categoria' }}</small></td><td>{{ 'Receber' if r.transaction_type=='Entrada' else 'Pagar' }}</td><td>{{ r.frequency }}</td><td>{{ r.next_due_date }}</td><td>R$ {{ '%.2f'|format(r.amount or 0) }}</td><td><span class="badge {{ 'success' if r.active else 'warning' }}">{{ 'Ativa' if r.active else 'Pausada' }}</span></td><td><div class="actions-row">
+    <form method="post" action="{{ url_for('financeiro.gerar_recorrencia_agora', recurrence_id=r.id) }}"><button class="small-button">Gerar próxima</button></form>
+    <form method="post" action="{{ url_for('financeiro.alternar_recorrencia', recurrence_id=r.id) }}"><button class="small-button">{{ 'Pausar' if r.active else 'Ativar' }}</button></form>
+    <form method="post" action="{{ url_for('financeiro.excluir_recorrencia', recurrence_id=r.id) }}" onsubmit="return confirm('Excluir a recorrência? Os lançamentos já gerados serão preservados.')"><button class="danger-btn">Excluir</button></form>
+  </div></td></tr>{% else %}<tr><td colspan="7">Nenhuma recorrência cadastrada.</td></tr>{% endfor %}
+  </tbody></table></div>
+</article>
+
+{% endblock %}
+{% block page_title %}Contas a Pagar e Receber
+<article class="card table-card">
+  <header class="section-header"><div><h2>Contas recorrentes</h2><p>Aluguel, água, energia, internet, salários e outros compromissos automáticos.</p></div><a class="small-button" href="{{ url_for('financeiro.financeiro') }}#recorrencias">Nova recorrência</a></header>
+  <div class="table-responsive"><table><thead><tr><th>Descrição</th><th>Tipo</th><th>Frequência</th><th>Próximo vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody>
+  {% for r in recorrencias %}<tr><td><strong>{{ r.description }}</strong><small class="block">{{ r.category or 'Sem categoria' }}</small></td><td>{{ 'Receber' if r.transaction_type=='Entrada' else 'Pagar' }}</td><td>{{ r.frequency }}</td><td>{{ r.next_due_date }}</td><td>R$ {{ '%.2f'|format(r.amount or 0) }}</td><td><span class="badge {{ 'success' if r.active else 'warning' }}">{{ 'Ativa' if r.active else 'Pausada' }}</span></td><td><div class="actions-row">
+    <form method="post" action="{{ url_for('financeiro.gerar_recorrencia_agora', recurrence_id=r.id) }}"><button class="small-button">Gerar próxima</button></form>
+    <form method="post" action="{{ url_for('financeiro.alternar_recorrencia', recurrence_id=r.id) }}"><button class="small-button">{{ 'Pausar' if r.active else 'Ativar' }}</button></form>
+    <form method="post" action="{{ url_for('financeiro.excluir_recorrencia', recurrence_id=r.id) }}" onsubmit="return confirm('Excluir a recorrência? Os lançamentos já gerados serão preservados.')"><button class="danger-btn">Excluir</button></form>
+  </div></td></tr>{% else %}<tr><td colspan="7">Nenhuma recorrência cadastrada.</td></tr>{% endfor %}
+  </tbody></table></div>
+</article>
+
+{% endblock %}
+{% block page_subtitle %}Vencimentos, atrasos e previsão financeira
+<article class="card table-card">
+  <header class="section-header"><div><h2>Contas recorrentes</h2><p>Aluguel, água, energia, internet, salários e outros compromissos automáticos.</p></div><a class="small-button" href="{{ url_for('financeiro.financeiro') }}#recorrencias">Nova recorrência</a></header>
+  <div class="table-responsive"><table><thead><tr><th>Descrição</th><th>Tipo</th><th>Frequência</th><th>Próximo vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody>
+  {% for r in recorrencias %}<tr><td><strong>{{ r.description }}</strong><small class="block">{{ r.category or 'Sem categoria' }}</small></td><td>{{ 'Receber' if r.transaction_type=='Entrada' else 'Pagar' }}</td><td>{{ r.frequency }}</td><td>{{ r.next_due_date }}</td><td>R$ {{ '%.2f'|format(r.amount or 0) }}</td><td><span class="badge {{ 'success' if r.active else 'warning' }}">{{ 'Ativa' if r.active else 'Pausada' }}</span></td><td><div class="actions-row">
+    <form method="post" action="{{ url_for('financeiro.gerar_recorrencia_agora', recurrence_id=r.id) }}"><button class="small-button">Gerar próxima</button></form>
+    <form method="post" action="{{ url_for('financeiro.alternar_recorrencia', recurrence_id=r.id) }}"><button class="small-button">{{ 'Pausar' if r.active else 'Ativar' }}</button></form>
+    <form method="post" action="{{ url_for('financeiro.excluir_recorrencia', recurrence_id=r.id) }}" onsubmit="return confirm('Excluir a recorrência? Os lançamentos já gerados serão preservados.')"><button class="danger-btn">Excluir</button></form>
+  </div></td></tr>{% else %}<tr><td colspan="7">Nenhuma recorrência cadastrada.</td></tr>{% endfor %}
+  </tbody></table></div>
+</article>
+
+{% endblock %}
+{% block content %}
+
+<div class="actions-row page-actions">
+  <a class="small-button" href="{{ url_for('financeiro.financeiro') }}">← Voltar ao Financeiro</a>
+  <button class="small-button" onclick="window.print()">Imprimir</button>
+</div>
+
+<section class="finance-kpis">
+  <article><span>A receber</span><strong>R$ {{ '%.2f'|format(receber) }}</strong><small>Valores pendentes e vencidos</small></article>
+  <article><span>A pagar</span><strong>R$ {{ '%.2f'|format(pagar) }}</strong><small>Compromissos em aberto</small></article>
+  <article class="{{ 'positive' if saldo_projetado >= 0 else 'negative' }}"><span>Saldo projetado</span><strong>R$ {{ '%.2f'|format(saldo_projetado) }}</strong><small>Receber menos pagar</small></article>
+  <article class="{{ 'negative' if (resumo.overdue or 0) > 0 else 'positive' }}"><span>Vencido</span><strong>R$ {{ '%.2f'|format(resumo.overdue or 0) }}</strong><small>Necessita atenção imediata</small></article>
+  <article><span>Vence hoje</span><strong>R$ {{ '%.2f'|format(resumo.due_today or 0) }}</strong><small>Entradas e saídas do dia</small></article>
+  <article><span>Próximos 7 dias</span><strong>R$ {{ '%.2f'|format(resumo.next_7_days or 0) }}</strong><small>{{ resumo.open_count or 0 }} contas abertas</small></article>
+</section>
+
+<article class="card">
+  <header class="section-header"><div><h2>Filtros</h2><p>Escolha o período e o tipo de conta</p></div></header>
+  <form method="get" class="form">
+    <div class="form-row"><input type="date" name="inicio" value="{{ inicio }}"><input type="date" name="fim" value="{{ fim }}"></div>
+    <div class="form-row">
+      <select name="tipo"><option value="">Entradas e saídas</option><option value="Entrada" {{ 'selected' if tipo=='Entrada' }}>A receber</option><option value="Saída" {{ 'selected' if tipo=='Saída' }}>A pagar</option></select>
+      <select name="status"><option value="">Todos os status</option>{% for s in status_opcoes %}<option value="{{ s }}" {{ 'selected' if status==s }}>{{ s }}</option>{% endfor %}</select>
+    </div>
+    <input name="busca" value="{{ busca }}" placeholder="Descrição, categoria, referência ou conta">
+    <div class="actions-row"><button>Filtrar</button><a class="small-button" href="{{ url_for('financeiro.contas_pagar_receber') }}">Limpar</a></div>
+  </form>
+</article>
+
+{% set sections = [
+  ('overdue','Contas atrasadas','Prioridade máxima','danger'),
+  ('today','Vencimentos de hoje','Movimentações previstas para hoje','warning'),
+  ('upcoming','Próximos vencimentos','Organize o caixa dos próximos dias','info'),
+  ('paid','Pagamentos no período','Contas já liquidadas','success')
+] %}
+
+{% for key,title,subtitle,badge in sections %}
+<article class="card table-card">
+  <header class="section-header"><div><h2>{{ title }}</h2><p>{{ subtitle }}</p></div><span class="badge {{ badge }}">{{ grupos[key]|length }}</span></header>
+  <div class="table-responsive"><table><thead><tr><th>Vencimento</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Valor / saldo</th><th>Status</th><th>Ações</th></tr></thead><tbody>
+  {% for l in grupos[key] %}
+    <tr>
+      <td><strong>{{ l.due_date or '-' }}</strong><small class="block">Lançado em {{ l.transaction_date or '-' }}</small></td>
+      <td><span class="badge {{ 'success' if l.type=='Entrada' else 'danger' }}">{{ 'Receber' if l.type=='Entrada' else 'Pagar' }}</span></td>
+      <td>{{ l.description }}{% if l.reference %}<small class="block">{{ l.reference }}</small>{% endif %}</td>
+      <td>{{ l.category or '-' }}{% if l.account %}<small class="block">{{ l.account }}</small>{% endif %}</td>
+      <td><strong>R$ {{ '%.2f'|format(l.amount or 0) }}</strong>
+        {% if (l.paid_amount or 0) > 0 %}<small class="block positive-text">Pago: R$ {{ '%.2f'|format(l.paid_amount or 0) }}</small>{% endif %}
+        {% if (l.balance_amount or 0) > 0 %}<small class="block">Saldo: R$ {{ '%.2f'|format(l.balance_amount or 0) }}</small>{% endif %}
+        <small class="block">{{ l.payment_method or 'Não informado' }}</small></td>
+      <td><span class="badge status-{{ (l.status or 'pendente')|lower }}">{{ l.status }}</span></td>
+      <td><div class="actions-row">
+        {% if l.status not in ['Pago','Cancelado'] %}
+        <details class="inline-payment"><summary class="small-button">Receber/Pagar</summary>
+          <form method="post" action="{{ url_for('financeiro.registrar_pagamento', lancamento_id=l.id) }}" class="compact-form payment-form">
+            <input name="amount" value="{{ '%.2f'|format(l.balance_amount or 0) }}" placeholder="Valor" required>
+            <input type="date" name="payment_date" value="{{ hoje }}" required>
+            <select name="payment_method"><option value="">Forma</option>{% for f in formas_pagamento %}<option>{{ f }}</option>{% endfor %}</select>
+            <input name="account" value="{{ l.account or 'Caixa' }}" placeholder="Conta">
+            <input name="notes" placeholder="Observação">
+            <button>Confirmar</button>
+          </form>
+        </details>
+        <form method="post" action="{{ url_for('financeiro.adiar_vencimento', lancamento_id=l.id) }}"><select name="dias" onchange="this.form.submit()"><option value="">Adiar</option><option value="1">1 dia</option><option value="3">3 dias</option><option value="7">7 dias</option><option value="15">15 dias</option><option value="30">30 dias</option></select></form>
+        {% endif %}
+        <a class="small-button" href="{{ url_for('financeiro.editar_lancamento', lancamento_id=l.id) }}">Editar</a>
+      </div></td>
+    </tr>
+    {% if l.payments %}
+    <tr class="payment-history-row"><td colspan="7"><details><summary>Histórico de pagamentos ({{ l.payments|length }})</summary>
+      <div class="payment-history-list">{% for p in l.payments %}<div><span>{{ p.payment_date }} · {{ p.payment_method or 'Não informado' }} · {{ p.account or 'Caixa' }}</span><strong>R$ {{ '%.2f'|format(p.amount or 0) }}</strong><form method="post" action="{{ url_for('financeiro.estornar_pagamento', payment_id=p.id) }}" onsubmit="return confirm('Estornar este pagamento?')"><button class="tiny-button danger-btn">Estornar</button></form></div>{% endfor %}</div>
+    </details></td></tr>
+    {% endif %}
+  {% else %}<tr><td colspan="7">Nenhuma conta nesta seção.</td></tr>{% endfor %}
+  </tbody></table></div>
+</article>
+{% endfor %}
+
+
+<article class="card table-card">
+  <header class="section-header"><div><h2>Contas recorrentes</h2><p>Aluguel, água, energia, internet, salários e outros compromissos automáticos.</p></div><a class="small-button" href="{{ url_for('financeiro.financeiro') }}#recorrencias">Nova recorrência</a></header>
+  <div class="table-responsive"><table><thead><tr><th>Descrição</th><th>Tipo</th><th>Frequência</th><th>Próximo vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody>
+  {% for r in recorrencias %}<tr><td><strong>{{ r.description }}</strong><small class="block">{{ r.category or 'Sem categoria' }}</small></td><td>{{ 'Receber' if r.transaction_type=='Entrada' else 'Pagar' }}</td><td>{{ r.frequency }}</td><td>{{ r.next_due_date }}</td><td>R$ {{ '%.2f'|format(r.amount or 0) }}</td><td><span class="badge {{ 'success' if r.active else 'warning' }}">{{ 'Ativa' if r.active else 'Pausada' }}</span></td><td><div class="actions-row">
+    <form method="post" action="{{ url_for('financeiro.gerar_recorrencia_agora', recurrence_id=r.id) }}"><button class="small-button">Gerar próxima</button></form>
+    <form method="post" action="{{ url_for('financeiro.alternar_recorrencia', recurrence_id=r.id) }}"><button class="small-button">{{ 'Pausar' if r.active else 'Ativar' }}</button></form>
+    <form method="post" action="{{ url_for('financeiro.excluir_recorrencia', recurrence_id=r.id) }}" onsubmit="return confirm('Excluir a recorrência? Os lançamentos já gerados serão preservados.')"><button class="danger-btn">Excluir</button></form>
+  </div></td></tr>{% else %}<tr><td colspan="7">Nenhuma recorrência cadastrada.</td></tr>{% endfor %}
+  </tbody></table></div>
+</article>
+
+{% endblock %}

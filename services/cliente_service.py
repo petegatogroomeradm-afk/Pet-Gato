@@ -139,6 +139,61 @@ def obter_ficha_cliente(cliente_id):
         (f"%{cliente['nome']}%",),
         one=True,
     )
+    crm_tarefas = query_db(
+        """
+        SELECT t.*, p.nome AS pet_nome
+        FROM crm_tasks t
+        LEFT JOIN pets p ON p.id = t.pet_id
+        WHERE t.client_id = ?
+        ORDER BY CASE WHEN t.status IN ('Pendente', 'Aberta no WhatsApp') THEN 0 ELSE 1 END,
+                 COALESCE(t.due_date, t.created_at) DESC, t.id DESC
+        LIMIT 30
+        """,
+        (cliente_id,),
+    )
+    crm_contatos = query_db(
+        """
+        SELECT h.*, p.nome AS pet_nome
+        FROM crm_contact_history h
+        LEFT JOIN pets p ON p.id = h.pet_id
+        WHERE h.client_id = ?
+        ORDER BY h.created_at DESC, h.id DESC
+        LIMIT 30
+        """,
+        (cliente_id,),
+    )
+    fidelidade = query_db(
+        "SELECT * FROM loyalty_accounts WHERE client_id = ?",
+        (cliente_id,),
+        one=True,
+    ) or {
+        "points_balance": 0, "cashback_balance": 0,
+        "lifetime_points": 0, "level": "Não participante"
+    }
+    fidelidade_movimentos = query_db(
+        """
+        SELECT * FROM loyalty_transactions
+        WHERE client_id = ?
+        ORDER BY created_at DESC, id DESC
+        LIMIT 20
+        """,
+        (cliente_id,),
+    )
+    proximos_agendamentos = query_db(
+        """
+        SELECT a.*, p.nome AS pet_nome, e.name AS profissional_nome
+        FROM appointments a
+        LEFT JOIN pets p ON p.id = a.pet_id
+        LEFT JOIN employees e ON e.id = a.employee_id
+        WHERE a.client_id = ?
+          AND a.data_agendamento >= ?
+          AND a.status NOT IN ('Cancelado', 'Finalizado', 'Concluído')
+        ORDER BY a.data_agendamento, a.horario
+        LIMIT 10
+        """,
+        (cliente_id, date.today().isoformat()),
+    )
+
     proximo = query_db(
         """
         SELECT a.*, p.nome AS pet_nome
@@ -314,4 +369,9 @@ def obter_ficha_cliente(cliente_id):
         "taxa_comparecimento": taxa_comparecimento,
         "score_relacionamento": round(score_relacionamento),
         "cancelamentos": cancelados,
+        "crm_tarefas": crm_tarefas,
+        "crm_contatos": crm_contatos,
+        "fidelidade": fidelidade,
+        "fidelidade_movimentos": fidelidade_movimentos,
+        "proximos_agendamentos": proximos_agendamentos,
     }

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Conciliação Financeira{% endblock %}
+{% block page_title %}Conciliação Financeira{% endblock %}
+{% block page_subtitle %}Confira caixa, PIX, cartões e contas bancárias com os lançamentos do sistema{% endblock %}
+{% block content %}
+
+<div class="actions-row page-actions">
+  <a class="small-button" href="{{ url_for('financeiro.financeiro') }}">📊 Visão geral</a>
+  <a class="small-button" href="{{ url_for('financeiro.painel_gerencial_financeiro') }}">🧭 Painel gerencial</a>
+  <a class="small-button" href="{{ url_for('financeiro.contas_pagar_receber') }}">📅 Contas</a>
+  <a class="small-button" href="{{ url_for('financeiro.despesas_loja') }}">🧾 Despesas</a>
+  <a class="small-button" href="{{ url_for('financeiro.previsao_fluxo_caixa') }}">📈 Projeção</a>
+  <a class="small-button" href="{{ url_for('financeiro.relatorio_mensal') }}">📑 Fechamento</a>
+  <a class="small-button" href="{{ url_for('financeiro.orcamento_mensal') }}">🎯 Orçamento</a>
+  <a class="small-button" href="{{ url_for('financeiro.calendario_financeiro') }}">🗓️ Calendário</a>
+  <a class="small-button" href="{{ url_for('financeiro.comparativo_financeiro') }}">📉 Comparativo</a>
+  <a class="small-button active" href="{{ url_for('financeiro.conciliacao_financeira') }}">🏦 Conciliação</a>
+</div>
+
+<section class="finance-kpis">
+  <article><span>Entradas pagas</span><strong>R$ {{ '%.2f'|format(totals['entries'] or 0) }}</strong><small>No período filtrado</small></article>
+  <article><span>Saídas pagas</span><strong>R$ {{ '%.2f'|format(totals['exits'] or 0) }}</strong><small>No período filtrado</small></article>
+  <article class="positive"><span>Conciliado</span><strong>R$ {{ '%.2f'|format(totals['reconciled'] or 0) }}</strong><small>Valores conferidos</small></article>
+  <article><span>Pendente</span><strong>R$ {{ '%.2f'|format(totals['pending'] or 0) }}</strong><small>Aguardando conferência</small></article>
+  <article class="negative"><span>Divergente</span><strong>R$ {{ '%.2f'|format(totals['divergent'] or 0) }}</strong><small>Precisa de correção</small></article>
+</section>
+
+<section class="finance-grid">
+  <article class="card">
+    <header class="section-header"><div><h2>Contas financeiras</h2><p>Saldo do sistema e saldo já conciliado</p></div></header>
+    <div class="account-summary-grid">
+      {% for a in account_summaries %}
+      <div class="account-summary-card">
+        <span>{{ a['account_type'] }}</span>
+        <h3>{{ a['name'] }}</h3>
+        <p>Saldo atual <strong>R$ {{ '%.2f'|format(a['current_balance']) }}</strong></p>
+        <p>Saldo conciliado <strong>R$ {{ '%.2f'|format(a['reconciled_balance']) }}</strong></p>
+      </div>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="card">
+    <h2>Nova conta</h2>
+    <form method="post" action="{{ url_for('financeiro.adicionar_conta_financeira') }}" class="form">
+      <input name="name" placeholder="Ex.: Nubank, Itaú, PagBank" required>
+      <select name="account_type">
+        <option>Caixa</option><option>Conta bancária</option><option>Carteira digital</option><option>Maquininha</option>
+      </select>
+      <input name="opening_balance" placeholder="Saldo inicial">
+      <button>Cadastrar conta</button>
+    </form>
+  </article>
+</section>
+
+<article class="card">
+  <header class="section-header"><div><h2>Filtros da conciliação</h2><p>Exiba somente os lançamentos que deseja conferir</p></div></header>
+  <form method="get" class="form filter-inline">
+    <input type="month" name="mes" value="{{ mes }}">
+    <select name="conta"><option value="">Todas as contas</option>{% for a in accounts %}<option value="{{ a['name'] }}" {{ 'selected' if conta==a['name'] }}>{{ a['name'] }}</option>{% endfor %}</select>
+    <select name="situacao"><option value="">Todas as situações</option>{% for s in ['Conciliado','Pendente','Divergente'] %}<option {{ 'selected' if situacao==s }}>{{ s }}</option>{% endfor %}</select>
+    <button>Filtrar</button>
+    <a class="small-button" href="{{ url_for('financeiro.conciliacao_financeira') }}">Limpar</a>
+  </form>
+</article>
+
+<article class="card table-card">
+  <header class="section-header"><div><h2>Lançamentos para conferência</h2><p>Marque cada movimentação conforme o extrato do banco ou caixa</p></div></header>
+  <div class="table-responsive"><table>
+    <thead><tr><th>Data</th><th>Conta</th><th>Descrição</th><th>Forma</th><th>Tipo</th><th>Valor</th><th>Situação</th><th>Referência bancária</th><th>Ação</th></tr></thead>
+    <tbody>
+      {% for item in transactions %}
+      <tr>
+        <td>{{ item['transaction_date'] }}</td><td>{{ item['account'] or 'Caixa' }}</td><td><strong>{{ item['description'] }}</strong><small>{{ item['category'] or '' }}</small></td>
+        <td>{{ item['payment_method'] or '-' }}</td><td>{{ item['type'] }}</td>
+        <td class="{{ 'positive-text' if item['type']=='Entrada' else 'negative-text' }}">R$ {{ '%.2f'|format(item['amount'] or 0) }}</td>
+        <td><span class="badge {{ 'success' if item['reconciliation_status']=='Conciliado' else ('danger' if item['reconciliation_status']=='Divergente' else 'warning') }}">{{ item['reconciliation_status'] or 'Pendente' }}</span></td>
+        <td>{{ item['bank_reference'] or '-' }}</td>
+        <td>
+          <form method="post" action="{{ url_for('financeiro.conciliar_lancamento', lancamento_id=item['id']) }}" class="reconcile-form">
+            <select name="reconciliation_status"><option>Conciliado</option><option>Pendente</option><option>Divergente</option></select>
+            <input name="bank_reference" value="{{ item['bank_reference'] or '' }}" placeholder="ID PIX, NSU, documento">
+            <button class="tiny-button">Salvar</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}<tr><td colspan="9">Nenhum lançamento pago encontrado para os filtros selecionados.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</article>
+{% endblock %}

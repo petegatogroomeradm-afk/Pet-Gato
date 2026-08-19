@@ -1,0 +1,12 @@
+PET & GATÔ BUSINESS 11.9.4-RC16
+
+Esta versão foi construída diretamente sobre a RC15 Enterprise restaurada.
+Nenhum módulo ou template funcional foi removido.
+
+Alterações:
+- camada visual única carregada por último;
+- menu com rolagem e rodapé sem sobreposição;
+- configurações organizadas e responsivas;
+- tabelas, formulários e cards padronizados;
+- Kanban e Agenda preservam largura mínima e usam rolagem;
+- melhorias para desktop, notebook e celular.

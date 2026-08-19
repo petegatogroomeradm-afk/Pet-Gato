@@ -1,0 +1,6 @@
+PET & GATÔ BUSINESS 11.11.1-RC22.1
+
+Correção do Erro 500 na Agenda após criar ou listar agendamentos.
+Causa: sqlite3.Row não suporta .get() nem atribuição direta.
+Correção: os registros são convertidos para dict antes da marcação visual de conflitos.
+Nenhum dado do banco é alterado.

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Central de Saúde dos Pets{% endblock %}
+{% block page_title %}Central de Saúde dos Pets{% endblock %}
+{% block page_subtitle %}Vacinas, antipulgas, vermífugos e alertas clínicos em um só painel{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pets_enterprise.css') }}">{% endblock %}
+{% block content %}
+<div class="page-actions pet-health-actions">
+  <a class="secondary-button" href="{{ url_for('pets.pets') }}">← Voltar para Pets</a>
+  <a class="button secondary" href="{{ url_for('pets.exportar_alertas_saude') }}">Exportar alertas para Excel</a>
+</div>
+
+<section class="health-metrics">
+  <article class="health-metric"><span>Pets ativos</span><strong>{{ stats.active_pets }}</strong><small>Base acompanhada</small></article>
+  <article class="health-metric danger"><span>Vencidos</span><strong>{{ stats.overdue }}</strong><small>Exigem atenção imediata</small></article>
+  <article class="health-metric warning"><span>Próximos 7 dias</span><strong>{{ stats.next_7 }}</strong><small>Programar contato</small></article>
+  <article class="health-metric"><span>Próximos 30 dias</span><strong>{{ stats.next_30 }}</strong><small>Vacinas e tratamentos</small></article>
+  <article class="health-metric muted"><span>Sem vacina cadastrada</span><strong>{{ stats.no_vaccine }}</strong><small>Prontuários incompletos</small></article>
+  <article class="health-metric clinical"><span>Atenção clínica</span><strong>{{ stats.clinical_attention }}</strong><small>Alergia ou medicamento</small></article>
+</section>
+
+<div class="dashboard-grid health-layout">
+  <section class="card health-main-card">
+    <div class="section-heading"><div><h2>Agenda preventiva</h2><p>Itens vencidos e previstos para os próximos 30 dias.</p></div><span class="pill">{{ alerts|length }}</span></div>
+    <div class="table-wrap">
+      <table class="health-table">
+        <thead><tr><th>Prioridade</th><th>Pet e tutor</th><th>Controle</th><th>Vencimento</th><th>Ação</th></tr></thead>
+        <tbody>
+          {% for item in alerts %}
+          <tr>
+            <td><span class="health-status {{ 'overdue' if item.days < 0 else 'today' if item.days == 0 else 'upcoming' }}">{{ item.status }}</span></td>
+            <td><strong>{{ item.pet_nome }}</strong><small>{{ item.cliente_nome or 'Tutor não informado' }}</small></td>
+            <td><strong>{{ item.kind }}</strong><small>{{ item.description or '-' }}</small></td>
+            <td><strong>{{ item.due_date }}</strong><small>{% if item.days < 0 %}Há {{ item.days|abs }} dia(s){% elif item.days == 0 %}Vence hoje{% else %}Em {{ item.days }} dia(s){% endif %}</small></td>
+            <td><a class="small-button" href="{{ url_for('pets.visualizar_pet', pet_id=item.pet_id) }}#saude">Abrir prontuário</a></td>
+          </tr>
+          {% else %}<tr><td colspan="5"><div class="empty-state">Nenhum vencimento nos próximos 30 dias.</div></td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <aside class="health-side-stack">
+    <section class="card">
+      <div class="section-heading"><div><h2>Sem vacina cadastrada</h2><p>Revise os prontuários incompletos.</p></div><span class="pill">{{ no_vaccine|length }}</span></div>
+      <div class="health-mini-list">
+        {% for pet in no_vaccine[:12] %}<a href="{{ url_for('pets.visualizar_pet', pet_id=pet.id) }}#saude"><span class="mini-avatar">🐾</span><span><strong>{{ pet.nome }}</strong><small>{{ pet.cliente_nome or 'Tutor não informado' }}</small></span><b>→</b></a>{% else %}<p class="empty-state">Todos possuem vacina registrada.</p>{% endfor %}
+      </div>
+    </section>
+    <section class="card">
+      <div class="section-heading"><div><h2>Atenção clínica</h2><p>Alergias e medicamentos ativos.</p></div><span class="pill">{{ clinical_attention|length }}</span></div>
+      <div class="health-mini-list clinical-list-compact">
+        {% for pet in clinical_attention[:12] %}<a href="{{ url_for('pets.visualizar_pet', pet_id=pet.id) }}#resumo"><span class="mini-avatar">🩺</span><span><strong>{{ pet.nome }}</strong><small>{% if pet.alergias %}Alergia: {{ pet.alergias|truncate(45) }}{% else %}Medicamento: {{ pet.medicamentos|truncate(45) }}{% endif %}</small></span><b>→</b></a>{% else %}<p class="empty-state">Nenhum alerta clínico cadastrado.</p>{% endfor %}
+      </div>
+    </section>
+  </aside>
+</div>
+{% endblock %}

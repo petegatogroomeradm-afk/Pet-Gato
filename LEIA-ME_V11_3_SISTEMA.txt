@@ -1,0 +1,15 @@
+PET & GATÔ BUSINESS ENTERPRISE V11.3
+
+FOCO DESTA ENTREGA
+- Central do Sistema e Integrações redesenhada.
+- Status real da conexão com PostgreSQL/SQLite e latência.
+- Identificação do último backup local disponível.
+- Cards claros para Financeiro, Estoque, Comissões e Eventos.
+- Pendências operacionais com reprocessamento seguro.
+- Linha do tempo de eventos recentes.
+
+INSTALAÇÃO
+1. Preserve .env, instance e logs.
+2. Substitua os demais arquivos.
+3. Execute scripts/migrate_database.py, scripts/check_db_compat.py e scripts/check_release.py.
+4. Inicie com py main.py.

@@ -7,7 +7,9 @@ from typing import Callable, Iterable
 from flask import abort, jsonify, request, session
 
 ROLE_LABELS = {
+    "superadmin": "Super Administrador",
     "admin": "Administrador",
+    "gerente": "Gerente",
     "recepcao": "Recepção",
     "banho_tosa": "Banho e Tosa",
     "motorista": "Motorista",
@@ -17,19 +19,21 @@ ROLE_LABELS = {
 
 # Permissões por módulo. O administrador sempre possui acesso total.
 ROLE_PERMISSIONS = {
+    "superadmin": {"*"},
     "admin": {"*"},
+    "gerente": {"dashboard", "clientes", "crm", "fidelidade", "pets", "agenda", "banho_tosa", "rh", "ponto", "pdv", "comunicacao", "financeiro", "estoque", "motorista", "relatorios", "configuracoes", "auditoria", "busca_global", "notificacoes"},
     "recepcao": {
         "dashboard", "clientes", "crm", "fidelidade", "pets", "agenda",
-        "banho_tosa", "busca_global", "notificacoes",
+        "banho_tosa", "pdv", "comunicacao", "busca_global", "notificacoes",
     },
     "banho_tosa": {
-        "dashboard", "pets", "agenda", "banho_tosa", "busca_global", "notificacoes",
+        "dashboard", "pets", "agenda", "banho_tosa", "pdv", "comunicacao", "busca_global", "notificacoes",
     },
     "motorista": {"dashboard", "motorista", "busca_global", "notificacoes"},
     "financeiro": {
-        "dashboard", "financeiro", "relatorios", "busca_global", "notificacoes",
+        "dashboard", "financeiro", "pdv", "relatorios", "busca_global", "notificacoes",
     },
-    "estoque": {"dashboard", "estoque", "busca_global", "notificacoes"},
+    "estoque": {"dashboard", "estoque", "pdv", "busca_global", "notificacoes"},
 }
 
 # Blueprint/endpoint -> módulo de autorização.
@@ -46,10 +50,14 @@ BLUEPRINT_MODULES = {
     "resumo_ponto": "rh",
     "rh": "rh",
     "financeiro": "financeiro",
+    "comissoes": "financeiro",
     "estoque": "estoque",
+    "pdv": "pdv",
+    "comunicacao": "comunicacao",
     "motorista": "motorista",
     "configuracoes": "configuracoes",
     "relatorios": "relatorios",
+    "auditoria": "auditoria",
 }
 
 ENDPOINT_MODULES = {
@@ -63,6 +71,10 @@ ENDPOINT_MODULES = {
 def normalize_role(role: str | None) -> str:
     value = (role or "").strip().lower()
     return value if value in ROLE_PERMISSIONS else "recepcao"
+
+
+def is_superadmin(role: str | None = None) -> bool:
+    return normalize_role(role if role is not None else session.get("role")) == "superadmin"
 
 
 def has_permission(permission: str, role: str | None = None) -> bool:

@@ -1,0 +1,23 @@
+PET & GATÔ BUSINESS ENTERPRISE V11.2
+
+Entrega focada na restauração e organização completa do Financeiro.
+
+Incluído:
+- Contas a pagar e receber
+- Fluxo de caixa projetado
+- Despesas fixas/recorrentes
+- Conciliação financeira
+- Relatório mensal
+- Orçamento mensal
+- Calendário financeiro
+- Painel gerencial
+- Comparativo financeiro
+- Navegação financeira centralizada
+
+Instalação:
+1. Preserve .env, instance e logs.
+2. Substitua os arquivos do projeto.
+3. Execute scripts\migrate_database.py.
+4. Execute scripts\check_db_compat.py.
+5. Execute scripts\check_release.py.
+6. Inicie com py main.py.

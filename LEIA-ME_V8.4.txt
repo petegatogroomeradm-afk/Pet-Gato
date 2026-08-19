@@ -1,0 +1,9 @@
+PET & GATÔ BUSINESS V8.4
+
+Sprint 8.4 - Orçamento Mensal e Metas Financeiras
+
+- Limites mensais por categoria
+- Comparação planejado x pago x pendente
+- Projeção de consumo do orçamento
+- Alertas de atenção e orçamento estourado
+- Navegação mensal

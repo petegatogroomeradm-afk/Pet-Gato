@@ -1,14 +1,14 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash
 from database import query_db, execute_db, now_iso
-from core.permissions import ROLE_LABELS, normalize_role
+from services.auditoria_service import registrar_auditoria
+from core.permissions import ROLE_LABELS, normalize_role, require_permission, is_superadmin
 
 configuracoes_bp = Blueprint("configuracoes", __name__)
 
 
 def audit(action, user_id=None, details=""):
-    execute_db("INSERT INTO audit_logs (user_name, action, entity_type, entity_id, details, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-               (session.get("user_name", "Sistema"), action, "user", user_id, details, now_iso()))
+    registrar_auditoria(session.get("user_name"), action, "user", user_id, details)
 
 
 @configuracoes_bp.route("/configuracoes", methods=["GET", "POST"])
@@ -42,11 +42,14 @@ def configuracoes():
 
 
 @configuracoes_bp.route("/usuarios", methods=["GET", "POST"])
+@require_permission("usuarios")
 def usuarios():
     if request.method == "POST":
         data = {k: request.form.get(k, "").strip() for k in ("name","username","cpf","phone","email","job_title","admission_date")}
         password = request.form.get("password", "")
         role = normalize_role(request.form.get("role"))
+        if role == "superadmin" and not is_superadmin():
+            role = "admin"
         force_change = 1 if request.form.get("must_change_password") else 0
         if not data["name"] or not data["username"] or len(password) < 8:
             flash("Informe nome, usuário e senha com pelo menos 8 caracteres.", "danger")
@@ -81,12 +84,14 @@ def usuarios():
 
 
 @configuracoes_bp.route("/usuarios/<int:user_id>/editar", methods=["POST"])
+@require_permission("usuarios")
 def editar_usuario(user_id):
     user = query_db("SELECT * FROM users WHERE id=?", (user_id,), one=True)
     if not user:
         flash("Usuário não encontrado.", "danger"); return redirect(url_for("configuracoes.usuarios"))
     name=request.form.get("name","").strip(); role=normalize_role(request.form.get("role")); password=request.form.get("password","")
-    if user["username"]=="admin": role="admin"
+    if role == "superadmin" and not is_superadmin(): role = user["role"]
+    if user["username"]=="admin" or user["role"] == "superadmin": role="superadmin"
     if not name: flash("O nome é obrigatório.","danger")
     elif password and len(password)<8: flash("A nova senha deve ter pelo menos 8 caracteres.","danger")
     else:
@@ -100,10 +105,11 @@ def editar_usuario(user_id):
 
 
 @configuracoes_bp.route("/usuarios/<int:user_id>/status", methods=["POST"])
+@require_permission("usuarios")
 def alternar_status_usuario(user_id):
-    user=query_db("SELECT id,username,active FROM users WHERE id=?",(user_id,),one=True)
+    user=query_db("SELECT id,username,role,active FROM users WHERE id=?",(user_id,),one=True)
     if not user: flash("Usuário não encontrado.","danger")
-    elif user["username"]=="admin": flash("O administrador principal não pode ser desativado.","danger")
+    elif user["username"]=="admin" or user["role"] == "superadmin": flash("O Super Administrador não pode ser desativado.","danger")
     elif session.get("user_id")==user_id: flash("Você não pode desativar seu próprio usuário.","danger")
     else:
         execute_db("UPDATE users SET active=?,updated_at=? WHERE id=?",(0 if user["active"] else 1,now_iso(),user_id)); audit("status_usuario_alterado",user_id)
@@ -112,7 +118,48 @@ def alternar_status_usuario(user_id):
 
 
 @configuracoes_bp.route("/usuarios/<int:user_id>/desbloquear", methods=["POST"])
+@require_permission("usuarios")
 def desbloquear_usuario(user_id):
     execute_db("UPDATE users SET failed_attempts=0,locked_until=NULL,updated_at=? WHERE id=?",(now_iso(),user_id)); audit("usuario_desbloqueado",user_id)
     flash("Usuário desbloqueado.","success")
+    return redirect(url_for("configuracoes.usuarios"))
+
+
+@configuracoes_bp.route("/usuarios/<int:user_id>/resetar-senha", methods=["POST"])
+@require_permission("usuarios")
+def resetar_senha_usuario(user_id):
+    user = query_db("SELECT id, username, role FROM users WHERE id=?", (user_id,), one=True)
+    password = request.form.get("temporary_password", "").strip()
+    if not user:
+        flash("Usuário não encontrado.", "danger")
+    elif user["role"] == "superadmin" and not is_superadmin():
+        flash("Somente o Super Administrador pode redefinir esta senha.", "danger")
+    elif len(password) < 8:
+        flash("A senha temporária deve ter pelo menos 8 caracteres.", "danger")
+    else:
+        execute_db(
+            "UPDATE users SET password_hash=?,must_change_password=1,failed_attempts=0,locked_until=NULL,updated_at=? WHERE id=?",
+            (generate_password_hash(password), now_iso(), user_id),
+        )
+        audit("senha_usuario_redefinida", user_id, f"Login: {user['username']}")
+        flash("Senha redefinida. O usuário deverá trocá-la no próximo acesso.", "success")
+    return redirect(url_for("configuracoes.usuarios"))
+
+
+@configuracoes_bp.route("/usuarios/<int:user_id>/excluir", methods=["POST"])
+@require_permission("usuarios")
+def excluir_usuario(user_id):
+    user = query_db("SELECT id, username, role FROM users WHERE id=?", (user_id,), one=True)
+    if not user:
+        flash("Usuário não encontrado.", "danger")
+    elif not is_superadmin():
+        flash("Somente o Super Administrador pode excluir usuários definitivamente.", "danger")
+    elif user["role"] == "superadmin" or user["username"] == "admin":
+        flash("O Super Administrador principal não pode ser excluído.", "danger")
+    elif session.get("user_id") == user_id:
+        flash("Você não pode excluir o próprio usuário.", "danger")
+    else:
+        execute_db("DELETE FROM users WHERE id=?", (user_id,))
+        audit("usuario_excluido", user_id, f"Login: {user['username']}")
+        flash("Usuário excluído definitivamente.", "success")
     return redirect(url_for("configuracoes.usuarios"))

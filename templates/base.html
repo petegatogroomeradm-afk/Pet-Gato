@@ -10,6 +10,9 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/crm.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/fidelidade.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/enterprise.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_refinement.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/interface_consolidation.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v12_design_system.css') }}">
 {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -21,7 +24,7 @@
             <div class="brand-icon">🐾</div>
             <div class="brand-copy">
                 <strong>Pet & Gatô</strong>
-                <span>Business V6.1</span>
+                <span>Business {{ app_version }}</span>
             </div>
             <button class="sidebar-close" id="sidebar-close" type="button" aria-label="Fechar menu">×</button>
         </div>
@@ -49,20 +52,29 @@
 
             <div class="menu-title"><span>Gestão</span></div>
             {% if can_access('relatorios') %}<a class="{{ 'active' if ep.startswith('relatorios.') else '' }}" href="{{ url_for('relatorios.relatorios') }}"><span class="menu-icon">📈</span><span class="menu-label">Relatórios Gerais</span></a>{% endif %}
+            {% if can_access('pdv') %}<a class="{{ 'active' if ep.startswith('pdv.') else '' }}" href="{{ url_for('pdv.pdv') }}"><span class="menu-icon">🛒</span><span class="menu-label">PDV e Caixa</span></a>{% endif %}
+            {% if can_access('comunicacao') %}<a class="{{ 'active' if ep.startswith('comunicacao.') else '' }}" href="{{ url_for('comunicacao.central') }}"><span class="menu-icon">💬</span><span class="menu-label">Comunicação</span></a>{% endif %}
             {% if can_access('financeiro') %}<a class="{{ 'active' if ep.startswith('financeiro.') else '' }}" href="{{ url_for('financeiro.financeiro') }}"><span class="menu-icon">💰</span><span class="menu-label">Financeiro</span></a>{% endif %}
+            {% if can_access('financeiro') %}<a class="{{ 'active' if ep.startswith('comissoes.') else '' }}" href="{{ url_for('comissoes.painel') }}"><span class="menu-icon">💵</span><span class="menu-label">Comissões</span></a>{% endif %}
             {% if can_access('estoque') %}<a class="{{ 'active' if ep.startswith('estoque.') else '' }}" href="{{ url_for('estoque.estoque') }}"><span class="menu-icon">📦</span><span class="menu-label">Estoque</span></a>{% endif %}
             {% if can_access('motorista') %}<a class="{{ 'active' if ep.startswith('motorista.') else '' }}" href="{{ url_for('motorista.motorista') }}"><span class="menu-icon">🚗</span><span class="menu-label">Motorista</span></a>{% endif %}
             {% if can_access('configuracoes') %}<a class="{{ 'active' if ep.startswith('configuracoes.') else '' }}" href="{{ url_for('configuracoes.configuracoes') }}"><span class="menu-icon">⚙️</span><span class="menu-label">Configurações</span></a>{% endif %}
-            {% if can_access('configuracoes') %}<a class="{{ 'active' if ep == 'configuracoes.usuarios' else '' }}" href="{{ url_for('configuracoes.usuarios') }}"><span class="menu-icon">🔐</span><span class="menu-label">Usuários e Permissões</span></a>{% endif %}
+            {% if can_access('configuracoes') %}<a class="{{ 'active' if ep == 'central_integracoes' else '' }}" href="{{ url_for('central_integracoes') }}"><span class="menu-icon">🔗</span><span class="menu-label">Integrações</span></a>{% endif %}
+            {% if can_access('usuarios') %}<a class="{{ 'active' if ep == 'configuracoes.usuarios' else '' }}" href="{{ url_for('configuracoes.usuarios') }}"><span class="menu-icon">🔐</span><span class="menu-label">Usuários e Permissões</span></a>{% endif %}
+            {% if can_access('auditoria') %}<a class="{{ 'active' if ep.startswith('auditoria.') else '' }}" href="{{ url_for('auditoria.painel') }}"><span class="menu-icon">🛡️</span><span class="menu-label">Auditoria e Segurança</span></a>{% endif %}
         </nav>
 
         <div class="sidebar-footer">
+            <div class="sidebar-version-badge" title="Versão instalada">
+                <span>Pet & Gatô Business</span>
+                <strong>{{ app_version }}</strong>
+            </div>
             <button class="sidebar-collapse" id="sidebar-collapse" type="button" aria-label="Recolher menu">
                 <span class="collapse-icon">‹</span><span class="menu-label">Recolher menu</span>
             </button>
         </div>
         {% endif %}
-    </aside>
+</aside>
 
     <main class="main">
         <header class="topbar">

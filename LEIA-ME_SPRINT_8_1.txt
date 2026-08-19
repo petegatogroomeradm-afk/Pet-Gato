@@ -1,0 +1,21 @@
+PET & GATÔ BUSINESS - SPRINT 8.1
+
+CONTAS A PAGAR E RECEBER
+
+Novidades:
+- Tela dedicada de contas a pagar e receber.
+- Atualização automática de contas pendentes vencidas.
+- Separação em atrasadas, vencendo hoje, próximas e pagas.
+- Indicadores de valores a receber, a pagar, vencidos e saldo projetado.
+- Filtros por período, tipo, status e pesquisa.
+- Ação rápida para marcar como pago.
+- Adiamento do vencimento por 1, 3, 7, 15 ou 30 dias.
+- Nenhuma alteração estrutural no banco de dados.
+
+Instalação:
+1. Pare o sistema.
+2. Extraia os arquivos sobre a pasta atual.
+3. Confirme a substituição.
+4. Remova as pastas __pycache__.
+5. Execute py main.py.
+6. Abra Financeiro e clique em Contas a pagar e receber.

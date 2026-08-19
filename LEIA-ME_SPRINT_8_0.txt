@@ -1,0 +1,15 @@
+SPRINT 8.0 — RELATÓRIOS E DESEMPENHO CRM
+
+Novidades:
+- Relatório CRM por intervalo de datas.
+- Indicadores de contatos, tarefas, agendamentos, conversão e taxa de resposta.
+- Resultados por classificação.
+- Evolução diária dos contatos concluídos.
+- Desempenho individual da equipe.
+- Desempenho e conversão das campanhas.
+- Histórico recente de contatos.
+- Exportação em CSV compatível com Excel em português.
+- Impressão do relatório.
+
+Acesso: CRM > Relatórios CRM.
+Não há alteração de banco de dados.
