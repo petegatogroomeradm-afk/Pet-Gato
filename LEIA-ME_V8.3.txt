@@ -1,0 +1,8 @@
+PET & GATÔ BUSINESS V8.3 - FECHAMENTO MENSAL E DRE
+
+- Nova rota /financeiro/relatorio-mensal
+- Receitas, despesas, resultado, margem, contas a receber e a pagar
+- Resultado por categoria e forma de pagamento
+- Movimento diário e lista de lançamentos
+- Exportação CSV e impressão
+- Sem alteração estrutural no banco de dados

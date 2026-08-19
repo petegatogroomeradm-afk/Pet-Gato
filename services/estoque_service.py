@@ -86,6 +86,7 @@ def _aplicar_produto(produto_id,quantidade,referencia):
 
 def baixar_estoque_banho_tosa(atendimento_id=None):
     if atendimento_id:
+        aplicar_receita_ao_atendimento(atendimento_id)
         usos=query_db('SELECT * FROM grooming_product_usage WHERE grooming_id=?',(atendimento_id,))
         if usos:
             pend=[u for u in usos if not u['stock_applied']]; aplicados=0
@@ -93,8 +94,54 @@ def baixar_estoque_banho_tosa(atendimento_id=None):
                 if _aplicar_produto(u['product_id'],u['quantity'],f'ATEND-{atendimento_id}'):
                     execute_db('UPDATE grooming_product_usage SET stock_applied=1 WHERE id=?',(u['id'],)); aplicados+=1
             return aplicados>0 or not pend
-    baixou=False
-    for nome,qtd in [('Shampoo',20),('Perfume',5),('Laco',1)]:
-        p=query_db('SELECT id FROM stock_products WHERE name=? AND COALESCE(active,1)=1 LIMIT 1',(nome,),one=True)
-        if p and _aplicar_produto(p['id'],qtd,f"ATEND-{atendimento_id or 'PADRAO'}"): baixou=True
-    return baixou
+    # Sem receita ou produtos vinculados, não cria consumo genérico.
+    # Isso evita baixas incorretas em serviços ainda não configurados.
+    return False
+
+
+def receitas_consumo():
+    receitas=query_db("""SELECT r.*,COUNT(i.id) item_count FROM service_consumption_recipes r
+      LEFT JOIN service_consumption_recipe_items i ON i.recipe_id=r.id
+      WHERE COALESCE(r.active,1)=1 GROUP BY r.id ORDER BY r.service_name""")
+    saida=[]
+    for r in receitas:
+        itens=query_db("""SELECT i.*,p.name product_name,p.quantity stock_quantity,p.unit product_unit
+          FROM service_consumption_recipe_items i JOIN stock_products p ON p.id=i.product_id
+          WHERE i.recipe_id=? ORDER BY p.name""",(r['id'],))
+        saida.append({**dict(r),'itens':[dict(x) for x in itens]})
+    return saida
+
+def salvar_receita_consumo(service_name,notes=''):
+    nome=(service_name or '').strip()
+    if not nome: raise ValueError('Informe o nome do serviço.')
+    existente=query_db('SELECT id FROM service_consumption_recipes WHERE service_name=?',(nome,),one=True)
+    if existente:
+        execute_db('UPDATE service_consumption_recipes SET active=1,notes=?,updated_at=? WHERE id=?',(notes,now_iso(),existente['id']))
+        return existente['id']
+    return insert_db('INSERT INTO service_consumption_recipes(service_name,active,notes,created_at,updated_at) VALUES(?,?,?,?,?)',(nome,1,notes,now_iso(),now_iso()))
+
+def adicionar_item_receita(recipe_id,product_id,quantity):
+    qtd=numero(quantity)
+    if qtd<=0: raise ValueError('Informe uma quantidade maior que zero.')
+    produto=produto_por_id(product_id)
+    if not produto: raise ValueError('Produto não encontrado.')
+    existente=query_db('SELECT id FROM service_consumption_recipe_items WHERE recipe_id=? AND product_id=?',(recipe_id,product_id),one=True)
+    if existente:
+        execute_db('UPDATE service_consumption_recipe_items SET quantity=?,unit=? WHERE id=?',(qtd,produto['unit'],existente['id']))
+        return existente['id']
+    return insert_db('INSERT INTO service_consumption_recipe_items(recipe_id,product_id,quantity,unit,created_at) VALUES(?,?,?,?,?)',(recipe_id,product_id,qtd,produto['unit'],now_iso()))
+
+def aplicar_receita_ao_atendimento(atendimento_id):
+    atendimento=query_db('SELECT id,servico FROM grooming_services WHERE id=?',(atendimento_id,),one=True)
+    if not atendimento: return 0
+    servico=(atendimento['servico'] or '').strip()
+    receita=query_db('SELECT id FROM service_consumption_recipes WHERE active=1 AND service_name=?',(servico,),one=True)
+    if not receita: return 0
+    itens=query_db('SELECT * FROM service_consumption_recipe_items WHERE recipe_id=?',(receita['id'],))
+    incluidos=0
+    for item in itens:
+        existe=query_db('SELECT id FROM grooming_product_usage WHERE grooming_id=? AND product_id=?',(atendimento_id,item['product_id']),one=True)
+        if not existe:
+            execute_db('INSERT INTO grooming_product_usage(grooming_id,product_id,quantity,unit,stock_applied,created_at) VALUES(?,?,?,?,0,?)',(atendimento_id,item['product_id'],item['quantity'],item['unit'],now_iso()))
+            incluidos+=1
+    return incluidos

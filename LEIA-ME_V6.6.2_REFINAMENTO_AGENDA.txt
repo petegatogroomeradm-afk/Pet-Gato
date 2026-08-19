@@ -1,0 +1,11 @@
+PET & GATÔ BUSINESS — V6.6.2
+
+Correções:
+1. Novo agendamento agora abre em uma janela ampla e responsiva.
+2. Campos de tutor, pet, serviço, data, hora, valor, profissional, status, Táxi Dog, encaixe e observações ficam totalmente visíveis.
+3. Fluxo do Banho & Tosa agora segue: Fotos -> Pagamento -> Em entrega -> Entregue -> Finalizado.
+4. Ao chegar em Entregue, o botão passa a ser “Finalizar atendimento”.
+5. Atendimentos finalizados saem da coluna Entrega e vão para Finalizados.
+6. A finalização continua disparando financeiro, estoque, comissão e histórico.
+
+Após copiar os arquivos, reinicie o sistema e use Ctrl+F5 no navegador.

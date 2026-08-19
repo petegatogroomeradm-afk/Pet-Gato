@@ -1,0 +1,8 @@
+PET & GATÔ BUSINESS 12.0.0-RC3
+
+Foco: Dashboard Executivo e consolidação operacional.
+
+- Resumo executivo com resultado do mês, ticket médio, equipe presente e pendências críticas.
+- Indicadores operacionais preparados para atualização via API do Dashboard.
+- Preserva a padronização visual RC2 e o schema financeiro consolidado da RC1.
+- Nenhuma alteração destrutiva no banco de dados.

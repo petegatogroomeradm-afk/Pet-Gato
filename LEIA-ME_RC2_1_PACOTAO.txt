@@ -1,0 +1,23 @@
+PET & GATÔ BUSINESS 10.0.0-rc.2.1 — PACOTÃO DE REFINAMENTO
+
+Incluído nesta entrega:
+- Tela de Usuários com modal de edição padronizado e responsivo.
+- Visão clara das permissões por perfil.
+- Configurações reconstruídas, sem blocos duplicados.
+- Configurações separadas em Empresa, Agenda, Pagamentos e Sistema.
+- Auditoria reorganizada, com filtros legíveis e detalhes expansíveis.
+- Central de Integrações com textos e apresentação mais claros.
+- Banho e Tosa com melhor leitura dos campos de operação e detalhes.
+- Preservação do Super Administrador, arquivamento e exclusão protegida.
+- Ajustes responsivos para telas menores.
+
+Instalação:
+1. Faça backup da pasta atual.
+2. Substitua os arquivos pelo conteúdo deste pacote.
+3. Preserve .env, instance e logs.
+4. Execute:
+   py scripts\migrate_database.py
+   py scripts\check_db_compat.py
+   py main.py
+
+Versão esperada: 10.0.0-rc.2.1

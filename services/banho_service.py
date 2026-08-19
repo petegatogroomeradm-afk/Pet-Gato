@@ -3,7 +3,7 @@ from database import query_db, execute_db, now_iso
 FLUXO_STATUS_BANHO = [
     "Agendado", "Aguardando coleta", "Em transporte", "Em atendimento",
     "Banho iniciado", "Banho concluído", "Secagem", "Tosa iniciada",
-    "Tosa concluída", "Fotos", "Finalizado", "Em entrega", "Entregue",
+    "Tosa concluída", "Fotos", "Pagamento", "Em entrega", "Entregue", "Finalizado",
 ]
 
 KANBAN_COLUNAS = [
@@ -13,8 +13,9 @@ KANBAN_COLUNAS = [
     ("secagem", "Secagem", ["Banho concluído", "Secagem"]),
     ("tosa", "Tosa", ["Tosa iniciada", "Tosa concluída"]),
     ("fotos", "Fotos", ["Fotos"]),
-    ("pagamento", "Pagamento", ["Finalizado"]),
+    ("pagamento", "Pagamento", ["Pagamento"]),
     ("entrega", "Entrega", ["Em entrega", "Entregue"]),
+    ("finalizados", "Finalizados", ["Finalizado"]),
     ("cancelado", "Cancelados", ["Cancelado"]),
 ]
 
@@ -47,8 +48,7 @@ def atualizar_status_atendimento(atendimento_id, novo_status):
     execute_db(f"UPDATE grooming_services SET {', '.join(campos)} WHERE id=?", tuple(params))
     atendimento=query_db("SELECT appointment_id FROM grooming_services WHERE id=?",(atendimento_id,),one=True)
     if atendimento and atendimento["appointment_id"]:
-        status_agenda="Finalizado" if novo_status in ("Finalizado","Em entrega","Entregue") else novo_status
-        execute_db("UPDATE appointments SET status=?, updated_at=? WHERE id=?",(status_agenda,now_iso(),atendimento["appointment_id"]))
+        execute_db("UPDATE appointments SET status=?, updated_at=? WHERE id=?",(novo_status,now_iso(),atendimento["appointment_id"]))
 
 def lancar_comissao(atendimento_id):
     atendimento=query_db("""SELECT g.id,g.employee_id,g.valor,e.commission_rate

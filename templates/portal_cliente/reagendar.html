@@ -1,0 +1,57 @@
+{% extends 'portal_cliente/base.html' %}{% block content %}<form method="post" class="card form" style="max-width:620px"><h1>Solicitar reagendamento</h1><p>{{ item.pet_nome }} • {{ item.servico }}</p><p class="muted">Atual: {{ item.data_agendamento }} às {{ item.horario }}</p><label>Nova data</label><input id="data" type="date" name="data" min="{{ hoje }}" required><label>Novo horário</label><select id="horario" name="horario" required><option value="">Escolha primeiro a data</option></select><button class="btn">Enviar para aprovação</button></form><script>
+const data = document.getElementById('data');
+const hora = document.getElementById('horario');
+let timerHorarios = null;
+let controleHorarios = null;
+let requisicaoAtual = 0;
+
+async function carregarHorarios() {
+  const valorData = data.value;
+  if (!valorData || !data.validity.valid || !/^\d{4}-\d{2}-\d{2}$/.test(valorData)) {
+    hora.disabled = false;
+    hora.innerHTML = '<option value="">Escolha uma data válida</option>';
+    return;
+  }
+
+  if (controleHorarios) controleHorarios.abort();
+  controleHorarios = new AbortController();
+  const numeroRequisicao = ++requisicaoAtual;
+
+  hora.disabled = true;
+  hora.innerHTML = '<option value="">Carregando...</option>';
+
+  try {
+    const url = `{{ url_for('portal_cliente.horarios_disponiveis') }}?data=${encodeURIComponent(valorData)}&ignorar_id={{ item.id }}`;
+    const resposta = await fetch(url, {
+      headers: {'Accept': 'application/json'},
+      signal: controleHorarios.signal,
+      cache: 'no-store'
+    });
+
+    if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+    const dados = await resposta.json();
+
+    if (numeroRequisicao !== requisicaoAtual || data.value !== valorData) return;
+
+    const horarios = Array.isArray(dados.horarios) ? dados.horarios : [];
+    hora.innerHTML = horarios.length
+      ? '<option value="">Selecione um horário</option>' + horarios.map(h => `<option value="${h}">${h}</option>`).join('')
+      : '<option value="">Nenhum horário disponível</option>';
+  } catch (erro) {
+    if (erro.name === 'AbortError') return;
+    console.error('Erro ao carregar horários:', erro);
+    if (numeroRequisicao === requisicaoAtual) {
+      hora.innerHTML = '<option value="">Erro ao carregar horários. Tente novamente.</option>';
+    }
+  } finally {
+    if (numeroRequisicao === requisicaoAtual) hora.disabled = false;
+  }
+}
+
+const agendarCarregamento = () => {
+  clearTimeout(timerHorarios);
+  timerHorarios = setTimeout(carregarHorarios, 300);
+};
+data.addEventListener('input', agendarCarregamento);
+data.addEventListener('change', agendarCarregamento);
+</script>{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Auditoria - Pet & Gatô{% endblock %}
+{% block page_title %}Auditoria e Segurança{% endblock %}
+{% block page_subtitle %}Rastreabilidade das alterações, acessos e operações do sistema{% endblock %}
+{% block content %}
+<div class="stats-grid audit-stats">
+  <div class="stat-card"><span>Total de registros</span><strong>{{ stats.total }}</strong><small>Histórico acumulado</small></div>
+  <div class="stat-card"><span>Registros hoje</span><strong>{{ stats.today }}</strong><small>Movimentações do dia</small></div>
+  <div class="stat-card"><span>Usuários registrados</span><strong>{{ stats.users }}</strong><small>Origem das alterações</small></div>
+  <div class="stat-card {{ 'danger' if stats.failed_logins else '' }}"><span>Logins falhos hoje</span><strong>{{ stats.failed_logins }}</strong><small>{{ 'Revisar acessos' if stats.failed_logins else 'Nenhuma ocorrência' }}</small></div>
+</div>
+{% if top_actions %}
+<section class="card audit-summary-card">
+  <div class="section-heading"><div><h2>Ações mais frequentes hoje</h2><p>Resumo rápido do que mais movimentou a auditoria.</p></div></div>
+  <div class="audit-action-chips">
+    {% for item in top_actions %}<span><strong>{{ item.total }}</strong> {{ item.action|replace('_',' ')|title }}</span>{% endfor %}
+  </div>
+</section>
+{% endif %}
+<section class="card audit-filter-card">
+  <div class="section-heading"><div><h2>Filtros de auditoria</h2><p>Localize ações por usuário, entidade, período ou conteúdo.</p></div><a class="btn-secondary" href="{{ url_for('auditoria.exportar_csv', q=filters.q, action=filters.action, entity_type=filters.entity_type, date_from=filters.date_from, date_to=filters.date_to) }}">Exportar CSV</a></div>
+  <form method="get" class="filters-grid audit-filters">
+    <label class="search-wide">Busca<input type="search" name="q" value="{{ filters.q }}" placeholder="Usuário, detalhe, rota ou identificação"></label>
+    <label>Ação<select name="action"><option value="">Todas</option>{% for item in actions %}<option value="{{ item.action }}" {{ 'selected' if filters.action == item.action else '' }}>{{ item.action|replace('_',' ')|title }}</option>{% endfor %}</select></label>
+    <label>Entidade<select name="entity_type"><option value="">Todas</option>{% for item in entities %}<option value="{{ item.entity_type }}" {{ 'selected' if filters.entity_type == item.entity_type else '' }}>{{ item.entity_type|replace('_',' ')|title }}</option>{% endfor %}</select></label>
+    <label>De<input type="date" name="date_from" value="{{ filters.date_from }}"></label><label>Até<input type="date" name="date_to" value="{{ filters.date_to }}"></label>
+    <div class="filter-actions"><button type="submit">Filtrar</button><a class="btn-secondary" href="{{ url_for('auditoria.painel') }}">Limpar filtros</a></div>
+  </form>
+</section>
+<section class="card table-card audit-table-card">
+  <div class="section-heading"><div><h2>Eventos registrados</h2><p>Abra “Ver detalhes” para visualizar informações técnicas sem poluir a tabela.</p></div></div>
+  <div class="table-responsive"><table class="audit-table"><thead><tr><th>Data</th><th>Usuário</th><th>Ação</th><th>Entidade</th><th>Detalhes</th><th>Origem</th></tr></thead><tbody>
+  {% for log in logs %}<tr><td class="nowrap">{{ log.created_at }}</td><td><strong>{{ log.user_name or 'Sistema' }}</strong></td><td><span class="badge neutral">{{ log.action|replace('_',' ')|title }}</span></td><td>{{ (log.entity_type or '-')|replace('_',' ')|title }}{% if log.entity_id %}<small>#{{ log.entity_id }}</small>{% endif %}</td><td class="audit-detail-cell"><details><summary>Ver detalhes</summary><pre>{{ log.details or 'Sem detalhes adicionais.' }}</pre></details></td><td><span class="request-method">{{ log.request_method or '-' }}</span><small>{{ log.request_path or '' }}<br>{{ log.ip_address or '-' }}</small></td></tr>
+  {% else %}<tr><td colspan="6" class="empty-state">Nenhum registro encontrado.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}

@@ -19,6 +19,7 @@
   <button type="button" data-stock-tab="abc">📊 Curva ABC</button>
   <button type="button" data-stock-tab="movimentos">↕ Movimentações</button>
   <button type="button" data-stock-tab="inventarios">🧮 Inventários</button>
+  <button type="button" data-stock-tab="receitas">🧴 Consumo por serviço</button>
 </div>
 
 <section class="stock-panel" data-panel="produtos">
@@ -53,5 +54,40 @@
 <section class="stock-panel" data-panel="movimentos" hidden><div class="card"><h2>Últimas movimentações</h2><div class="table-wrap"><table><thead><tr><th>Data</th><th>Produto</th><th>Tipo</th><th>Quantidade</th><th>Custo</th><th>Motivo</th><th>Referência</th><th>Usuário</th></tr></thead><tbody>{% for m in movimentos %}<tr><td>{{ m.movement_date }}</td><td>{{ m.product_name }}</td><td><span class="movement-badge">{{ m.movement_type }}</span></td><td>{{ m.quantity }} {{ m.unit or '' }}</td><td>R$ {{ '%.2f'|format(m.unit_cost or 0) }}</td><td>{{ m.reason or '-' }}</td><td>{{ m.reference or '-' }}</td><td>{{ m.user_name or '-' }}</td></tr>{% else %}<tr><td colspan="8">Nenhuma movimentação.</td></tr>{% endfor %}</tbody></table></div></div></section>
 
 <section class="stock-panel" data-panel="inventarios" hidden><div class="grid"><div class="card"><h2>Novo inventário</h2><form method="post" action="{{ url_for('estoque.novo_inventario') }}" class="form"><input name="reference" placeholder="Referência do inventário"><textarea name="notes" placeholder="Observações"></textarea><button>Iniciar contagem</button></form></div><div class="card"><h2>Histórico</h2>{% for i in inventarios %}<a class="inventory-link" href="{{ url_for('estoque.inventario',inventory_id=i.id) }}"><strong>{{ i.reference }}</strong><span>{{ i.status }} · {{ i.started_at }}</span></a>{% else %}<p>Nenhum inventário realizado.</p>{% endfor %}</div></div></section>
+
+
+<section class="stock-panel" data-panel="receitas" hidden id="receitas">
+  <div class="grid">
+    <div class="card">
+      <h2>Nova receita de consumo</h2>
+      <p>Use exatamente o mesmo nome cadastrado no campo Serviço do Banho e Tosa.</p>
+      <form method="post" action="{{ url_for('estoque.nova_receita') }}" class="form">
+        <input name="service_name" placeholder="Ex.: Banho pequeno" required>
+        <textarea name="notes" placeholder="Observações"></textarea>
+        <button>Criar receita</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Como funciona</h2>
+      <p>Ao finalizar um atendimento, o sistema adiciona os produtos configurados e realiza a baixa com proteção contra duplicidade.</p>
+      <p>Quando não existir receita cadastrada, nenhuma baixa automática por receita será criada.</p>
+    </div>
+  </div>
+  {% for r in receitas %}
+  <div class="card" style="margin-top:16px">
+    <h2>{{ r.service_name }} <small>({{ r.item_count }} itens)</small></h2>
+    {% if r.notes %}<p>{{ r.notes }}</p>{% endif %}
+    <form method="post" action="{{ url_for('estoque.novo_item_receita',recipe_id=r.id) }}" class="stock-filter">
+      <select name="product_id" required><option value="">Selecione o produto</option>{% for p in todos_produtos %}<option value="{{ p.id }}">{{ p.name }} — saldo {{ p.quantity }} {{ p.unit or '' }}</option>{% endfor %}</select>
+      <input name="quantity" placeholder="Quantidade por atendimento" required>
+      <button>Adicionar produto</button>
+    </form>
+    <div class="table-wrap"><table><thead><tr><th>Produto</th><th>Consumo</th><th>Saldo atual</th><th>Ação</th></tr></thead><tbody>
+      {% for i in r.itens %}<tr><td>{{ i.product_name }}</td><td>{{ i.quantity }} {{ i.unit or i.product_unit or '' }}</td><td>{{ i.stock_quantity }} {{ i.product_unit or '' }}</td><td><form method="post" action="{{ url_for('estoque.excluir_item_receita',item_id=i.id) }}" onsubmit="return confirm('Remover este produto da receita?')"><button class="danger-btn">Remover</button></form></td></tr>{% else %}<tr><td colspan="4">Nenhum produto configurado.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </div>
+  {% else %}<div class="card" style="margin-top:16px"><p>Nenhuma receita de consumo cadastrada.</p></div>{% endfor %}
+</section>
+
 <script src="{{ url_for('static',filename='js/estoque.js') }}"></script>
 {% endblock %}

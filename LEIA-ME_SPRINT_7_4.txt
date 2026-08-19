@@ -1,0 +1,18 @@
+SPRINT 7.4 — CENTRAL DE TAREFAS CRM
+
+IMPLEMENTADO
+- Filtro de tarefas: todas, pendentes, concluídas e canceladas.
+- Botão de WhatsApp direto na tarefa, com a mensagem já preenchida.
+- Adiamento rápido por 1, 3, 7, 15 ou 30 dias.
+- Cancelamento de tarefas pendentes.
+- Reabertura de tarefas concluídas ou canceladas.
+- Exibição da mensagem da tarefa na própria central.
+- Contador de pendências continua exibindo o total real, mesmo com filtro ativo.
+
+TESTE
+1. Abra CRM.
+2. Gere tarefas automáticas.
+3. Teste o botão WhatsApp.
+4. Adie uma tarefa e confira a nova data.
+5. Cancele e depois reabra a tarefa.
+6. Alterne o filtro de status.

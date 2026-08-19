@@ -1,0 +1,15 @@
+PET & GATÔ BUSINESS V8.2.1
+
+CORREÇÕES E MELHORIAS
+- Fluxo de caixa projetado refeito com cálculo compatível com SQLite e PostgreSQL.
+- Nova tela Despesas da Loja.
+- Cadastro de aluguel, água, energia, internet, boletos, fornecedores, impostos e outras contas.
+- Suporte a despesas únicas e recorrentes.
+- Despesas cadastradas entram automaticamente em Contas a Pagar e no Fluxo Projetado.
+- Ações para editar e marcar despesas como pagas.
+
+INSTALAÇÃO
+1. Pare o sistema com Ctrl+C.
+2. Extraia o ZIP na pasta do projeto e confirme a substituição.
+3. Exclua pastas __pycache__.
+4. Execute: py main.py

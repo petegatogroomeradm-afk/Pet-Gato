@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Resumo Diário CRM{% endblock %}
+{% block page_title %}Resumo Diário CRM{% endblock %}
+{% block page_subtitle %}Prioridades, contatos do dia e desempenho recente{% endblock %}
+{% block content %}
+<div class="crm-brief-toolbar no-print">
+  <div class="crm-brief-links">
+    <a class="small-button crm-secondary" href="{{ url_for('crm.dashboard') }}">← Voltar ao CRM</a>
+    <a class="small-button crm-secondary" href="{{ url_for('crm.task_agenda') }}">📅 Agenda CRM</a>
+  </div>
+  <form method="get" class="crm-brief-filter"><label>Data <input type="date" name="data" value="{{ brief_date }}"></label><button>Atualizar</button></form>
+  <button type="button" class="crm-print-button" onclick="window.print()">🖨️ Imprimir resumo</button>
+</div>
+
+<div class="crm-brief-date-nav no-print">
+  <a href="{{ url_for('crm.daily_brief', data=previous_date) }}">← Dia anterior</a>
+  <strong>{{ brief_date_label }}</strong>
+  <a href="{{ url_for('crm.daily_brief', data=next_date) }}">Próximo dia →</a>
+</div>
+
+<header class="crm-brief-print-header">
+  <h2>Pet & Gatô · Resumo Diário CRM</h2>
+  <p>{{ brief_date_label }}</p>
+</header>
+
+<section class="crm-brief-metrics">
+  <article class="is-overdue"><span>Atrasadas</span><strong>{{ brief_metrics.overdue }}</strong></article>
+  <article class="is-today"><span>Para o dia</span><strong>{{ brief_metrics.today }}</strong></article>
+  <article class="is-done"><span>Concluídas no dia</span><strong>{{ brief_metrics.completed_today }}</strong></article>
+  <article><span>Próximos 7 dias</span><strong>{{ brief_metrics.next_7_days }}</strong></article>
+</section>
+
+<section class="card crm-brief-performance">
+  <div class="section-head"><div><h2>Desempenho dos últimos 7 dias</h2><small>{{ week_performance.start }} até {{ week_performance.end }}</small></div><strong>{{ week_performance.conversion_rate }}% conversão</strong></div>
+  <div class="crm-brief-performance-grid">
+    <div><span>Contatos</span><strong>{{ week_performance.contacts }}</strong></div>
+    <div><span>Agendamentos</span><strong>{{ week_performance.scheduled }}</strong></div>
+    <div><span>Interessados</span><strong>{{ week_performance.interested }}</strong></div>
+    <div><span>Sem resposta</span><strong>{{ week_performance.no_response }}</strong></div>
+  </div>
+</section>
+
+{% macro task_row(t, overdue=false) %}
+<article class="crm-brief-task {% if overdue %}is-overdue{% endif %}">
+  <div><div class="crm-agenda-task-title"><span class="crm-priority crm-priority-{{ t.priority|lower|replace('é','e') }}">{{ t.priority }}</span><strong>{{ t.title }}</strong></div>
+  <small>{{ t.client_name or 'Sem cliente' }}{% if t.pet_name %} · {{ t.pet_name }}{% endif %} · {{ t.task_type }}</small>{% if t.message %}<p>{{ t.message }}</p>{% endif %}</div>
+  <div class="crm-brief-task-side"><span>{{ t.deadline_label }}</span>{% if t.whatsapp_url %}<a class="small-button crm-whatsapp no-print" target="_blank" href="{{ t.whatsapp_url }}">WhatsApp</a>{% endif %}<a class="small-button crm-secondary no-print" href="{{ url_for('crm.dashboard', status_tarefa='Pendente') }}#tarefas-crm">Abrir</a></div>
+</article>
+{% endmacro %}
+
+<section class="card crm-brief-section crm-brief-overdue"><div class="section-head"><div><h2>⚠️ Prioridade: tarefas atrasadas</h2><small>Resolva primeiro os contatos vencidos.</small></div><span class="pill">{{ overdue_tasks|length }}</span></div><div class="crm-brief-list">{% for t in overdue_tasks %}{{ task_row(t, true) }}{% else %}<p class="crm-empty-day">Nenhuma tarefa atrasada.</p>{% endfor %}</div></section>
+<section class="card crm-brief-section"><div class="section-head"><div><h2>Contatos programados para o dia</h2><small>Lista operacional da equipe.</small></div><span class="pill">{{ today_tasks|length }}</span></div><div class="crm-brief-list">{% for t in today_tasks %}{{ task_row(t) }}{% else %}<p class="crm-empty-day">Nenhum contato programado.</p>{% endfor %}</div></section>
+{% if undated_tasks %}<section class="card crm-brief-section"><div class="section-head"><div><h2>Tarefas sem prazo</h2><small>Revise e defina uma data de acompanhamento.</small></div><span class="pill">{{ undated_tasks|length }}</span></div><div class="crm-brief-list">{% for t in undated_tasks %}{{ task_row(t) }}{% endfor %}</div></section>{% endif %}
+{% endblock %}

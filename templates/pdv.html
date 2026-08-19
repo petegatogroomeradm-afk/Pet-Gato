@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block title %}PDV Premium{% endblock %}
+{% block page_title %}PDV Premium{% endblock %}
+{% block page_subtitle %}Venda rápida, carrinho inteligente e caixa integrado{% endblock %}
+{% block content %}
+<div class="pdv-premium" data-caixa-aberto="{{ '1' if caixa else '0' }}">
+  <section class="pdv-catalog card">
+    <div class="section-head">
+      <div><span class="eyebrow">CATÁLOGO</span><h2>Produtos</h2></div>
+      <span class="counter-pill"><strong id="catalog-count">{{ produtos|length }}</strong> disponíveis</span>
+    </div>
+
+    <div class="pdv-searchbar">
+      <span>🔎</span>
+      <input id="product-search" type="search" placeholder="Buscar por nome, código, marca ou categoria" autocomplete="off">
+      <button class="btn-icon" type="button" id="clear-search" title="Limpar busca">×</button>
+    </div>
+
+    <div class="category-strip" id="category-strip">
+      <button type="button" class="category-chip active" data-category="">Todos</button>
+      {% for categoria in produtos|map(attribute='category')|select|unique|sort %}
+      <button type="button" class="category-chip" data-category="{{ categoria|lower }}">{{ categoria }}</button>
+      {% endfor %}
+    </div>
+
+    <div class="product-grid" id="product-grid">
+      {% for p in produtos %}
+      <button type="button" class="product-card"
+        data-id="{{ p.id }}"
+        data-name="{{ p.name }}"
+        data-price="{{ p.sale_price or 0 }}"
+        data-stock="{{ p.quantity or 0 }}"
+        data-unit="{{ p.unit or 'un' }}"
+        data-category="{{ (p.category or 'Sem categoria')|lower }}"
+        data-search="{{ (p.name ~ ' ' ~ (p.sku or '') ~ ' ' ~ (p.barcode or '') ~ ' ' ~ (p.category or ''))|lower }}">
+        <span class="product-icon">🛍️</span>
+        <span class="product-info">
+          <strong>{{ p.name }}</strong>
+          <small>{{ p.category or 'Sem categoria' }}{% if p.barcode %} · {{ p.barcode }}{% endif %}</small>
+          <span class="product-meta"><b>R$ {{ '%.2f'|format(p.sale_price or 0) }}</b><em>{{ p.quantity or 0 }} {{ p.unit or 'un' }}</em></span>
+        </span>
+        <span class="add-badge">+</span>
+      </button>
+      {% else %}
+      <div class="empty-state">Nenhum produto disponível em estoque.</div>
+      {% endfor %}
+    </div>
+    <div class="empty-state hidden" id="no-products">Nenhum produto encontrado para esta busca.</div>
+  </section>
+
+  <section class="pdv-cart card">
+    <div class="section-head">
+      <div><span class="eyebrow">VENDA ATUAL</span><h2>Carrinho</h2></div>
+      <button type="button" class="text-button" id="clear-cart">Limpar</button>
+    </div>
+
+    {% if not caixa %}<div class="alert warning">⚠️ Abra o caixa para concluir vendas. Você ainda pode montar o carrinho.</div>{% endif %}
+
+    <form method="post" action="{{ url_for('pdv.vender') }}" id="pdv-form">
+      <label class="field-label">Cliente
+        <select name="client_id" class="premium-input">
+          <option value="">Consumidor final</option>
+          {% for c in clientes %}<option value="{{ c.id }}">{{ c.nome }}{% if c.telefone %} · {{ c.telefone }}{% endif %}</option>{% endfor %}
+        </select>
+      </label>
+
+      <div id="cart-empty" class="cart-empty"><span>🛒</span><strong>Carrinho vazio</strong><small>Clique em um produto para adicionar.</small></div>
+      <div id="sale-items" class="cart-list"></div>
+
+      <div class="summary-box">
+        <div><span>Subtotal</span><strong id="subtotal">R$ 0,00</strong></div>
+        <label><span>Desconto</span><span class="money-field">R$ <input name="discount_amount" id="discount" type="number" step="0.01" min="0" value="0"></span></label>
+        <div class="grand-total"><span>Total</span><strong id="grand-total">R$ 0,00</strong></div>
+      </div>
+
+      <div class="payment-panel">
+        <div class="section-mini-head"><h3>Pagamento</h3><button class="text-button" type="button" id="add-payment">+ Dividir</button></div>
+        <div id="payments">
+          <div class="payment-row">
+            <select name="payment_method[]" class="premium-input"><option>PIX</option><option>Dinheiro</option><option>Débito</option><option>Crédito</option><option>Voucher</option></select>
+            <input name="payment_amount[]" class="premium-input payment-amount" type="number" step="0.01" min="0" placeholder="Valor">
+          </div>
+        </div>
+        <div class="payment-balance"><span>Falta pagar</span><strong id="payment-balance">R$ 0,00</strong></div>
+      </div>
+
+      <label class="field-label">Observações<textarea class="premium-input" name="notes" rows="2" placeholder="Informações adicionais da venda"></textarea></label>
+      <button class="finish-sale" {% if not caixa %}disabled{% endif %}><span>Finalizar venda</span><strong id="finish-total">R$ 0,00</strong></button>
+    </form>
+  </section>
+
+  <aside class="pdv-side">
+    <section class="card cash-card">
+      <div class="section-head"><div><span class="eyebrow">CAIXA</span><h2>{{ 'Aberto' if caixa else 'Fechado' }}</h2></div><span class="cash-status {{ 'open' if caixa else 'closed' }}">{{ '● Operando' if caixa else '● Fechado' }}</span></div>
+      {% if not caixa %}
+      <form method="post" action="{{ url_for('pdv.abrir') }}" class="stack-form">
+        <label class="field-label">Valor inicial<input class="premium-input" name="opening_amount" type="number" step="0.01" value="0"></label>
+        <label class="field-label">Observações<textarea class="premium-input" name="notes" rows="2"></textarea></label>
+        <button class="btn primary large">Abrir caixa</button>
+      </form>
+      {% else %}
+      <div class="cash-metrics">
+        <div><span>Valor inicial</span><strong>R$ {{ '%.2f'|format(caixa.opening_amount or 0) }}</strong></div>
+        <div><span>Vendido hoje</span><strong>R$ {{ '%.2f'|format(resumo.total_vendido or 0) }}</strong></div>
+        <div><span>Dinheiro esperado</span><strong>R$ {{ '%.2f'|format(resumo.esperado or 0) }}</strong></div>
+        <div><span>Responsável</span><strong>{{ caixa.opened_by }}</strong></div>
+      </div>
+      <details class="cash-details"><summary>Movimentar caixa</summary>
+        <form method="post" action="{{ url_for('pdv.movimentar') }}" class="stack-form compact">
+          <select class="premium-input" name="movement_type"><option>Sangria</option><option>Suprimento</option></select>
+          <input class="premium-input" name="amount" type="number" step="0.01" placeholder="Valor">
+          <input class="premium-input" name="description" placeholder="Motivo">
+          <button class="btn secondary">Registrar</button>
+        </form>
+      </details>
+      <details class="cash-details danger-zone"><summary>Fechar caixa</summary>
+        <form method="post" action="{{ url_for('pdv.fechar') }}" class="stack-form compact">
+          <input class="premium-input" name="counted_amount" type="number" step="0.01" required placeholder="Dinheiro contado">
+          <textarea class="premium-input" name="notes" rows="2" placeholder="Observações"></textarea>
+          <button class="btn danger">Fechar caixa</button>
+        </form>
+      </details>
+      {% endif %}
+    </section>
+
+    <section class="card recent-sales">
+      <div class="section-head"><div><span class="eyebrow">HISTÓRICO</span><h2>Últimas vendas</h2></div></div>
+      <div class="sales-list">
+        {% for v in vendas[:8] %}
+        <div class="sale-row">
+          <span><strong>{{ v.sale_number }}</strong><small>{{ v.cliente_nome or 'Consumidor final' }}</small></span>
+          <span class="sale-row-actions">
+            <span><strong>R$ {{ '%.2f'|format(v.total_amount or 0) }}</strong><small>{{ v.status }}</small></span>
+            <a class="sale-action" href="{{ url_for('pdv.detalhe_venda',sale_id=v.id) }}" title="Ver detalhes">👁️</a>
+            <a class="sale-action" href="{{ url_for('pdv.comprovante',sale_id=v.id) }}" target="_blank" title="Imprimir comprovante">🖨️</a>
+          </span>
+        </div>
+        {% else %}<div class="empty-state small">Nenhuma venda registrada.</div>{% endfor %}
+      </div>
+    </section>
+  </aside>
+</div>
+
+<template id="cart-item-template">
+  <div class="cart-item">
+    <input type="hidden" name="product_id[]" class="product-id">
+    <input type="hidden" name="unit_price[]" class="price-input">
+    <div class="cart-item-main"><span class="cart-icon">🛍️</span><span><strong class="item-name"></strong><small class="item-stock"></small></span></div>
+    <div class="qty-control"><button type="button" class="qty-minus">−</button><input name="quantity[]" class="qty" type="number" min="0.01" step="0.01" value="1"><button type="button" class="qty-plus">+</button></div>
+    <div class="cart-price"><strong class="line-total">R$ 0,00</strong><small class="unit-price"></small></div>
+    <button type="button" class="remove-item" title="Remover">×</button>
+  </div>
+</template>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.pdv-premium{display:grid;grid-template-columns:minmax(360px,1.1fr) minmax(420px,1fr) minmax(290px,.68fr);gap:18px;align-items:start}.pdv-premium .card{border:1px solid rgba(255,255,255,.08);box-shadow:0 14px 40px rgba(0,0,0,.12)}.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.section-head h2{margin:2px 0 0;font-size:1.25rem}.eyebrow{font-size:.68rem;letter-spacing:.12em;font-weight:800;color:var(--primary,#8b5cf6)}.counter-pill,.cash-status{font-size:.74rem;padding:6px 10px;border-radius:999px;background:rgba(139,92,246,.12)}.pdv-searchbar{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:9px;padding:0 12px;border:1px solid var(--border,#353247);border-radius:13px;margin-bottom:12px;background:rgba(255,255,255,.035)}.pdv-searchbar input{border:0!important;background:transparent!important;padding:13px 0!important;outline:0;color:inherit;width:100%}.category-strip{display:flex;gap:8px;overflow:auto;padding-bottom:10px}.category-chip{border:1px solid var(--border,#353247);background:transparent;color:inherit;padding:8px 12px;border-radius:999px;white-space:nowrap;cursor:pointer}.category-chip.active{background:var(--primary,#7c3aed);border-color:var(--primary,#7c3aed);color:white}.product-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-height:650px;overflow:auto;padding-right:3px}.product-card{position:relative;display:flex;text-align:left;gap:10px;padding:13px;border:1px solid var(--border,#353247);border-radius:14px;background:rgba(255,255,255,.025);color:inherit;cursor:pointer;transition:.18s}.product-card:hover{transform:translateY(-2px);border-color:var(--primary,#8b5cf6);background:rgba(139,92,246,.08)}.product-icon,.cart-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(139,92,246,.12);font-size:1.25rem;flex:none}.product-info{min-width:0;display:flex;flex-direction:column;gap:4px}.product-info strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.product-info small,.cart-item small,.sale-row small{opacity:.66}.product-meta{display:flex;gap:8px;align-items:center;justify-content:space-between}.product-meta b{color:#a78bfa}.product-meta em{font-size:.68rem;font-style:normal}.add-badge{position:absolute;right:9px;top:8px;width:23px;height:23px;border-radius:50%;display:grid;place-items:center;background:var(--primary,#7c3aed);color:#fff}.field-label{display:flex;flex-direction:column;gap:6px;font-size:.78rem;font-weight:700;margin-bottom:12px}.premium-input{width:100%;box-sizing:border-box;padding:11px 12px;border-radius:10px;border:1px solid var(--border,#353247);background:rgba(255,255,255,.045);color:inherit}.cart-empty{min-height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;opacity:.62}.cart-empty span{font-size:2.4rem}.cart-list{display:flex;flex-direction:column;gap:8px;max-height:335px;overflow:auto}.cart-item{display:grid;grid-template-columns:minmax(145px,1fr) auto auto auto;gap:10px;align-items:center;padding:10px;border:1px solid var(--border,#353247);border-radius:12px}.cart-item-main{display:flex;align-items:center;gap:9px;min-width:0}.cart-item-main>span:last-child{min-width:0}.item-name{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qty-control{display:flex;align-items:center;border:1px solid var(--border,#353247);border-radius:9px;overflow:hidden}.qty-control button{width:29px;height:32px;border:0;background:rgba(255,255,255,.05);color:inherit;cursor:pointer}.qty-control input{width:47px;border:0;background:transparent;color:inherit;text-align:center}.cart-price{text-align:right;min-width:82px}.cart-price small{display:block}.remove-item{border:0;background:transparent;color:#f87171;font-size:1.3rem;cursor:pointer}.summary-box{margin:14px 0;padding:14px;border-radius:13px;background:rgba(139,92,246,.07)}.summary-box>div,.summary-box>label{display:flex;align-items:center;justify-content:space-between;padding:6px 0;margin:0}.money-field{display:flex;align-items:center;gap:5px}.money-field input{width:90px;padding:6px 8px;border-radius:7px;border:1px solid var(--border,#353247);background:transparent;color:inherit;text-align:right}.grand-total{margin-top:6px;padding-top:12px!important;border-top:1px solid var(--border,#353247);font-size:1.28rem}.payment-panel{padding:13px;border:1px solid var(--border,#353247);border-radius:13px;margin-bottom:12px}.section-mini-head{display:flex;justify-content:space-between;align-items:center}.section-mini-head h3{margin:0 0 10px}.payment-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}.payment-balance{display:flex;justify-content:space-between;font-size:.78rem;padding-top:4px}.text-button{border:0;background:transparent;color:#a78bfa;cursor:pointer;font-weight:700}.finish-sale{width:100%;display:flex;justify-content:space-between;align-items:center;border:0;border-radius:13px;padding:15px 17px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-size:1rem;font-weight:800;cursor:pointer}.finish-sale:disabled{filter:grayscale(1);opacity:.45;cursor:not-allowed}.pdv-side{display:flex;flex-direction:column;gap:18px}.cash-status.open{color:#34d399;background:rgba(52,211,153,.12)}.cash-status.closed{color:#f87171;background:rgba(248,113,113,.12)}.cash-metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px}.cash-metrics>div{padding:11px;border-radius:11px;background:rgba(255,255,255,.035)}.cash-metrics span,.cash-metrics strong{display:block}.cash-metrics span{font-size:.7rem;opacity:.67;margin-bottom:4px}.cash-details{border-top:1px solid var(--border,#353247);margin-top:12px;padding-top:11px}.cash-details summary{cursor:pointer;font-weight:700}.stack-form{display:flex;flex-direction:column;gap:9px}.stack-form.compact{margin-top:10px}.btn.large{padding:12px}.sale-row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--border,#353247)}.sale-row>span:last-child{text-align:right}.sale-row-actions{display:flex;align-items:center;gap:8px}.sale-action{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;text-decoration:none;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.22)}.sale-action:hover{background:rgba(139,92,246,.24)}.sale-row strong,.sale-row small{display:block}.hidden{display:none!important}.empty-state.small{min-height:auto;padding:20px}.btn-icon{border:0;background:transparent;color:inherit;cursor:pointer;font-size:1.1rem}@media(max-width:1350px){.pdv-premium{grid-template-columns:minmax(350px,1fr) minmax(420px,1fr)}.pdv-side{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}}@media(max-width:900px){.pdv-premium{grid-template-columns:1fr}.pdv-side{grid-column:auto;display:flex}.product-grid{grid-template-columns:1fr 1fr}.cart-item{grid-template-columns:1fr auto}.cart-price{grid-column:1/2;text-align:left}.remove-item{grid-column:2;grid-row:2}}@media(max-width:560px){.product-grid{grid-template-columns:1fr}.payment-row,.cash-metrics{grid-template-columns:1fr}.cart-item{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+{% block extra_js %}<script src="{{ url_for('static',filename='js/pdv.js') }}"></script>{% endblock %}

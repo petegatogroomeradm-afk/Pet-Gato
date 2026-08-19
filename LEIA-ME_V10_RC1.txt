@@ -1,0 +1,17 @@
+PET & GATÔ BUSINESS — V10 RC1
+
+Principais correções desta consolidação:
+- Auditoria compatível com SQLite e PostgreSQL nas consultas por data.
+- Remoção da dependência de CAST(... AS TIMESTAMP) / CURRENT_DATE na tela de auditoria.
+- Testes de versão passam a usar a versão centralizada do arquivo VERSION.
+- Base consolidada sobre a V10 Beta 10 enviada pelo usuário.
+
+Instalação:
+1. Faça backup da pasta atual e do banco.
+2. Substitua os arquivos do sistema pelos deste pacote.
+3. Preserve o arquivo .env e a pasta instance caso use SQLite.
+4. Execute: py scripts\migrate_database.py
+5. Execute: py scripts\check_db_compat.py
+6. Inicie: py main.py
+
+Versão: 10.0.0-rc.1

@@ -51,15 +51,28 @@ def obter_ficha_pet(pet_id):
         (pet_id,),
         one=True,
     )
-    proximo_agendamento = query_db(
+    proximos_agendamentos = query_db(
         """
-        SELECT data_agendamento, horario, servico, status
+        SELECT id, data_agendamento, horario, servico, status, valor
         FROM appointments
         WHERE pet_id = ? AND data_agendamento >= ?
           AND status NOT IN ('Cancelado', 'Finalizado', 'Concluído')
-        ORDER BY data_agendamento ASC, horario ASC LIMIT 1
+        ORDER BY data_agendamento ASC, horario ASC LIMIT 8
         """,
         (pet_id, date.today().isoformat()),
+    )
+    proximo_agendamento = proximos_agendamentos[0] if proximos_agendamentos else None
+
+    servico_favorito = query_db(
+        """
+        SELECT servico, COUNT(*) AS quantidade, COALESCE(SUM(valor), 0) AS total
+        FROM grooming_services
+        WHERE pet_id = ? AND COALESCE(servico, '') <> ''
+        GROUP BY servico
+        ORDER BY quantidade DESC, total DESC
+        LIMIT 1
+        """,
+        (pet_id,),
         one=True,
     )
     historico = query_db(
@@ -258,6 +271,8 @@ def obter_ficha_pet(pet_id):
         "idade_calculada": _idade_detalhada(pet["data_nascimento"]),
         "financeiro": financeiro,
         "proximo_agendamento": proximo_agendamento,
+        "proximos_agendamentos": proximos_agendamentos,
+        "servico_favorito": servico_favorito,
         "historico": historico,
         "vacinas": vacinas,
         "alertas_vacina": alertas_vacina,

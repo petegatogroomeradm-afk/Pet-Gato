@@ -1,0 +1,12 @@
+PET & GATÔ BUSINESS — V6.6.1 AGENDA OPERACIONAL
+
+Principais melhorias:
+- Painel operacional com aguardando aprovação, na loja, em atendimento, prontos e Táxi Dog.
+- Check-in do pet pela agenda.
+- Ações rápidas: chegou, iniciar, pronto, entregue e cancelar.
+- Registro automático dos horários de chegada, pronto e entrega.
+- Cartões da agenda com tutor, telefone, duração, transporte e indicação de encaixe.
+- Modal de detalhes e ações rápidas ao clicar no agendamento.
+- Compatível com SQLite e PostgreSQL.
+
+Instalação: copiar os arquivos sobre a pasta atual preservando a pasta instance.

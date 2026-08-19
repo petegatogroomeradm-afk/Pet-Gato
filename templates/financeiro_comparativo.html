@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Comparativo Financeiro{% endblock %}
+{% block page_title %}Comparativo Financeiro{% endblock %}
+{% block page_subtitle %}Receitas, despesas, lucro e tendências dos últimos meses{% endblock %}
+{% block content %}
+
+<div class="actions-row page-actions">
+  <a class="small-button" href="{{ url_for('financeiro.financeiro') }}">← Financeiro</a>
+  <a class="small-button" href="{{ url_for('financeiro.comparativo_financeiro', meses=meses, ate=ate_anterior) }}">← Período anterior</a>
+  <a class="small-button" href="{{ url_for('financeiro.comparativo_financeiro', meses=meses, ate=ate_proximo) }}">Período seguinte →</a>
+  <button class="small-button" onclick="window.print()">🖨️ Imprimir</button>
+</div>
+
+<section class="card">
+  <form method="get" class="form-row">
+    <label>Quantidade de meses
+      <select name="meses">
+        {% for qtd in [3,6,12,18,24] %}<option value="{{ qtd }}" {{ 'selected' if meses==qtd }}>{{ qtd }} meses</option>{% endfor %}
+      </select>
+    </label>
+    <label>Encerrar período em
+      <input type="month" name="ate" value="{{ ate }}">
+    </label>
+    <button>Atualizar comparativo</button>
+  </form>
+  <p class="muted">Período analisado: {{ periodo_inicio }} até {{ periodo_fim }}</p>
+</section>
+
+<section class="finance-kpis">
+  <article><span>Receita acumulada</span><strong>R$ {{ '%.2f'|format(total_receita) }}</strong><small>Média mensal: R$ {{ '%.2f'|format(media_receita) }}</small></article>
+  <article><span>Despesas acumuladas</span><strong>R$ {{ '%.2f'|format(total_despesas) }}</strong><small>{{ meses }} meses analisados</small></article>
+  <article class="{{ 'positive' if total_resultado >= 0 else 'negative' }}"><span>Resultado acumulado</span><strong>R$ {{ '%.2f'|format(total_resultado) }}</strong><small>Média mensal: R$ {{ '%.2f'|format(media_resultado) }}</small></article>
+  <article class="positive"><span>Melhor mês</span><strong>{{ melhor_mes.month if melhor_mes else '-' }}</strong><small>Resultado: R$ {{ '%.2f'|format(melhor_mes.profit if melhor_mes else 0) }}</small></article>
+  <article class="negative"><span>Menor resultado</span><strong>{{ pior_mes.month if pior_mes else '-' }}</strong><small>Resultado: R$ {{ '%.2f'|format(pior_mes.profit if pior_mes else 0) }}</small></article>
+</section>
+
+<section class="finance-grid">
+  <article class="card finance-chart-card">
+    <header class="section-header"><div><h2>Evolução financeira</h2><p>Receitas, despesas e resultado mensal</p></div></header>
+    <canvas id="comparison-chart" height="120"></canvas>
+  </article>
+  <article class="card finance-chart-card">
+    <header class="section-header"><div><h2>Margem mensal</h2><p>Percentual de lucro sobre a receita</p></div></header>
+    <canvas id="margin-chart" height="120"></canvas>
+  </article>
+</section>
+
+<section class="card">
+  <header class="section-header"><div><h2>Comparação mês a mês</h2><p>Valores realizados e compromissos em aberto</p></div></header>
+  <div class="table-responsive">
+    <table>
+      <thead><tr><th>Mês</th><th>Receitas</th><th>Variação</th><th>Despesas</th><th>Resultado</th><th>Margem</th><th>A receber</th><th>A pagar</th><th>Vencido</th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td><strong>{{ r.month }}</strong></td>
+          <td>R$ {{ '%.2f'|format(r.revenue) }}</td>
+          <td>{% if r.revenue_change is none %}—{% else %}<span class="badge {{ 'success' if r.revenue_change >= 0 else 'danger' }}">{{ '%+.1f'|format(r.revenue_change) }}%</span>{% endif %}</td>
+          <td>R$ {{ '%.2f'|format(r.expenses) }}</td>
+          <td class="{{ 'positive' if r.profit >= 0 else 'negative' }}"><strong>R$ {{ '%.2f'|format(r.profit) }}</strong></td>
+          <td>{{ '%.1f'|format(r.margin) }}%</td>
+          <td>R$ {{ '%.2f'|format(r.receivable) }}</td>
+          <td>R$ {{ '%.2f'|format(r.payable) }}</td>
+          <td>R$ {{ '%.2f'|format(r.overdue) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <header class="section-header"><div><h2>Maiores categorias de despesas</h2><p>Total pago no período selecionado</p></div></header>
+  {% if categorias %}
+    {% for c in categorias %}
+      <div class="dre-row"><span>{{ c.category }}</span><strong>R$ {{ '%.2f'|format(c.amount) }}</strong></div>
+    {% endfor %}
+  {% else %}<p class="empty-state">Nenhuma despesa paga no período.</p>{% endif %}
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const comparison = {{ chart_json|safe }};
+new Chart(document.getElementById('comparison-chart'), {
+  type: 'bar',
+  data: {labels: comparison.labels, datasets: [
+    {label: 'Receitas', data: comparison.revenue},
+    {label: 'Despesas', data: comparison.expenses},
+    {label: 'Resultado', data: comparison.profit, type: 'line'}
+  ]},
+  options: {responsive: true, interaction: {mode: 'index', intersect: false}}
+});
+new Chart(document.getElementById('margin-chart'), {
+  type: 'line',
+  data: {labels: comparison.labels, datasets: [{label: 'Margem (%)', data: comparison.margin, tension: .25}]},
+  options: {responsive: true, scales: {y: {ticks: {callback: value => value + '%'}}}}
+});
+</script>
+{% endblock %}

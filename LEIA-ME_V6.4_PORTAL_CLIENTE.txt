@@ -1,0 +1,40 @@
+PET & GATÔ BUSINESS V6.4 — PORTAL DO CLIENTE
+
+NOVO ACESSO PÚBLICO
+- Página inicial: /cliente
+- Cadastro: /cliente/cadastro
+- Login: /cliente/login
+- Painel: /cliente/painel
+
+RECURSOS DO CLIENTE
+- Criar conta com nome, e-mail, telefone, WhatsApp e endereço.
+- Entrar com e-mail e senha.
+- Cadastrar um ou vários pets.
+- Informar dados importantes: raça, porte, peso, alergias, medicamentos e temperamento.
+- Solicitar serviço, data e horário.
+- Solicitar Táxi Dog.
+- Acompanhar o status: Aguardando aprovação, Agendado ou Recusado.
+- Visualizar a resposta da loja.
+
+RECURSOS DA EQUIPE
+- Novo menu: Agenda > Solicitações Online.
+- Aprovar uma solicitação e colocá-la na agenda.
+- Recusar informando o motivo.
+- Verificação de conflito de horário antes da aprovação.
+
+BANCO DE DADOS
+O init_db cria automaticamente a tabela client_portal_accounts e adiciona as colunas necessárias em appointments.
+Compatível com SQLite e PostgreSQL.
+
+FLUXO RECOMENDADO DE TESTE
+1. Acesse http://127.0.0.1:5000/cliente
+2. Crie uma conta de cliente.
+3. Cadastre um pet.
+4. Solicite um horário.
+5. Saia do portal e entre como administrador ou recepção.
+6. Abra Agenda > Solicitações Online.
+7. Aprove ou recuse.
+8. Entre novamente no portal do cliente e confirme o novo status.
+
+IMPORTANTE
+A solicitação não entra como confirmada automaticamente. O status inicial é "Aguardando aprovação".

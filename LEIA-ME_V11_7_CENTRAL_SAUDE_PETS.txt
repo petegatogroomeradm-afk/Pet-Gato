@@ -1,0 +1,15 @@
+PET & GATÔ BUSINESS 11.7.0
+
+CENTRAL DE SAÚDE DOS PETS
+- Painel preventivo com vacinas, vermífugos e antipulgas.
+- Alertas vencidos, hoje, próximos 7 e 30 dias.
+- Lista de pets sem vacina cadastrada.
+- Destaque para alergias e medicamentos.
+- Exportação CSV compatível com Excel.
+- Atalho na tela Pets.
+
+Após atualizar, execute:
+py scripts\migrate_database.py
+py scripts\check_db_compat.py
+py scripts\check_release.py
+py main.py

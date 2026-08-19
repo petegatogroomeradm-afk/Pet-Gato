@@ -1,0 +1,23 @@
+PET & GATÔ BUSINESS — V10.0.0 BETA 6
+
+MIGRAÇÃO CENTRALIZADA SQLITE / POSTGRESQL
+
+1. Pare o sistema.
+2. Faça a substituição dos arquivos desta versão.
+3. Execute:
+
+   py scripts\migrate_database.py
+
+O comando usa DATABASE_URL quando ela estiver definida no Windows ou no arquivo .env.
+Sem DATABASE_URL, atualiza o SQLite local.
+
+Para forçar o SQLite:
+
+   py scripts\migrate_database.py --sqlite
+
+Depois confira:
+
+   py scripts\check_db_compat.py
+
+O SQLite recebe backup automático em backups\database antes da migração.
+Nenhuma tabela ou registro é apagado.

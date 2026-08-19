@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Central do Sistema{% endblock %}
+{% block content %}
+<div class="page-header enterprise-header">
+  <div><span class="eyebrow">SAÚDE DO SISTEMA</span><h1>Central do Sistema e Integrações</h1><p>Banco de dados, backups e integrações operacionais reunidos em uma única tela.</p></div>
+  <form method="post" action="{{ url_for('reprocessar_integracoes_pendentes') }}"><button class="btn btn-primary" type="submit" {% if total_pendencias == 0 %}disabled{% endif %}>Reprocessar pendências</button></form>
+</div>
+
+<div class="system-status-grid">
+  <article class="service-card {{ 'service-ok' if banco_ok else 'service-error' }}"><div class="service-icon">🗄️</div><div><span>Banco de dados</span><strong>{{ banco_tipo }}</strong><small>{{ banco_latencia_ms }} ms · {{ 'Conectado' if banco_ok else 'Falha na conexão' }}</small></div><b>{{ 'ONLINE' if banco_ok else 'ERRO' }}</b></article>
+  <article class="service-card {{ 'service-ok' if backup_ok else 'service-warning' }}"><div class="service-icon">💾</div><div><span>Backup</span><strong>{{ 'Localizado' if backup_ok else 'Atenção' }}</strong><small>Último: {{ ultimo_backup }}</small></div><b>{{ 'OK' if backup_ok else 'VERIFICAR' }}</b></article>
+  <article class="service-card {{ 'service-ok' if agenda_pendente == 0 else 'service-warning' }}"><div class="service-icon">📅</div><div><span>Agenda</span><strong>{{ 'Sincronizada' if agenda_pendente == 0 else agenda_pendente ~ ' divergência(s)' }}</strong><small>Status alinhado ao Banho & Tosa</small></div><b>{{ 'OK' if agenda_pendente == 0 else 'PENDENTE' }}</b></article>
+  <article class="service-card {{ 'service-ok' if financeiro_pendente == 0 else 'service-warning' }}"><div class="service-icon">💰</div><div><span>Financeiro</span><strong>{{ 'Sincronizado' if financeiro_pendente == 0 else financeiro_pendente ~ ' pendente(s)' }}</strong><small>Receitas do Banho e Tosa</small></div><b>{{ 'OK' if financeiro_pendente == 0 else 'PENDENTE' }}</b></article>
+  <article class="service-card {{ 'service-ok' if estoque_pendente == 0 else 'service-warning' }}"><div class="service-icon">📦</div><div><span>Estoque</span><strong>{{ 'Sincronizado' if estoque_pendente == 0 else estoque_pendente ~ ' pendente(s)' }}</strong><small>Baixas automáticas de consumo</small></div><b>{{ 'OK' if estoque_pendente == 0 else 'PENDENTE' }}</b></article>
+  <article class="service-card {{ 'service-ok' if comissao_pendente == 0 else 'service-warning' }}"><div class="service-icon">👥</div><div><span>Comissões</span><strong>{{ 'Sincronizadas' if comissao_pendente == 0 else comissao_pendente ~ ' pendente(s)' }}</strong><small>Cálculo por profissional</small></div><b>{{ 'OK' if comissao_pendente == 0 else 'PENDENTE' }}</b></article>
+  <article class="service-card {{ 'service-ok' if eventos_erro_24h == 0 else 'service-error' }}"><div class="service-icon">⚙️</div><div><span>Eventos</span><strong>{{ eventos_24h }} nas últimas 24h</strong><small>{{ eventos_erro_24h }} evento(s) com erro</small></div><b>{{ 'OK' if eventos_erro_24h == 0 else 'ATENÇÃO' }}</b></article>
+</div>
+
+{% if not banco_ok and banco_erro %}<div class="system-alert danger"><strong>Falha no banco:</strong> {{ banco_erro }}</div>{% endif %}
+
+<section class="panel-card">
+  <div class="panel-header"><div><h2>Pendências operacionais</h2><p>A verificação não duplica lançamentos já existentes.</p></div><span class="status-badge {{ 'success' if total_pendencias == 0 else 'warning' }}">{{ total_pendencias }} pendência(s)</span></div>
+  <div class="table-responsive"><table class="table"><thead><tr><th>Data</th><th>Pet / Cliente</th><th>Serviço</th><th>Financeiro</th><th>Estoque</th><th>Comissão</th><th>Ação</th></tr></thead><tbody>
+  {% for item in pendencias %}<tr><td>{{ item.data or '-' }}</td><td><strong>{{ item.pet_nome or 'Pet' }}</strong><br><small>{{ item.cliente_nome or '-' }}</small></td><td>{{ item.servico or '-' }}<br><small>R$ {{ '%.2f'|format(item.valor or 0)|replace('.', ',') }}</small></td><td><span class="status-badge {{ 'success' if item.financeiro_ok else 'warning' }}">{{ 'OK' if item.financeiro_ok else 'Pendente' }}</span></td><td><span class="status-badge {{ 'success' if item.estoque_ok else 'warning' }}">{{ 'OK' if item.estoque_ok else 'Pendente' }}</span></td><td><span class="status-badge {{ 'success' if item.comissao_ok else 'warning' }}">{{ 'OK' if item.comissao_ok else 'Pendente' }}</span></td><td><form method="post" action="{{ url_for('reprocessar_integracao', atendimento_id=item.id) }}"><button class="btn btn-sm btn-secondary" type="submit">Verificar</button></form></td></tr>
+  {% else %}<tr><td colspan="7" class="empty-state">✅ Nenhuma pendência encontrada.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+
+<section id="backups" class="panel-card system-admin-card">
+  <div class="panel-header">
+    <div><h2>Backup e restauração</h2><p>Crie cópias locais do SQLite e restaure apenas backups conhecidos do sistema.</p></div>
+    <form method="post" action="{{ url_for('criar_backup_sistema') }}"><button class="btn btn-primary" type="submit">Criar backup agora</button></form>
+  </div>
+  <div class="system-health-summary">
+    <div><span>Espaço livre</span><strong>{{ disco_livre_gb }} GB</strong><small>de {{ disco_total_gb }} GB no volume</small></div>
+    <div><span>Log de erros</span><strong>{{ error_log_kb }} KB</strong><small>Arquivo logs/errors.log</small></div>
+    <div><span>Último backup</span><strong>{{ ultimo_backup }}</strong><small>{{ 'Proteção localizada' if backup_ok else 'Nenhum backup detectado' }}</small></div>
+  </div>
+  <div class="table-responsive"><table class="table"><thead><tr><th>Arquivo</th><th>Data</th><th>Tamanho</th><th>Ações</th></tr></thead><tbody>
+  {% for item in backups_recentes %}
+    <tr><td><strong>{{ item.nome }}</strong></td><td>{{ item.data }}</td><td>{{ item.tamanho_mb }} MB</td><td class="backup-actions">
+      <a class="btn btn-sm btn-secondary" href="{{ url_for('baixar_backup_sistema', nome=item.nome) }}">Baixar</a>
+      {% if session.get('role') == 'superadmin' %}
+      <form method="post" action="{{ url_for('restaurar_backup_sistema', nome=item.nome) }}" onsubmit="return confirm('Restaurar este backup substituirá o banco SQLite atual. Um backup de segurança será criado antes. Continuar?')">
+        <input type="hidden" name="confirmacao" value="RESTAURAR"><button class="btn btn-sm btn-danger" type="submit">Restaurar</button>
+      </form>
+      {% endif %}
+    </td></tr>
+  {% else %}<tr><td colspan="4" class="empty-state">Nenhum backup SQLite disponível.</td></tr>{% endfor %}
+  </tbody></table></div>
+  <div class="system-note"><strong>PostgreSQL:</strong> para ambientes em nuvem, mantenha também o backup automático do provedor. A restauração desta tela é limitada ao SQLite local.</div>
+</section>
+
+<section class="panel-card system-admin-card">
+  <div class="panel-header"><div><h2>Diagnóstico técnico</h2><p>Resumo para suporte e implantação.</p></div></div>
+  <div class="diagnostic-grid">
+    <div><span>Versão</span><strong>{{ app_version }}</strong></div>
+    <div><span>Banco</span><strong>{{ banco_tipo }}</strong><small>{{ banco_latencia_ms }} ms</small></div>
+    <div><span>Integrações</span><strong>{{ status_geral }}</strong><small>{{ total_pendencias }} pendência(s)</small></div>
+    <div><span>Eventos com erro / 24h</span><strong>{{ eventos_erro_24h }}</strong><small>{{ eventos_24h }} evento(s) processados</small></div>
+  </div>
+  <div class="diagnostic-actions">
+    <a class="btn btn-secondary" href="{{ url_for('health') }}" target="_blank">Abrir /health</a>
+    <a class="btn btn-secondary" href="{{ url_for('readiness') }}" target="_blank">Abrir /readiness</a>
+    <a class="btn btn-secondary" href="{{ url_for('auditoria.painel') }}">Abrir auditoria</a>
+    <a class="btn btn-secondary" href="{{ url_for('configuracoes.configuracoes') }}">Configurações</a>
+  </div>
+</section>
+
+<section class="panel-card">
+  <div class="panel-header"><div><h2>Eventos recentes</h2><p>Histórico técnico das integrações executadas.</p></div></div>
+  <div class="event-timeline">{% for evento in eventos %}<article><span class="event-dot {{ 'error' if evento.status == 'Erro' else 'ok' }}"></span><div><strong>{{ evento.event_name }}</strong><small>{{ evento.created_at }}</small></div><span class="status-badge {{ 'danger' if evento.status == 'Erro' else 'success' }}">{{ evento.status }}</span></article>{% else %}<p class="empty-state">Nenhum evento registrado.</p>{% endfor %}</div>
+</section>
+{% endblock %}

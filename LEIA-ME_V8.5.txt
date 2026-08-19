@@ -1,0 +1,17 @@
+PET & GATÔ BUSINESS V8.5
+Sprint 8.5 - Calendário Financeiro e Alertas de Vencimento
+
+Novidades:
+- calendário mensal de contas a pagar e receber;
+- filtros por conta e tipo de lançamento;
+- totais diários de entradas e saídas;
+- destaque para hoje, atrasos e contas quitadas;
+- alertas de vencimentos dos próximos 7 dias;
+- atalhos para editar e marcar como pago;
+- impressão do calendário financeiro.
+
+Instalação:
+1. Pare o sistema.
+2. Extraia este pacote sobre a pasta petegato_business_v3.
+3. Confirme a substituição dos arquivos.
+4. Apague as pastas __pycache__ e execute py main.py.

@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from pathlib import Path
+from datetime import datetime
 from uuid import uuid4
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for, session
 from werkzeug.utils import secure_filename
 
 from database import execute_db, insert_db, now_iso, query_db
 from services.historico_service import registrar_historico
+from modules.comunicacao import preparar_whatsapp_banho
 from services.financeiro_service import lancar_receita_banho_tosa
 from services.estoque_service import baixar_estoque_banho_tosa
 from services.event_bus import publish
@@ -16,6 +18,8 @@ from services.banho_service import (
     atualizar_status_atendimento, lancar_comissao,
 )
 
+from services.appointment_grooming_sync import sincronizar_agendamentos_existentes
+from services.fechamento_service import resumo_fechamento, executar_fechamento, reprocessar_integracoes
 banho_tosa_bp=Blueprint("banho_tosa",__name__)
 BASE_DIR=Path(__file__).resolve().parents[1]
 PHOTO_DIR=BASE_DIR/"static"/"uploads"/"atendimentos"
@@ -65,6 +69,7 @@ def banho_tosa():
         registrar_historico(atendimento_id,"Atendimento criado","Administrador")
         flash("Atendimento cadastrado com sucesso.","success"); return redirect(url_for("banho_tosa.banho_tosa"))
 
+    sincronizar_agendamentos_existentes()
     data_filtro=request.args.get("data","").strip(); status_filtro=request.args.get("status","").strip(); busca=request.args.get("busca","").strip()
     sql="""SELECT g.*,c.nome AS cliente_nome,c.whatsapp,p.nome AS pet_nome,p.foto AS pet_foto,e.name AS funcionario_nome
         FROM grooming_services g LEFT JOIN clients c ON c.id=g.client_id LEFT JOIN pets p ON p.id=g.pet_id
@@ -74,7 +79,43 @@ def banho_tosa():
     if busca:
         termo=f"%{busca}%"; sql+=" AND (c.nome LIKE ? OR p.nome LIKE ? OR g.servico LIKE ?)"; params.extend([termo]*3)
     sql+=" ORDER BY g.data DESC,g.hora_entrada DESC,g.id DESC"
-    atendimentos=query_db(sql,tuple(params))
+    atendimentos=[dict(a) for a in query_db(sql,tuple(params))]
+
+    # Enriquecimento operacional sem alterar o banco: idade da etapa e alertas de SLA.
+    agora=datetime.now()
+    limites_sla={
+        "Agendado":60,"Aguardando coleta":45,"Em transporte":60,"Em atendimento":30,
+        "Banho iniciado":45,"Banho concluído":20,"Secagem":40,"Tosa iniciada":60,
+        "Tosa concluída":20,"Fotos":20,"Pagamento":20,"Em entrega":60,"Entregue":30,
+    }
+    ids=[a["id"] for a in atendimentos]
+    ultima_mudanca={}
+    if ids:
+        marks=",".join("?" for _ in ids)
+        historicos=query_db(f"""SELECT grooming_id,MAX(created_at) AS last_change
+            FROM grooming_history WHERE grooming_id IN ({marks})
+            AND COALESCE(action,event,'') LIKE 'Status alterado%' GROUP BY grooming_id""",tuple(ids))
+        ultima_mudanca={r["grooming_id"]:r["last_change"] for r in historicos}
+    sla_atrasados=0
+    tempos_operacao=[]
+    for a in atendimentos:
+        referencia=ultima_mudanca.get(a["id"]) or a.get("started_at") or a.get("created_at")
+        minutos=0
+        if referencia:
+            try:
+                inicio=datetime.fromisoformat(str(referencia).replace("Z","+00:00")).replace(tzinfo=None)
+                minutos=max(0,int((agora-inicio).total_seconds()//60))
+            except (ValueError,TypeError):
+                minutos=0
+        a["stage_minutes"]=minutos
+        a["stage_since"]=referencia or ""
+        limite=limites_sla.get(a.get("status"),0)
+        a["sla_limit"]=limite
+        a["sla_overdue"]=bool(limite and minutos>limite and a.get("status") not in ("Finalizado","Cancelado"))
+        if a["sla_overdue"]: sla_atrasados+=1
+        if a.get("started_at") and a.get("status") not in ("Finalizado","Cancelado"):
+            tempos_operacao.append(minutos)
+
     resumo=query_db("""SELECT COUNT(*) AS total,
         SUM(CASE WHEN status NOT IN ('Finalizado','Entregue','Cancelado') THEN 1 ELSE 0 END) AS em_andamento,
         SUM(CASE WHEN status='Finalizado' THEN 1 ELSE 0 END) AS finalizados,
@@ -85,12 +126,17 @@ def banho_tosa():
     colunas=[]
     for codigo,titulo,statuses in KANBAN_COLUNAS:
         colunas.append({"codigo":codigo,"titulo":titulo,"statuses":statuses,"items":[a for a in atendimentos if a["status"] in statuses]})
+    resumo=dict(resumo or {})
+    resumo["sla_atrasados"]=sla_atrasados
+    resumo["tempo_medio_operacao"]=round(sum(tempos_operacao)/len(tempos_operacao)) if tempos_operacao else 0
+    resumo["sem_profissional"]=sum(1 for a in atendimentos if not a.get("employee_id") and a.get("status") not in ("Finalizado","Cancelado"))
     return render_template("banho_tosa.html",clientes=query_db("SELECT id,nome FROM clients WHERE COALESCE(ativo,1)=1 ORDER BY nome"),
         pets=query_db("""SELECT p.id,p.nome,p.client_id,c.nome AS cliente_nome FROM pets p LEFT JOIN clients c ON c.id=p.client_id
             WHERE COALESCE(p.ativo,1)=1 ORDER BY p.nome"""),funcionarios=query_db("SELECT id,name,commission_rate FROM employees WHERE active=1 ORDER BY name"),
         produtos=query_db("SELECT id,name,quantity,unit FROM stock_products WHERE COALESCE(active,1)=1 ORDER BY name"),
         atendimentos=atendimentos,resumo=resumo,fluxo_status=FLUXO_STATUS_BANHO,colunas=colunas,checks=checks,
-        produtos_usados=produtos_usados,fotos=fotos,comissoes=comissoes,data_filtro=data_filtro,status_filtro=status_filtro,busca=busca)
+        produtos_usados=produtos_usados,fotos=fotos,comissoes=comissoes,data_filtro=data_filtro,status_filtro=status_filtro,busca=busca,hoje=agora.date().isoformat(),
+        prefill_client_id=request.args.get("client_id", ""),prefill_pet_id=request.args.get("pet_id", ""))
 
 @banho_tosa_bp.route("/banho-tosa/<int:atendimento_id>/checkin",methods=["POST"])
 def checkin(atendimento_id):
@@ -113,13 +159,52 @@ def checkin(atendimento_id):
 
 @banho_tosa_bp.route("/banho-tosa/<int:atendimento_id>/checkout",methods=["POST"])
 def checkout(atendimento_id):
-    existente=query_db("SELECT id FROM grooming_checklists WHERE grooming_id=?",(atendimento_id,),one=True)
     notas=request.form.get("checkout_notes","").strip()
-    if existente: execute_db("UPDATE grooming_checklists SET checkout_notes=?,checked_out_at=?,updated_at=? WHERE grooming_id=?",(notas,now_iso(),now_iso(),atendimento_id))
-    else: execute_db("INSERT INTO grooming_checklists (grooming_id,checkout_notes,checked_out_at,updated_at) VALUES (?,?,?,?)",(atendimento_id,notas,now_iso(),now_iso()))
-    execute_db("UPDATE grooming_services SET checked_out_at=?,updated_at=? WHERE id=?",(now_iso(),now_iso(),atendimento_id))
-    registrar_historico(atendimento_id,"Check-out realizado","Administrador")
-    return _processar_status(atendimento_id,"Finalizado")
+    if notas:
+        existente=query_db("SELECT id FROM grooming_checklists WHERE grooming_id=?",(atendimento_id,),one=True)
+        if existente:
+            execute_db("UPDATE grooming_checklists SET checkout_notes=?,updated_at=? WHERE grooming_id=?",(notas,now_iso(),atendimento_id))
+        else:
+            execute_db("INSERT INTO grooming_checklists (grooming_id,checkout_notes,updated_at) VALUES (?,?,?)",(atendimento_id,notas,now_iso()))
+    return redirect(url_for("banho_tosa.fechamento_atendimento",atendimento_id=atendimento_id))
+
+@banho_tosa_bp.route("/banho-tosa/<int:atendimento_id>/fechamento",methods=["GET","POST"])
+def fechamento_atendimento(atendimento_id):
+    try:
+        resumo=resumo_fechamento(atendimento_id)
+    except ValueError as exc:
+        flash(str(exc),"danger")
+        return redirect(url_for("banho_tosa.banho_tosa"))
+    if request.method=="POST":
+        valor=_valor_decimal(request.form.get("valor"))
+        metodo=request.form.get("payment_method") or "A definir"
+        notas=request.form.get("checkout_notes","").strip()
+        resultado=executar_fechamento(
+            atendimento_id,
+            payment_method=metodo,
+            valor=valor,
+            checkout_notes=notas,
+            user_name=session.get("user_name") or "Administrador",
+        )
+        if resultado["ok"]:
+            flash("Atendimento finalizado e integrações concluídas.","success")
+        else:
+            pendentes=", ".join(r.name for r in resultado["results"] if not r.ok)
+            flash(f"Atendimento finalizado. Integrações pendentes: {pendentes}.","warning")
+        return redirect(url_for("banho_tosa.fechamento_atendimento",atendimento_id=atendimento_id,concluido=1))
+    return render_template("banho_tosa_fechamento.html",**resumo,concluido=request.args.get("concluido")=="1")
+
+@banho_tosa_bp.route("/banho-tosa/<int:atendimento_id>/reprocessar-integracoes",methods=["POST"])
+def reprocessar_integracoes_atendimento(atendimento_id):
+    try:
+        resultado=reprocessar_integracoes(atendimento_id,session.get("user_name") or "Administrador")
+        if resultado["ok"]:
+            flash("Integrações conferidas e concluídas.","success")
+        else:
+            flash("Ainda existem integrações pendentes. Confira os detalhes do fechamento.","warning")
+    except ValueError as exc:
+        flash(str(exc),"danger")
+    return redirect(url_for("banho_tosa.fechamento_atendimento",atendimento_id=atendimento_id,concluido=1))
 
 @banho_tosa_bp.route("/banho-tosa/<int:atendimento_id>/produtos",methods=["POST"])
 def adicionar_produto(atendimento_id):
@@ -159,8 +244,30 @@ def excluir_foto(foto_id):
 @banho_tosa_bp.route("/banho-tosa/<int:atendimento_id>/avancar-status",methods=["POST"])
 def avancar_status(atendimento_id):
     atendimento=obter_atendimento(atendimento_id)
-    if not atendimento: flash("Atendimento não encontrado.","danger"); return redirect(url_for("banho_tosa.banho_tosa"))
-    return _processar_status(atendimento_id,proximo_status(atendimento["status"]))
+    wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.accept_mimetypes.best == "application/json"
+    if not atendimento:
+        if wants_json:
+            return jsonify({"ok": False, "message": "Atendimento não encontrado."}), 404
+        flash("Atendimento não encontrado.","danger")
+        return redirect(url_for("banho_tosa.banho_tosa"))
+
+    novo = proximo_status(atendimento["status"])
+    if wants_json:
+        ok = _processar_status(atendimento_id, novo, json_mode=True)
+        if isinstance(ok,dict) and ok.get("requires_confirmation"):
+            return jsonify({"ok":True,"requires_confirmation":True,"url":ok["url"],"status":atendimento["status"],"message":"Revise o fechamento antes de concluir."})
+        if not ok:
+            return jsonify({"ok": False, "message": "Não foi possível atualizar o atendimento."}), 400
+        coluna = next((codigo for codigo, _titulo, statuses in KANBAN_COLUNAS if novo in statuses), "")
+        return jsonify({
+            "ok": True,
+            "status_anterior": atendimento["status"],
+            "status": novo,
+            "coluna": coluna,
+            "finalizado": novo == "Finalizado",
+            "message": f"Status atualizado para {novo}."
+        })
+    return _processar_status(atendimento_id, novo)
 
 @banho_tosa_bp.route("/banho-tosa/<int:atendimento_id>/status",methods=["POST"])
 def definir_status(atendimento_id):
@@ -168,17 +275,29 @@ def definir_status(atendimento_id):
     if novo not in FLUXO_STATUS_BANHO and novo!="Cancelado": flash("Status inválido.","danger"); return redirect(request.referrer or url_for("banho_tosa.banho_tosa"))
     return _processar_status(atendimento_id,novo)
 
+
+def atendimento_status(atendimento_id):
+    row=query_db("SELECT status FROM grooming_services WHERE id=?",(atendimento_id,),one=True)
+    return row["status"] if row else ""
+
 @banho_tosa_bp.route("/banho-tosa/<int:atendimento_id>/kanban-status",methods=["POST"])
 def kanban_status(atendimento_id):
     novo=request.form.get("status")
     if novo not in FLUXO_STATUS_BANHO and novo!="Cancelado": return jsonify({"ok":False,"message":"Status inválido"}),400
-    _processar_status(atendimento_id,novo,json_mode=True); return jsonify({"ok":True,"status":novo})
+    result=_processar_status(atendimento_id,novo,json_mode=True)
+    if isinstance(result,dict) and result.get("requires_confirmation"):
+        return jsonify({"ok":True,"requires_confirmation":True,"url":result["url"],"status":atendimento_status(atendimento_id)})
+    return jsonify({"ok":True,"status":novo})
 
 def _processar_status(atendimento_id,novo,json_mode=False):
     atendimento=obter_atendimento(atendimento_id)
     if not atendimento:
         if json_mode: return False
         flash("Atendimento não encontrado.","danger"); return redirect(url_for("banho_tosa.banho_tosa"))
+    if novo=="Finalizado" and atendimento["status"]!="Finalizado":
+        if json_mode:
+            return {"requires_confirmation": True, "url": url_for("banho_tosa.fechamento_atendimento",atendimento_id=atendimento_id)}
+        return redirect(url_for("banho_tosa.fechamento_atendimento",atendimento_id=atendimento_id))
     atualizar_status_atendimento(atendimento_id,novo); registrar_historico(atendimento_id,f"Status alterado de {atendimento['status']} para {novo}","Administrador")
     publish("ATENDIMENTO_STATUS_ALTERADO",{"entity_type":"grooming_service","entity_id":atendimento_id,"status_anterior":atendimento["status"],"novo_status":novo,"user_name":"Administrador"})
     if novo=="Finalizado":
@@ -205,3 +324,12 @@ def historico_atendimento(atendimento_id):
     atendimento=obter_atendimento(atendimento_id)
     if not atendimento: flash("Atendimento não encontrado.","danger"); return redirect(url_for("banho_tosa.banho_tosa"))
     return render_template("historico_atendimento.html",atendimento=atendimento,historico=query_db("SELECT * FROM grooming_history WHERE grooming_id=? ORDER BY created_at DESC,id DESC",(atendimento_id,)))
+
+
+@banho_tosa_bp.route("/banho-tosa/<int:atendimento_id>/whatsapp/<action>")
+def whatsapp_atendimento(atendimento_id, action):
+    try:
+        return redirect(preparar_whatsapp_banho(atendimento_id, action))
+    except Exception:
+        flash("Não foi possível preparar a mensagem de WhatsApp.", "danger")
+        return redirect(url_for("banho_tosa.painel"))

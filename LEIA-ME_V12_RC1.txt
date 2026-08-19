@@ -1,0 +1,22 @@
+PET & GATÔ BUSINESS 12.0.0-RC1
+
+Objetivo desta versão
+- Consolidar a base funcional atual sem remover módulos.
+- Incorporar ao init_db as correções financeiras que antes dependiam de fix_finance_schema.py.
+- Criar automaticamente financial_category_budgets.
+- Criar automaticamente reconciliation_status, reconciled_at e bank_reference.
+- Criar índices usados por orçamento mensal e conciliação.
+- Manter compatibilidade SQLite e PostgreSQL.
+
+Instalação segura
+1. Faça backup da pasta atual e do banco.
+2. Preserve .env, instance, uploads, backups e logs.
+3. Substitua os arquivos do sistema pelos desta versão.
+4. Execute:
+   py scripts\migrate_database.py
+   py scripts\check_db_compat.py
+   py scripts\check_release.py
+   py main.py
+
+A correção manual scripts\fix_finance_schema.py pode permanecer como ferramenta de recuperação,
+mas uma instalação nova da V12 RC1 não deve depender dela.

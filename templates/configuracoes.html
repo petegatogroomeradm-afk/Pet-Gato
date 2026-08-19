@@ -1,24 +1,63 @@
 {% extends "base.html" %}
-
 {% block title %}Configurações{% endblock %}
 {% block page_title %}Configurações{% endblock %}
-{% block page_subtitle %}Dados gerais da empresa{% endblock %}
-
+{% block page_subtitle %}Empresa, agenda, pagamentos e preferências operacionais{% endblock %}
 {% block content %}
-<div class="card">
-    <h2>Dados da Empresa</h2>
+<div class="settings-shell">
+  <aside class="settings-nav card">
+    <a href="#empresa" class="active">🏢 Empresa</a>
+    <a href="#agenda">📅 Agenda</a>
+    <a href="#pagamentos">💳 Pagamentos</a>
+    <a href="#sistema">⚙️ Sistema</a>
+  </aside>
+  <div class="settings-content">
+    <section id="empresa" class="card settings-card">
+      <div class="section-heading"><div><span class="eyebrow">IDENTIDADE</span><h2>Dados da empresa</h2><p>Informações usadas em comprovantes, mensagens e relatórios.</p></div><span class="status-pill success">Configuração ativa</span></div>
+      <form method="post" class="form form-grid two-columns">
+        <input type="hidden" name="form_type" value="company">
+        <label>Nome da empresa<input name="company_name" placeholder="Pet & Gatô" value="{{ config.company_name if config else '' }}"></label>
+        <label>CNPJ<input name="cnpj" placeholder="00.000.000/0000-00" value="{{ config.cnpj if config else '' }}"></label>
+        <label>Telefone<input name="phone" placeholder="(31) 0000-0000" value="{{ config.phone if config else '' }}"></label>
+        <label>WhatsApp<input name="whatsapp" placeholder="(31) 90000-0000" value="{{ config.whatsapp if config else '' }}"></label>
+        <label>E-mail<input type="email" name="email" placeholder="contato@empresa.com" value="{{ config.email if config else '' }}"></label>
+        <label>Endereço<input name="address" placeholder="Endereço completo" value="{{ config.address if config else '' }}"></label>
+        <label class="span-2">Observações<textarea name="notes" placeholder="Informações internas">{{ config.notes if config else '' }}</textarea></label>
+        <div class="span-2 form-actions"><button>Salvar dados da empresa</button></div>
+      </form>
+    </section>
 
-    <form method="post" class="form">
-        <input name="company_name" placeholder="Nome da empresa" value="{{ config.company_name if config else '' }}">
-        <input name="cnpj" placeholder="CNPJ" value="{{ config.cnpj if config else '' }}">
-        <input name="phone" placeholder="Telefone" value="{{ config.phone if config else '' }}">
-        <input name="whatsapp" placeholder="WhatsApp" value="{{ config.whatsapp if config else '' }}">
-        <input name="email" placeholder="E-mail" value="{{ config.email if config else '' }}">
-        <input name="address" placeholder="Endereço" value="{{ config.address if config else '' }}">
-        <input name="pix_key" placeholder="Chave PIX" value="{{ config.pix_key if config else '' }}">
-        <textarea name="notes" placeholder="Observações">{{ config.notes if config else '' }}</textarea>
+    <section id="agenda" class="card settings-card">
+      <div class="section-heading"><div><span class="eyebrow">OPERAÇÃO</span><h2>Capacidade da agenda</h2><p>Controle quantos pets podem ocupar o mesmo horário e quem pode autorizar encaixes.</p></div></div>
+      <form method="post" class="form settings-inline-form">
+        <input type="hidden" name="form_type" value="agenda_capacity">
+        <label>Capacidade padrão por horário<input type="number" name="default_capacity" min="1" max="50" value="{{ agenda_config.default_capacity if agenda_config else 3 }}" required></label>
+        <label class="toggle-row"><input type="checkbox" name="allow_admin_override" {% if not agenda_config or agenda_config.allow_admin_override %}checked{% endif %}><span><strong>Encaixe pelo administrador</strong><small>Permite ultrapassar o limite quando necessário.</small></span></label>
+        <label class="toggle-row"><input type="checkbox" name="allow_recepcao_override" {% if not agenda_config or agenda_config.allow_recepcao_override %}checked{% endif %}><span><strong>Encaixe pela recepção</strong><small>Autoriza a equipe de recepção a confirmar horários lotados.</small></span></label>
+        <div class="form-actions"><button>Salvar capacidade</button></div>
+      </form>
+    </section>
 
-        <button>Salvar configurações</button>
-    </form>
+    <section id="pagamentos" class="card settings-card">
+      <div class="section-heading"><div><span class="eyebrow">FINANCEIRO</span><h2>Recebimentos</h2><p>Chave usada nos comprovantes e mensagens de cobrança.</p></div></div>
+      <form method="post" class="form">
+        <input type="hidden" name="form_type" value="company">
+        <input type="hidden" name="company_name" value="{{ config.company_name if config else '' }}"><input type="hidden" name="cnpj" value="{{ config.cnpj if config else '' }}"><input type="hidden" name="phone" value="{{ config.phone if config else '' }}"><input type="hidden" name="whatsapp" value="{{ config.whatsapp if config else '' }}"><input type="hidden" name="email" value="{{ config.email if config else '' }}"><input type="hidden" name="address" value="{{ config.address if config else '' }}"><input type="hidden" name="notes" value="{{ config.notes if config else '' }}">
+        <label>Chave PIX<input name="pix_key" placeholder="CPF, CNPJ, e-mail, telefone ou chave aleatória" value="{{ config.pix_key if config else '' }}"></label>
+        <div class="form-actions"><button>Salvar chave PIX</button></div>
+      </form>
+    </section>
+
+    <section id="sistema" class="card settings-card system-summary">
+      <div class="section-heading"><div><span class="eyebrow">SISTEMA</span><h2>Administração técnica</h2><p>Acesse os módulos responsáveis por segurança, integrações e relatórios.</p></div></div>
+      <div class="quick-links-grid">
+        <a href="{{ url_for('configuracoes.usuarios') }}"><strong>👥 Usuários e permissões</strong><span>Perfis, bloqueios e acessos</span></a>
+        <a href="{{ url_for('auditoria.painel') }}"><strong>🛡️ Auditoria</strong><span>Alterações e histórico</span></a>
+        <a href="{{ url_for('central_integracoes') }}"><strong>🔗 Saúde do Sistema</strong><span>Banco, backups e integrações</span></a>
+        <a href="{{ url_for('relatorios.relatorios') }}"><strong>📊 Relatórios</strong><span>PDF, CSV e indicadores</span></a>
+        <a href="{{ url_for('central_integracoes') }}#backups"><strong>💾 Backup e Restore</strong><span>Cópias locais e restauração protegida</span></a>
+        <a href="{{ url_for('health') }}" target="_blank"><strong>🩺 Health Check</strong><span>Status básico da aplicação</span></a>
+      </div>
+    </section>
+  </div>
 </div>
 {% endblock %}

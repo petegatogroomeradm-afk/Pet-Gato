@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Agenda CRM{% endblock %}
+{% block page_title %}Agenda CRM{% endblock %}
+{% block page_subtitle %}Tarefas atrasadas, contatos de hoje e próximos acompanhamentos{% endblock %}
+{% block content %}
+<div class="crm-agenda-toolbar">
+  <a class="small-button crm-secondary" href="{{ url_for('crm.dashboard') }}">← Voltar ao CRM</a>
+  <form method="get" class="crm-agenda-filter">
+    <label>Início <input type="date" name="inicio" value="{{ agenda_start }}"></label>
+    <label>Período <select name="dias"><option value="7" {% if agenda_days_count == 7 %}selected{% endif %}>7 dias</option><option value="14" {% if agenda_days_count == 14 %}selected{% endif %}>14 dias</option><option value="30" {% if agenda_days_count == 30 %}selected{% endif %}>30 dias</option></select></label>
+    <button>Atualizar</button>
+  </form>
+</div>
+
+<section class="crm-agenda-metrics">
+  <article class="is-overdue"><span>Atrasadas</span><strong>{{ agenda_metrics.overdue }}</strong></article>
+  <article class="is-today"><span>Para hoje</span><strong>{{ agenda_metrics.today }}</strong></article>
+  <article><span>Próximas</span><strong>{{ agenda_metrics.upcoming }}</strong></article>
+  <article><span>Sem prazo</span><strong>{{ agenda_metrics.undated }}</strong></article>
+</section>
+
+<div class="crm-agenda-nav">
+  <a href="{{ url_for('crm.task_agenda', inicio=previous_start, dias=agenda_days_count) }}">← Período anterior</a>
+  <strong>{{ agenda_start }} até {{ agenda_end }}</strong>
+  <a href="{{ url_for('crm.task_agenda', inicio=next_start, dias=agenda_days_count) }}">Próximo período →</a>
+</div>
+
+{% macro task_card(t, overdue=false) %}
+<article class="crm-agenda-task {% if overdue %}is-overdue{% endif %}">
+  <div class="crm-agenda-task-main">
+    <div class="crm-agenda-task-title"><span class="crm-priority crm-priority-{{ t.priority|lower|replace('é','e') }}">{{ t.priority }}</span><strong>{{ t.title }}</strong></div>
+    <small>{{ t.client_name or 'Sem cliente' }}{% if t.pet_name %} · {{ t.pet_name }}{% endif %} · {{ t.task_type }}</small>
+    {% if t.message %}<p>{{ t.message }}</p>{% endif %}
+  </div>
+  <div class="crm-agenda-task-actions">
+    {% if overdue %}<span class="crm-overdue-label">{{ t.deadline_label }}</span>{% endif %}
+    {% if t.whatsapp_url %}<a class="small-button crm-whatsapp" target="_blank" href="{{ t.whatsapp_url }}">WhatsApp</a>{% endif %}
+    <a class="small-button crm-secondary" href="{{ url_for('crm.dashboard', status_tarefa='Pendente') }}#tarefas-crm">Abrir tarefa</a>
+    <form method="post" action="{{ url_for('crm.postpone_task', task_id=t.id) }}" class="crm-inline"><select name="days"><option value="1">+1 dia</option><option value="3">+3 dias</option><option value="7" selected>+7 dias</option></select><button class="small-button crm-secondary">Adiar</button></form>
+  </div>
+</article>
+{% endmacro %}
+
+{% if overdue_tasks %}<section class="card crm-agenda-section crm-agenda-overdue"><div class="section-head"><div><h2>⚠️ Tarefas atrasadas</h2><small>Priorize estes contatos antes dos próximos.</small></div><span class="pill">{{ overdue_tasks|length }}</span></div><div class="crm-agenda-list">{% for t in overdue_tasks %}{{ task_card(t, true) }}{% endfor %}</div></section>{% endif %}
+
+<section class="crm-week-grid">
+{% for day in agenda_days %}<article class="card crm-day-column {% if day.date == today %}is-today{% endif %}">
+  <header><div><strong>{{ day.weekday|capitalize }}</strong><small>{{ day.label }}</small></div><span class="pill">{{ day.tasks|length }}</span></header>
+  <div class="crm-day-tasks">{% for t in day.tasks %}{{ task_card(t) }}{% else %}<p class="crm-empty-day">Nenhuma tarefa.</p>{% endfor %}</div>
+</article>{% endfor %}
+</section>
+
+{% if undated_tasks %}<section class="card crm-agenda-section"><div class="section-head"><div><h2>Tarefas sem prazo</h2><small>Defina uma data para não perder o acompanhamento.</small></div><span class="pill">{{ undated_tasks|length }}</span></div><div class="crm-agenda-list">{% for t in undated_tasks %}{{ task_card(t) }}{% endfor %}</div></section>{% endif %}
+{% endblock %}

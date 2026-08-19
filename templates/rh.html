@@ -1,55 +1,25 @@
 {% extends "base.html" %}
 {% block title %}RH Enterprise{% endblock %}
 {% block page_title %}RH Enterprise{% endblock %}
-{% block page_subtitle %}Banco de horas, férias, comissões e fechamento mensal{% endblock %}
+{% block page_subtitle %}Equipe, ponto, férias, ausências, folha estimada e fechamento mensal{% endblock %}
 {% block content %}
-<form method="get" class="rh-period-filter">
-    <label>Mês de referência<input type="month" name="mes" value="{{ reference_month }}"></label>
-    <button>Atualizar painel</button>
-</form>
-
+<div class="rh-toolbar">
+<form method="get" class="rh-period-filter"><label>Mês de referência<input type="month" name="mes" value="{{ reference_month }}"></label><button>Atualizar painel</button></form>
+<a class="button secondary" href="{{ url_for('rh.export_csv', mes=reference_month) }}">Exportar para Excel</a>
+</div>
 <section class="rh-metrics">
-    <article><span>Funcionários ativos</span><strong>{{ metrics.active }}</strong></article>
-    <article><span>Presentes hoje</span><strong>{{ metrics.present }}</strong></article>
-    <article><span>Afastados hoje</span><strong>{{ metrics.away }}</strong></article>
-    <article><span>Em férias</span><strong>{{ metrics.vacations }}</strong></article>
-    <article><span>Banco consolidado</span><strong>{{ metrics.hour_balance }}</strong></article>
-    <article><span>Comissões do mês</span><strong>R$ {{ '%.2f'|format(metrics.commissions) }}</strong></article>
+<article><span>Funcionários ativos</span><strong>{{ metrics.active }}</strong></article><article><span>Presentes hoje</span><strong>{{ metrics.present }}</strong></article><article><span>Afastados hoje</span><strong>{{ metrics.away }}</strong></article><article><span>Em férias</span><strong>{{ metrics.vacations }}</strong></article><article><span>Banco consolidado</span><strong>{{ metrics.hour_balance }}</strong></article><article><span>Comissões do mês</span><strong>R$ {{ '%.2f'|format(metrics.commissions) }}</strong></article>
 </section>
-
-<div class="rh-grid">
-<section class="card"><h2>Registrar férias</h2>
-<form method="post" action="{{ url_for('rh.add_vacation') }}" class="form">
-<select name="employee_id" required><option value="">Funcionário</option>{% for e in employees %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select>
-<div class="grid-2"><label>Início<input type="date" name="start_date" required></label><label>Fim<input type="date" name="end_date" required></label></div>
-<div class="grid-2"><label>Início aquisitivo<input type="date" name="acquisition_start"></label><label>Fim aquisitivo<input type="date" name="acquisition_end"></label></div>
-<div class="grid-2"><input type="number" name="days" value="30" min="1"><select name="status"><option>Planejada</option><option>Aprovada</option><option>Em andamento</option><option>Concluída</option><option>Cancelada</option></select></div>
-<div class="grid-2"><input name="vacation_pay" placeholder="Valor das férias"><input name="advance_amount" placeholder="Adiantamento"></div>
-<textarea name="notes" placeholder="Observações"></textarea><button>Salvar férias</button>
-</form></section>
-
-<section class="card"><h2>Adiantamentos e descontos</h2>
-<form method="post" action="{{ url_for('rh.add_adjustment') }}" class="form">
-<select name="employee_id" required><option value="">Funcionário</option>{% for e in employees %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select>
-<div class="grid-2"><input type="month" name="reference_month" value="{{ reference_month }}" required>
-<select name="adjustment_type"><option>Adiantamento</option><option>Desconto</option><option>Vale</option><option>Bônus</option><option>Acréscimo</option><option>Falta</option></select></div>
-<input name="description" placeholder="Descrição"><div class="grid-2"><input name="amount" placeholder="Valor"><select name="status"><option>Pendente</option><option>Processado</option><option>Cancelado</option></select></div>
-<button>Lançar ajuste</button></form></section>
+<div class="rh-grid rh-grid-3">
+<section class="card"><h2>Registrar ausência</h2><form method="post" action="{{ url_for('rh.add_absence') }}" class="form"><select name="employee_id" required><option value="">Funcionário</option>{% for e in employees %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select><div class="grid-2"><select name="absence_type"><option>Falta</option><option>Atestado</option><option>Folga</option><option>Licença</option><option>Afastamento</option></select><label class="check-line"><input type="checkbox" name="justified" value="1"> Justificada</label></div><div class="grid-2"><label>Início<input type="date" name="start_date" required></label><label>Fim<input type="date" name="end_date"></label></div><textarea name="notes" placeholder="Motivo e observações"></textarea><button>Salvar ausência</button></form></section>
+<section class="card"><h2>Registrar férias</h2><form method="post" action="{{ url_for('rh.add_vacation') }}" class="form"><select name="employee_id" required><option value="">Funcionário</option>{% for e in employees %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select><div class="grid-2"><label>Início<input type="date" name="start_date" required></label><label>Fim<input type="date" name="end_date" required></label></div><div class="grid-2"><input type="number" name="days" value="30" min="1"><select name="status"><option>Planejada</option><option>Aprovada</option><option>Em andamento</option><option>Concluída</option><option>Cancelada</option></select></div><div class="grid-2"><input name="vacation_pay" placeholder="Valor das férias"><input name="advance_amount" placeholder="Adiantamento"></div><textarea name="notes" placeholder="Observações"></textarea><button>Salvar férias</button></form></section>
+<section class="card"><h2>Adiantamentos e descontos</h2><form method="post" action="{{ url_for('rh.add_adjustment') }}" class="form"><select name="employee_id" required><option value="">Funcionário</option>{% for e in employees %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select><div class="grid-2"><input type="month" name="reference_month" value="{{ reference_month }}" required><select name="adjustment_type"><option>Adiantamento</option><option>Desconto</option><option>Vale</option><option>Bônus</option><option>Acréscimo</option><option>Falta</option></select></div><input name="description" placeholder="Descrição"><div class="grid-2"><input name="amount" placeholder="Valor"><select name="status"><option>Pendente</option><option>Processado</option><option>Cancelado</option></select></div><button>Lançar ajuste</button></form></section>
 </div>
-
-<section class="card"><h2>Apuração mensal</h2>
-<div class="table-wrap"><table><thead><tr><th>Funcionário</th><th>Trabalhado</th><th>Previsto</th><th>Saldo</th><th>Faltas</th><th>Justificadas</th><th>Comissão</th><th>Acréscimos</th><th>Descontos</th><th>Fechamento</th></tr></thead>
-<tbody>{% for i in summaries %}<tr><td><strong>{{ i.employee.name }}</strong><br><small>{{ i.employee.role_name or '-' }}</small></td><td>{{ i.worked_label }}</td><td>{{ i.expected_label }}</td><td><span class="rh-balance {{ 'positive' if i.balance_minutes >= 0 else 'negative' }}">{{ i.balance_label }}</span></td><td>{{ i.absences }}</td><td>{{ i.justified_absences }}</td><td>R$ {{ '%.2f'|format(i.commission_amount) }}</td><td>R$ {{ '%.2f'|format(i.additions) }}</td><td>R$ {{ '%.2f'|format(i.deductions) }}</td><td><form method="post" action="{{ url_for('rh.close_employee_month') }}"><input type="hidden" name="employee_id" value="{{ i.employee.id }}"><input type="hidden" name="reference_month" value="{{ reference_month }}"><button class="small-button" data-confirm="Fechar o mês deste funcionário?">Fechar mês</button></form></td></tr>{% else %}<tr><td colspan="10">Nenhum funcionário ativo.</td></tr>{% endfor %}</tbody>
-</table></div></section>
-
+<section class="card"><div class="card-heading"><div><h2>Apuração e folha estimada</h2><p>Conferência antes do fechamento mensal.</p></div></div><div class="table-wrap"><table><thead><tr><th>Funcionário</th><th>Salário</th><th>Trabalhado</th><th>Previsto</th><th>Saldo</th><th>Faltas</th><th>Comissão</th><th>Acréscimos</th><th>Descontos</th><th>Líquido estimado</th><th>Status</th><th>Ação</th></tr></thead><tbody>{% for i in summaries %}<tr><td><strong>{{ i.employee.name }}</strong><br><small>{{ i.employee.role_name or '-' }}</small></td><td>R$ {{ '%.2f'|format(i.salary) }}</td><td>{{ i.worked_label }}</td><td>{{ i.expected_label }}</td><td><span class="rh-balance {{ 'positive' if i.balance_minutes >= 0 else 'negative' }}">{{ i.balance_label }}</span></td><td>{{ i.absences }} <small>({{ i.justified_absences }} just.)</small></td><td>R$ {{ '%.2f'|format(i.commission_amount) }}</td><td>R$ {{ '%.2f'|format(i.additions) }}</td><td>R$ {{ '%.2f'|format(i.deductions) }}</td><td><strong>R$ {{ '%.2f'|format(i.estimated_net) }}</strong></td><td><span class="status-pill {{ 'success' if i.closing and i.closing.status == 'Fechado' else 'warning' }}">{{ i.closing.status if i.closing else 'Em aberto' }}</span></td><td>{% if i.closing and i.closing.status == 'Fechado' %}<form method="post" action="{{ url_for('rh.reopen_month', closing_id=i.closing.id) }}"><button class="small-button secondary" data-confirm="Reabrir este fechamento?">Reabrir</button></form>{% else %}<form method="post" action="{{ url_for('rh.close_employee_month') }}"><input type="hidden" name="employee_id" value="{{ i.employee.id }}"><input type="hidden" name="reference_month" value="{{ reference_month }}"><button class="small-button" data-confirm="Fechar o mês deste funcionário?">Fechar mês</button></form>{% endif %}</td></tr>{% else %}<tr><td colspan="12">Nenhum funcionário ativo.</td></tr>{% endfor %}</tbody></table></div></section>
 <div class="rh-grid">
-<section class="card"><h2>Férias registradas</h2><div class="table-wrap"><table><thead><tr><th>Funcionário</th><th>Período</th><th>Dias</th><th>Status</th><th>Ação</th></tr></thead><tbody>
-{% for i in vacations %}<tr><td>{{ i.employee_name }}</td><td>{{ i.start_date }} a {{ i.end_date }}</td><td>{{ i.days }}</td><td>{{ i.status }}</td><td><form method="post" action="{{ url_for('rh.vacation_status', vacation_id=i.id) }}"><select name="status" onchange="this.form.submit()">{% for s in ['Planejada','Aprovada','Em andamento','Concluída','Cancelada'] %}<option {% if i.status==s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></form></td></tr>{% else %}<tr><td colspan="5">Nenhuma férias registrada.</td></tr>{% endfor %}
-</tbody></table></div></section>
-
-<section class="card"><h2>Ajustes do mês</h2><div class="table-wrap"><table><thead><tr><th>Funcionário</th><th>Tipo</th><th>Descrição</th><th>Valor</th><th>Status</th></tr></thead><tbody>
-{% for i in adjustments %}<tr><td>{{ i.employee_name }}</td><td>{{ i.adjustment_type }}</td><td>{{ i.description or '-' }}</td><td>R$ {{ '%.2f'|format(i.amount or 0) }}</td><td>{{ i.status }}</td></tr>{% else %}<tr><td colspan="5">Nenhum ajuste neste mês.</td></tr>{% endfor %}
-</tbody></table></div></section>
+<section class="card"><h2>Ausências do período</h2><div class="table-wrap"><table><thead><tr><th>Funcionário</th><th>Tipo</th><th>Período</th><th>Justificada</th><th>Observações</th><th></th></tr></thead><tbody>{% for i in absences %}<tr><td>{{ i.employee_name }}</td><td>{{ i.absence_type }}</td><td>{{ i.start_date }}{% if i.end_date and i.end_date != i.start_date %} a {{ i.end_date }}{% endif %}</td><td>{{ 'Sim' if i.justified else 'Não' }}</td><td>{{ i.notes or '-' }}</td><td><form method="post" action="{{ url_for('rh.delete_absence', absence_id=i.id) }}"><button class="icon-danger" data-confirm="Remover esta ausência?">Excluir</button></form></td></tr>{% else %}<tr><td colspan="6">Nenhuma ausência neste período.</td></tr>{% endfor %}</tbody></table></div></section>
+<section class="card"><h2>Férias registradas</h2><div class="table-wrap"><table><thead><tr><th>Funcionário</th><th>Período</th><th>Dias</th><th>Status</th><th></th></tr></thead><tbody>{% for i in vacations %}<tr><td>{{ i.employee_name }}</td><td>{{ i.start_date }} a {{ i.end_date }}</td><td>{{ i.days }}</td><td><form method="post" action="{{ url_for('rh.vacation_status', vacation_id=i.id) }}"><select name="status" onchange="this.form.submit()">{% for s in ['Planejada','Aprovada','Em andamento','Concluída','Cancelada'] %}<option {% if i.status==s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></form></td><td><form method="post" action="{{ url_for('rh.delete_vacation', vacation_id=i.id) }}"><button class="icon-danger" data-confirm="Excluir este registro?">Excluir</button></form></td></tr>{% else %}<tr><td colspan="5">Nenhuma férias registrada.</td></tr>{% endfor %}</tbody></table></div></section>
 </div>
+<section class="card"><h2>Ajustes do mês</h2><div class="table-wrap"><table><thead><tr><th>Funcionário</th><th>Tipo</th><th>Descrição</th><th>Valor</th><th>Status</th><th></th></tr></thead><tbody>{% for i in adjustments %}<tr><td>{{ i.employee_name }}</td><td>{{ i.adjustment_type }}</td><td>{{ i.description or '-' }}</td><td>R$ {{ '%.2f'|format(i.amount or 0) }}</td><td><form method="post" action="{{ url_for('rh.adjustment_status', adjustment_id=i.id) }}"><select name="status" onchange="this.form.submit()">{% for s in ['Pendente','Processado','Cancelado'] %}<option {% if i.status==s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></form></td><td><form method="post" action="{{ url_for('rh.delete_adjustment', adjustment_id=i.id) }}"><button class="icon-danger" data-confirm="Excluir este ajuste?">Excluir</button></form></td></tr>{% else %}<tr><td colspan="6">Nenhum ajuste neste mês.</td></tr>{% endfor %}</tbody></table></div></section>
 <script src="{{ url_for('static', filename='js/rh.js') }}"></script>
 {% endblock %}

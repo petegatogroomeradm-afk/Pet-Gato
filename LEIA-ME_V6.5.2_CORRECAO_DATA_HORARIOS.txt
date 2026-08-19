@@ -1,0 +1,13 @@
+PET & GATÔ BUSINESS V6.5.2
+
+Correção definitiva do carregamento de horários no portal do cliente.
+
+Causa: o navegador disparava várias requisições enquanto o ano da data ainda estava sendo digitado, gerando datas parciais como 0002, 0020, 0202 e 2020. Respostas fora de ordem mantinham o seletor em Carregando ou exibiam dados incorretos.
+
+Correções:
+- validação nativa do campo de data antes da consulta;
+- debounce de 300 ms;
+- cancelamento da requisição anterior;
+- proteção contra respostas antigas;
+- cache desativado na consulta;
+- correção aplicada em agendamento e reagendamento.

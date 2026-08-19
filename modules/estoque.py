@@ -4,7 +4,8 @@ from datetime import date, timedelta
 from flask import Blueprint, Response, flash, redirect, render_template, request, session, url_for
 from database import execute_db, now_iso, query_db
 from services.estoque_service import (concluir_inventario, curva_abc, indicadores_estoque,
-    iniciar_inventario, numero, produto_por_id, registrar_movimento, salvar_contagem, sugestoes_compra)
+    iniciar_inventario, numero, produto_por_id, registrar_movimento, salvar_contagem, sugestoes_compra,
+    receitas_consumo, salvar_receita_consumo, adicionar_item_receita)
 
 estoque_bp=Blueprint('estoque',__name__)
 
@@ -39,7 +40,8 @@ def estoque():
       ORDER BY m.movement_date DESC,m.id DESC LIMIT 80""")
     inventarios=query_db('SELECT * FROM stock_inventory_sessions ORDER BY id DESC LIMIT 10')
     return render_template('estoque.html',produtos=produtos,resumo=indicadores_estoque(),categorias=categorias,movimentos=movimentos,
-      busca=busca,categoria=categoria,situacao=situacao,sugestoes=sugestoes_compra(),abc=curva_abc()[:12],inventarios=inventarios)
+      busca=busca,categoria=categoria,situacao=situacao,sugestoes=sugestoes_compra(),abc=curva_abc()[:12],inventarios=inventarios,
+      receitas=receitas_consumo(),todos_produtos=query_db("SELECT id,name,quantity,unit FROM stock_products WHERE COALESCE(active,1)=1 ORDER BY name"))
 
 @estoque_bp.route('/estoque/<int:produto_id>/movimentar',methods=['POST'])
 def movimentar(produto_id):
@@ -103,3 +105,26 @@ def exportar_csv():
         custo=float(p['cost_price'] or 0); venda=float(p['sale_price'] or 0); margem=((venda-custo)/venda*100) if venda else 0
         w.writerow([p['name'],p['category'],p['subcategory'],p['brand'],p['sku'],p['barcode'],p['quantity'],p['unit'],p['min_quantity'],p['max_quantity'],custo,venda,round(margem,2),p['supplier'],p['expiration_date'],p['location']])
     return Response('\ufeff'+b.getvalue(),mimetype='text/csv',headers={'Content-Disposition':'attachment; filename=estoque_enterprise.csv'})
+
+
+@estoque_bp.route('/estoque/receitas',methods=['POST'])
+def nova_receita():
+    try:
+        salvar_receita_consumo(request.form.get('service_name',''),request.form.get('notes',''))
+        flash('Receita de consumo criada.','success')
+    except ValueError as exc: flash(str(exc),'danger')
+    return redirect(url_for('estoque.estoque')+'#receitas')
+
+@estoque_bp.route('/estoque/receitas/<int:recipe_id>/itens',methods=['POST'])
+def novo_item_receita(recipe_id):
+    try:
+        adicionar_item_receita(recipe_id,int(request.form.get('product_id') or 0),request.form.get('quantity'))
+        flash('Produto vinculado ao serviço.','success')
+    except (ValueError,TypeError) as exc: flash(str(exc),'danger')
+    return redirect(url_for('estoque.estoque')+'#receitas')
+
+@estoque_bp.route('/estoque/receitas/itens/<int:item_id>/excluir',methods=['POST'])
+def excluir_item_receita(item_id):
+    execute_db('DELETE FROM service_consumption_recipe_items WHERE id=?',(item_id,))
+    flash('Item removido da receita.','info')
+    return redirect(url_for('estoque.estoque')+'#receitas')

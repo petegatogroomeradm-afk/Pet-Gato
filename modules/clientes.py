@@ -46,13 +46,18 @@ def clientes():
         return redirect(url_for("clientes.clientes"))
 
     busca = request.args.get("busca", "").strip()
+    status = request.args.get("status", "ativos").strip()
     params = ()
-    where = "WHERE COALESCE(ativo, 1) = 1"
+    where = "WHERE 1=1"
+    if status == "ativos":
+        where += " AND COALESCE(ativo, 1) = 1"
+    elif status == "arquivados":
+        where += " AND COALESCE(ativo, 1) = 0"
     if busca:
         where += " AND (nome LIKE ? OR telefone LIKE ? OR whatsapp LIKE ? OR cpf LIKE ? OR email LIKE ?)"
         params = tuple(f"%{busca}%" for _ in range(5))
     clientes_lista = query_db(f"SELECT * FROM clients {where} ORDER BY nome", params)
-    return render_template("clientes.html", clientes=clientes_lista, busca=busca)
+    return render_template("clientes.html", clientes=clientes_lista, busca=busca, status=status)
 
 
 @clientes_bp.route("/clientes/<int:cliente_id>")
@@ -176,3 +181,11 @@ def excluir_foto(cliente_id, item_id):
             "user_name": session.get("user_name", "Sistema")})
     flash("Foto removida da galeria.", "info")
     return redirect(url_for("clientes.visualizar_cliente", cliente_id=cliente_id))
+
+
+@clientes_bp.route("/clientes/<int:cliente_id>/restaurar", methods=["POST"])
+def restaurar_cliente(cliente_id):
+    execute_db("UPDATE clients SET ativo=1 WHERE id=?", (cliente_id,))
+    publish("CLIENTE_RESTAURADO", {"entity_type": "client", "entity_id": cliente_id, "user_name": session.get("user_name", "Sistema")})
+    flash("Cliente restaurado com sucesso.", "success")
+    return redirect(url_for("clientes.clientes", status="arquivados"))

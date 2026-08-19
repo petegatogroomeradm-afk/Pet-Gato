@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Central de Comunicação{% endblock %}
+{% block page_title %}Central de Comunicação{% endblock %}
+{% block page_subtitle %}WhatsApp, modelos de mensagens e histórico de contatos{% endblock %}
+{% block content %}
+<style>
+.comm-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,.8fr);gap:18px}.comm-card{background:var(--card-bg,#171420);border:1px solid var(--border-color,#302a3c);border-radius:16px;padding:18px}.comm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}.comm-stat{padding:16px;border-radius:14px;background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(234,179,8,.08));border:1px solid rgba(124,58,237,.25)}.comm-stat strong{display:block;font-size:1.65rem}.comm-form{display:grid;gap:12px}.comm-form label{display:grid;gap:6px;font-weight:700}.comm-form input,.comm-form select,.comm-form textarea{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--border-color,#393147);background:var(--input-bg,#0f0d15);color:inherit}.comm-btn{border:0;border-radius:11px;padding:12px 16px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#7c3aed,#9f67ff);color:white}.comm-btn.secondary{background:transparent;border:1px solid #6d5b85}.comm-history{width:100%;border-collapse:collapse}.comm-history th,.comm-history td{padding:10px;border-bottom:1px solid var(--border-color,#302a3c);text-align:left}.hint{font-size:.86rem;opacity:.72}.template-chip{display:block;padding:10px;border:1px solid var(--border-color,#302a3c);border-radius:10px;margin-bottom:8px;cursor:pointer}.template-chip:hover{border-color:#8b5cf6}@media(max-width:900px){.comm-grid{grid-template-columns:1fr}.comm-stats{grid-template-columns:1fr}}
+</style>
+<div class="comm-stats">
+ <div class="comm-stat"><span>Contatos registrados</span><strong>{{ resumo.total or 0 }}</strong></div>
+ <div class="comm-stat"><span>WhatsApp</span><strong>{{ resumo.whatsapp or 0 }}</strong></div>
+ <div class="comm-stat"><span>Hoje</span><strong>{{ resumo.hoje or 0 }}</strong></div>
+</div>
+<div class="comm-grid">
+ <section class="comm-card"><h2>💬 Preparar mensagem</h2><p class="hint">O sistema abre a conversa no WhatsApp. O envio só acontece após sua confirmação no aplicativo.</p>
+  <form class="comm-form" method="post" action="{{ url_for('comunicacao.preparar') }}" target="_blank" id="message-form">
+   <label>Cliente<select name="client_id" id="client-select"><option value="">Selecione...</option>{% for c in clientes %}<option value="{{ c.id }}" data-phone="{{ c.contato or '' }}">{{ c.nome }}{% if c.contato %} — {{ c.contato }}{% endif %}</option>{% endfor %}</select></label>
+   <label>Telefone<input name="recipient" id="recipient" placeholder="5531999999999"></label>
+   <label>Assunto<input name="subject" value="Atendimento Pet & Gatô"></label>
+   <label>Nome do pet (opcional)<input name="pet_name" placeholder="Ex.: Thor"></label>
+   <label>Modelo<select name="template_id" id="template-select"><option value="">Mensagem livre</option>{% for t in templates %}<option value="{{ t.id }}" data-content="{{ t.content|e }}">{{ t.category }} — {{ t.name }}</option>{% endfor %}</select></label>
+   <label>Mensagem<textarea name="message" id="message" rows="8" required placeholder="Olá, {cliente}! O {pet} está pronto para buscar."></textarea></label>
+   <div class="hint">Variáveis disponíveis: <b>{cliente}</b>, <b>{pet}</b> e <b>{empresa}</b>.</div>
+   <button class="comm-btn" type="submit">Abrir no WhatsApp</button>
+  </form>
+ </section>
+ <aside class="comm-card"><h2>📝 Novo modelo</h2><form class="comm-form" method="post" action="{{ url_for('comunicacao.criar_modelo') }}">
+  <label>Nome<input name="name" required placeholder="Pet pronto"></label><label>Categoria<select name="category"><option>Atendimento</option><option>Agenda</option><option>CRM</option><option>Financeiro</option><option>Campanha</option><option>Geral</option></select></label><label>Texto<textarea name="content" rows="6" required></textarea></label><button class="comm-btn secondary" type="submit">Salvar modelo</button></form>
+  <h3 style="margin-top:20px">Modelos disponíveis</h3>{% for t in templates %}<button type="button" class="template-chip" data-template-content="{{ t.content|e }}"><b>{{ t.name }}</b><br><span class="hint">{{ t.category }}</span></button>{% else %}<p class="hint">Nenhum modelo cadastrado.</p>{% endfor %}
+ </aside>
+</div>
+<section class="comm-card" style="margin-top:18px"><h2>🕘 Histórico recente</h2><div style="overflow:auto"><table class="comm-history"><thead><tr><th>Data</th><th>Cliente</th><th>Canal</th><th>Assunto</th><th>Status</th><th>Usuário</th></tr></thead><tbody>{% for h in historico %}<tr><td>{{ h.created_at }}</td><td>{{ h.cliente_nome or 'Contato avulso' }}</td><td>{{ h.channel }}</td><td>{{ h.subject }}</td><td>{{ h.status }}</td><td>{{ h.user_name }}</td></tr>{% else %}<tr><td colspan="6">Nenhum contato registrado.</td></tr>{% endfor %}</tbody></table></div></section>
+<script>
+const cs=document.getElementById('client-select'), phone=document.getElementById('recipient'), ts=document.getElementById('template-select'), msg=document.getElementById('message');
+cs?.addEventListener('change',()=>{phone.value=cs.selectedOptions[0]?.dataset.phone||''});
+ts?.addEventListener('change',()=>{const c=ts.selectedOptions[0]?.dataset.content;if(c)msg.value=c});
+document.querySelectorAll('[data-template-content]').forEach(b=>b.addEventListener('click',()=>{msg.value=b.dataset.templateContent;msg.focus()}));
+</script>
+{% endblock %}

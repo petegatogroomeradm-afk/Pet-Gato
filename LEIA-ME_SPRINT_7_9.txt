@@ -1,0 +1,13 @@
+PET & GATÔ BUSINESS — SPRINT 7.9
+RESUMO DIÁRIO DO CRM
+
+Novidades:
+- Tela de resumo operacional por data.
+- Indicadores de tarefas atrasadas, previstas, concluídas e próximos 7 dias.
+- Desempenho dos últimos 7 dias com contatos, agendamentos e conversão.
+- Lista priorizada de tarefas atrasadas e contatos do dia.
+- Atalhos para WhatsApp, Agenda CRM e Central de Tarefas.
+- Impressão limpa do resumo para uso da equipe.
+- Nenhuma alteração no banco de dados.
+
+Acesso: CRM > Resumo diário.

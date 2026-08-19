@@ -1,0 +1,12 @@
+PET & GATÔ BUSINESS V10.0.0 BETA 10
+Permissões e Auditoria
+
+Novidades:
+- Novo perfil Gerente.
+- Central de Auditoria com filtros e exportação CSV.
+- Registro de usuário, IP, método HTTP, rota e navegador.
+- Auditoria automática das alterações realizadas por POST/PUT/PATCH/DELETE.
+- Compatibilidade SQLite e PostgreSQL.
+
+Após extrair, inicie normalmente com: py main.py
+Acesse: Gestão > Auditoria e Segurança

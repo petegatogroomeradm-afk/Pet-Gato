@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Comprovante {{ venda.sale_number }}</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#111}.receipt{width:78mm;max-width:100%;margin:18px auto;padding:8px}.center{text-align:center}.brand{font-size:20px;font-weight:800}.muted{color:#555;font-size:12px}.divider{border-top:1px dashed #555;margin:10px 0}.row{display:flex;justify-content:space-between;gap:8px;font-size:12px;margin:5px 0}.item{margin:8px 0}.item-name{font-size:12px;font-weight:700}.total{font-size:17px;font-weight:800}.actions{display:flex;gap:8px;justify-content:center;margin:18px auto}.actions button,.actions a{border:0;border-radius:8px;padding:10px 13px;background:#6d28d9;color:#fff;text-decoration:none;cursor:pointer}@media print{.actions{display:none}.receipt{margin:0;padding:0;width:72mm}@page{size:80mm auto;margin:4mm}}
+</style></head><body>
+<div class="receipt">
+  <div class="center"><div class="brand">{{ empresa.company_name or 'Pet & Gatô' }}</div>{% if empresa.cnpj %}<div class="muted">CNPJ: {{ empresa.cnpj }}</div>{% endif %}{% if empresa.address %}<div class="muted">{{ empresa.address }}</div>{% endif %}{% if empresa.phone or empresa.whatsapp %}<div class="muted">{{ empresa.phone or empresa.whatsapp }}</div>{% endif %}</div>
+  <div class="divider"></div>
+  <div class="row"><span>Venda</span><strong>{{ venda.sale_number }}</strong></div><div class="row"><span>Data</span><span>{{ venda.created_at }}</span></div><div class="row"><span>Atendente</span><span>{{ venda.created_by }}</span></div><div class="row"><span>Cliente</span><span>{{ venda.cliente_nome or 'Consumidor final' }}</span></div>
+  <div class="divider"></div>
+  {% for i in itens %}<div class="item"><div class="item-name">{{ i.description }}</div><div class="row"><span>{{ i.quantity }} × R$ {{ '%.2f'|format(i.unit_price or 0) }}</span><strong>R$ {{ '%.2f'|format(i.total_price or 0) }}</strong></div></div>{% endfor %}
+  <div class="divider"></div><div class="row"><span>Subtotal</span><strong>R$ {{ '%.2f'|format(venda.subtotal or 0) }}</strong></div>{% if venda.discount_amount %}<div class="row"><span>Desconto</span><strong>- R$ {{ '%.2f'|format(venda.discount_amount or 0) }}</strong></div>{% endif %}<div class="row total"><span>TOTAL</span><strong>R$ {{ '%.2f'|format(venda.total_amount or 0) }}</strong></div>
+  <div class="divider"></div><div class="muted"><strong>Pagamento</strong></div>{% for p in pagamentos %}<div class="row"><span>{{ p.payment_method }}</span><strong>R$ {{ '%.2f'|format(p.amount or 0) }}</strong></div>{% endfor %}
+  {% if venda.notes %}<div class="divider"></div><div class="muted">Observações: {{ venda.notes }}</div>{% endif %}
+  <div class="divider"></div><div class="center muted">Obrigado pela preferência!<br>Comprovante não fiscal.</div>
+</div>
+<div class="actions"><button onclick="window.print()">🖨️ Imprimir</button><a href="{{ url_for('pdv.detalhe_venda',sale_id=venda.id) }}">Ver detalhes</a><a href="{{ url_for('pdv.pdv') }}">Voltar ao PDV</a></div>
+{% if request.args.get('auto_print') == '1' %}<script>window.addEventListener('load',()=>setTimeout(()=>window.print(),350));</script>{% endif %}
+</body></html>

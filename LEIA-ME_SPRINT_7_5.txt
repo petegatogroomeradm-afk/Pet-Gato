@@ -1,0 +1,18 @@
+SPRINT 7.5 — CAMPANHAS CRM
+
+IMPLEMENTADO
+- Criação de campanhas segmentadas dentro do CRM.
+- Segmentos: clientes com consentimento, sem retorno, VIP, aniversariantes e vacinas em alerta.
+- Personalização da mensagem com {cliente} e {pet}.
+- Conversão automática do público em tarefas individuais de WhatsApp.
+- Contagem de público, tarefas criadas e contatos ignorados por falta de telefone.
+- Histórico das últimas campanhas.
+- O envio permanece manual pela Central de Tarefas para evitar disparos indevidos.
+
+TESTE
+1. Abra CRM.
+2. Em Campanhas CRM, escolha um segmento.
+3. Escreva uma mensagem usando {cliente} e {pet}.
+4. Crie a campanha.
+5. Confira as tarefas geradas na Central de Tarefas.
+6. Abra o WhatsApp de uma tarefa e valide a mensagem personalizada.

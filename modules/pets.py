@@ -1,6 +1,9 @@
 from pathlib import Path
+import csv
+import io
+from datetime import date, datetime, timedelta
 
-from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, Response, flash, redirect, render_template, request, session, url_for
 
 from database import execute_db, now_iso, query_db
 from services.pet_service import obter_ficha_pet
@@ -21,6 +24,112 @@ def _float_or_none(value):
         return float(value)
     except ValueError:
         return None
+
+
+
+
+def _parse_date(value):
+    if not value:
+        return None
+    text = str(value)[:10]
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(text, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
+def _health_center_data():
+    pets = query_db("""
+        SELECT p.id, p.nome, p.especie, p.raca, p.foto, p.alergias, p.medicamentos,
+               p.peso, p.data_nascimento, c.nome AS cliente_nome, c.whatsapp, c.telefone
+        FROM pets p
+        LEFT JOIN clients c ON c.id = p.client_id
+        WHERE COALESCE(p.ativo, 1) = 1
+        ORDER BY p.nome
+    """)
+    vaccines = query_db("""
+        SELECT v.*, p.nome AS pet_nome, c.nome AS cliente_nome
+        FROM pet_vaccines v
+        JOIN pets p ON p.id = v.pet_id
+        LEFT JOIN clients c ON c.id = p.client_id
+        WHERE COALESCE(p.ativo, 1) = 1
+        ORDER BY v.proxima_dose ASC, v.id DESC
+    """)
+    treatments = query_db("""
+        SELECT t.*, p.nome AS pet_nome, c.nome AS cliente_nome
+        FROM pet_health_treatments t
+        JOIN pets p ON p.id = t.pet_id
+        LEFT JOIN clients c ON c.id = p.client_id
+        WHERE COALESCE(p.ativo, 1) = 1
+        ORDER BY t.next_date ASC, t.id DESC
+    """)
+    today = date.today()
+    limit = today + timedelta(days=30)
+    alerts = []
+    pets_with_vaccine = set()
+    for item in vaccines:
+        pets_with_vaccine.add(item["pet_id"])
+        due = _parse_date(item["proxima_dose"])
+        if not due or due > limit:
+            continue
+        days = (due - today).days
+        alerts.append({
+            "kind": "Vacina", "pet_id": item["pet_id"], "pet_nome": item["pet_nome"],
+            "cliente_nome": item["cliente_nome"], "description": item["vacina"],
+            "due_date": due.isoformat(), "days": days,
+            "status": "Vencida" if days < 0 else ("Hoje" if days == 0 else "Próxima"),
+            "priority": 0 if days < 0 else 1,
+        })
+    for item in treatments:
+        due = _parse_date(item["next_date"])
+        if not due or due > limit:
+            continue
+        days = (due - today).days
+        alerts.append({
+            "kind": item["treatment_type"] or "Tratamento", "pet_id": item["pet_id"],
+            "pet_nome": item["pet_nome"], "cliente_nome": item["cliente_nome"],
+            "description": item["product_name"] or item["treatment_type"],
+            "due_date": due.isoformat(), "days": days,
+            "status": "Vencido" if days < 0 else ("Hoje" if days == 0 else "Próximo"),
+            "priority": 0 if days < 0 else 1,
+        })
+    alerts.sort(key=lambda x: (x["priority"], x["due_date"], x["pet_nome"]))
+    no_vaccine = [pet for pet in pets if pet["id"] not in pets_with_vaccine]
+    clinical_attention = [pet for pet in pets if pet["alergias"] or pet["medicamentos"]]
+    return {
+        "pets": pets, "alerts": alerts, "no_vaccine": no_vaccine,
+        "clinical_attention": clinical_attention,
+        "stats": {
+            "active_pets": len(pets),
+            "overdue": sum(1 for item in alerts if item["days"] < 0),
+            "next_7": sum(1 for item in alerts if 0 <= item["days"] <= 7),
+            "next_30": sum(1 for item in alerts if 0 <= item["days"] <= 30),
+            "no_vaccine": len(no_vaccine),
+            "clinical_attention": len(clinical_attention),
+        },
+    }
+
+
+@pets_bp.route("/pets/saude")
+def central_saude():
+    return render_template("pets_saude.html", **_health_center_data())
+
+
+@pets_bp.route("/pets/saude/exportar.csv")
+def exportar_alertas_saude():
+    data = _health_center_data()
+    output = io.StringIO()
+    output.write("\ufeff")
+    writer = csv.writer(output, delimiter=";")
+    writer.writerow(["Tipo", "Pet", "Tutor", "Descrição", "Vencimento", "Status", "Dias"])
+    for item in data["alerts"]:
+        writer.writerow([item["kind"], item["pet_nome"], item["cliente_nome"] or "",
+                         item["description"], item["due_date"], item["status"], item["days"]])
+    filename = f"alertas_saude_pets_{date.today().isoformat()}.csv"
+    return Response(output.getvalue(), mimetype="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
 @pets_bp.route("/pets", methods=["GET", "POST"])
@@ -62,9 +171,14 @@ def pets():
         return redirect(url_for("pets.pets"))
 
     busca = request.args.get("busca", "").strip()
+    status = request.args.get("status", "ativos").strip()
     clientes = query_db("SELECT id, nome FROM clients WHERE COALESCE(ativo, 1) = 1 ORDER BY nome")
     params = ()
-    where = "WHERE COALESCE(p.ativo, 1) = 1"
+    where = "WHERE 1=1"
+    if status == "ativos":
+        where += " AND COALESCE(p.ativo, 1) = 1"
+    elif status == "arquivados":
+        where += " AND COALESCE(p.ativo, 1) = 0"
     if busca:
         where += " AND (p.nome LIKE ? OR c.nome LIKE ? OR p.raca LIKE ? OR p.especie LIKE ?)"
         params = tuple(f"%{busca}%" for _ in range(4))
@@ -73,7 +187,7 @@ def pets():
         LEFT JOIN clients c ON c.id = p.client_id
         {where} ORDER BY p.nome
     """, params)
-    return render_template("pets.html", pets=pets_lista, clientes=clientes, busca=busca)
+    return render_template("pets.html", pets=pets_lista, clientes=clientes, busca=busca, status=status)
 
 
 @pets_bp.route("/pets/<int:pet_id>")
@@ -83,6 +197,15 @@ def visualizar_pet(pet_id):
         flash("Pet não encontrado.", "danger")
         return redirect(url_for("pets.pets"))
     return render_template("pet_detalhes.html", **ficha)
+
+
+@pets_bp.route("/pets/<int:pet_id>/prontuario")
+def imprimir_prontuario(pet_id):
+    ficha = obter_ficha_pet(pet_id)
+    if not ficha:
+        flash("Pet não encontrado.", "danger")
+        return redirect(url_for("pets.pets"))
+    return render_template("pet_prontuario_impressao.html", **ficha)
 
 
 @pets_bp.route("/pets/<int:pet_id>/editar", methods=["GET", "POST"])
@@ -384,3 +507,11 @@ def atualizar_perfil_saude(pet_id):
     )
     flash("Informações de saúde atualizadas.", "success")
     return redirect(url_for("pets.visualizar_pet", pet_id=pet_id) + "#saude")
+
+
+@pets_bp.route("/pets/<int:pet_id>/restaurar", methods=["POST"])
+def restaurar_pet(pet_id):
+    execute_db("UPDATE pets SET ativo=1 WHERE id=?", (pet_id,))
+    publish("PET_RESTAURADO", {"entity_type": "pet", "entity_id": pet_id, "user_name": session.get("user_name", "Sistema")})
+    flash("Pet restaurado com sucesso.", "success")
+    return redirect(url_for("pets.pets", status="arquivados"))

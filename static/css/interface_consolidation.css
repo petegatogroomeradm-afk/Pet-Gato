@@ -1,0 +1,89 @@
+/* RC16 — camada de consolidação visual. Carregada por último e sem remover módulos. */
+:root{--content-max:1680px;--panel-gap:18px}
+html{font-size:16px}
+body{overflow-x:hidden}
+.main{min-width:0}
+.content{width:100%;max-width:var(--content-max);padding:24px 28px 56px;margin:0 auto;box-sizing:border-box}
+.content>*{min-width:0}
+.card{min-width:0}
+
+/* Sidebar: mantém versão e recolhimento visíveis sem cobrir opções. */
+.sidebar{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.sidebar .menu{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:22px;scrollbar-width:thin}
+.sidebar-footer{position:static!important;left:auto!important;bottom:auto!important;width:auto!important;margin-top:8px;padding:0 2px 2px;flex:0 0 auto}
+.sidebar-version-badge{position:static!important;display:flex;flex-direction:column;align-items:center;gap:2px;margin:8px 4px 6px;padding:7px 9px;border-radius:10px;background:rgba(20,4,42,.18);color:#fff;text-align:center;font-size:10px}
+.sidebar-version-badge strong{font-size:11px}
+.layout.sidebar-collapsed .sidebar-footer{width:auto!important}
+.layout.sidebar-collapsed .sidebar-version-badge span{display:none}
+.layout.sidebar-collapsed .sidebar-version-badge strong{font-size:9px;max-width:56px;overflow:hidden;text-overflow:ellipsis}
+
+/* Estruturas gerais */
+.grid,.cards,.metrics-grid,.dashboard-grid,.form-grid,.quick-links-grid{min-width:0}
+.grid{gap:var(--panel-gap)}
+.cards,.metrics-grid{gap:14px}
+.metric,.kpi-card{min-width:0;padding:18px}
+.metric strong,.kpi-card strong{overflow-wrap:anywhere}
+.table-wrap,.table-responsive,.kanban-shell,.agenda-scroll{max-width:100%;overflow:auto}
+table{width:100%;border-collapse:collapse}
+th,td{vertical-align:middle}
+input,select,textarea,button{max-width:100%;box-sizing:border-box}
+.form input,.form select,.form textarea{width:100%;min-height:42px}
+.form textarea{min-height:92px;resize:vertical}
+.form-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.form-actions button{min-height:42px}
+
+/* Configurações: uma única coluna de navegação + conteúdo consistente. */
+.settings-shell{display:grid;grid-template-columns:230px minmax(0,1fr);gap:20px;align-items:start}
+.settings-nav{position:sticky;top:118px;padding:10px;display:grid;gap:6px}
+.settings-nav a{padding:11px 12px;border-radius:10px;color:var(--text);font-weight:700}
+.settings-nav a:hover,.settings-nav a.active{background:var(--surface-2);color:var(--primary)}
+.settings-content{display:grid;gap:18px;min-width:0}
+.settings-card{padding:22px}
+.section-heading{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px}
+.section-heading h2{margin:3px 0 4px}
+.section-heading p{margin:0}
+.eyebrow{font-size:10px;font-weight:900;letter-spacing:.14em;color:var(--primary)}
+.form-grid.two-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.span-2{grid-column:1/-1}
+.settings-inline-form{display:grid;grid-template-columns:minmax(240px,1fr) minmax(280px,1fr);gap:14px}
+.settings-inline-form .form-actions{grid-column:1/-1}
+.toggle-row{display:flex!important;align-items:flex-start;gap:10px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)}
+.toggle-row input{width:auto!important;min-height:auto;margin-top:3px}
+.toggle-row span{display:grid;gap:3px}.toggle-row small{color:var(--muted)}
+.quick-links-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.quick-links-grid a{display:grid;gap:4px;padding:15px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);color:var(--text)}
+.quick-links-grid a span{color:var(--muted);font-size:12px}
+
+/* Páginas largas: largura útil e hierarquia consistentes. */
+.user-stats,.finance-summary,.stock-summary,.rh-summary{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))!important}
+.user-toolbar,.filters-row,.toolbar{flex-wrap:wrap}
+.user-filters{min-width:0}
+.user-filters input{min-width:220px}
+
+/* Kanban e agenda sem esmagamento. */
+.kanban-board{display:grid!important;grid-template-columns:repeat(6,minmax(220px,1fr));gap:12px;min-width:1380px}
+.kanban-column{min-width:220px}
+.agenda-board,.calendar-grid{min-width:980px}
+
+/* Evita painéis excessivamente estreitos em zoom normal. */
+@media(min-width:1280px){
+  .content{padding-left:32px;padding-right:32px}
+  .settings-content{max-width:1180px}
+}
+@media(max-width:1050px){
+  .settings-shell{grid-template-columns:1fr}
+  .settings-nav{position:static;display:flex;overflow-x:auto}
+  .settings-nav a{white-space:nowrap}
+  .settings-inline-form{grid-template-columns:1fr}
+  .form-grid.two-columns{grid-template-columns:1fr}
+  .span-2{grid-column:auto}
+}
+@media(max-width:760px){
+  .content{padding:18px 12px 44px}
+  .settings-card{padding:16px}
+  .section-heading{flex-direction:column}
+  .quick-links-grid{grid-template-columns:1fr}
+  .user-filters input{min-width:0}
+}
+
+.global-search-section-title{padding:10px 14px 6px;font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.62}

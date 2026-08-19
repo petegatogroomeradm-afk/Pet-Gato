@@ -1,0 +1,6 @@
+PET & GATÔ BUSINESS V6.5.1
+
+Correção do carregamento de horários disponíveis no Portal do Cliente.
+- Compatibilidade PostgreSQL para coluna horario do tipo TIME.
+- Tratamento de erro no navegador para não permanecer em Carregando...
+- Campo de horário mostra mensagem clara em caso de falha.

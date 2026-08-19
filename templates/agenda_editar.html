@@ -11,5 +11,6 @@
 <select name="employee_id"><option value="">Profissional não definido</option>{% for e in funcionarios %}<option value="{{ e.id }}" {% if agendamento.employee_id==e.id %}selected{% endif %}>{{ e.name }}</option>{% endfor %}</select>
 <div class="form-grid-2"><input name="valor" value="{{ agendamento.valor or 0 }}"><select name="status">{% for s in status_lista %}<option {% if agendamento.status==s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
 <label class="check-inline"><input type="checkbox" name="transport_required" {% if agendamento.transport_required %}checked{% endif %}> Necessita Táxi Dog</label>
+{% if session.role in ['admin','recepcao'] %}<label class="check-inline warning-check"><input type="checkbox" name="capacity_override" {% if agendamento.capacity_override %}checked{% endif %}> Confirmar encaixe se o horário estiver lotado</label>{% endif %}
 <textarea name="observacoes">{{ agendamento.observacoes or '' }}</textarea><div class="actions"><button>Salvar alterações</button><a class="secondary-button" href="{{ url_for('agenda.agenda', referencia=agendamento.data_agendamento) }}">Voltar</a></div></form></div>
 {% endblock %}

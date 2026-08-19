@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Calendário Financeiro{% endblock %}
+{% block page_title %}Calendário Financeiro{% endblock %}
+{% block page_subtitle %}Vencimentos, recebimentos e alertas organizados por dia{% endblock %}
+{% block content %}
+
+<div class="actions-row page-actions">
+  <a class="small-button" href="{{ url_for('financeiro.financeiro') }}">← Voltar ao Financeiro</a>
+  <a class="small-button" href="{{ url_for('financeiro.contas_pagar_receber') }}">📋 Contas a pagar e receber</a>
+  <button class="small-button" onclick="window.print()">Imprimir</button>
+</div>
+
+<section class="finance-kpis">
+  <article><span>A receber no mês</span><strong>R$ {{ '%.2f'|format(resumo.receivable or 0) }}</strong><small>Entradas ainda abertas</small></article>
+  <article><span>A pagar no mês</span><strong>R$ {{ '%.2f'|format(resumo.payable or 0) }}</strong><small>Saídas ainda abertas</small></article>
+  <article class="{{ 'positive' if (resumo.receivable or 0) >= (resumo.payable or 0) else 'negative' }}"><span>Saldo previsto</span><strong>R$ {{ '%.2f'|format((resumo.receivable or 0) - (resumo.payable or 0)) }}</strong><small>Receber menos pagar</small></article>
+  <article class="{{ 'negative' if (resumo.overdue or 0) > 0 else 'positive' }}"><span>Valores vencidos</span><strong>R$ {{ '%.2f'|format(resumo.overdue or 0) }}</strong><small>Exigem atenção</small></article>
+  <article><span>Movimentado no mês</span><strong>R$ {{ '%.2f'|format(resumo.paid or 0) }}</strong><small>Contas já liquidadas</small></article>
+  <article><span>Contas abertas</span><strong>{{ resumo.open_count or 0 }}</strong><small>Pendentes ou vencidas</small></article>
+</section>
+
+<article class="card">
+  <form method="get" class="form calendar-filter">
+    <div class="form-row">
+      <input type="month" name="mes" value="{{ mes }}">
+      <select name="tipo"><option value="">Entradas e saídas</option><option value="Entrada" {{ 'selected' if tipo=='Entrada' }}>A receber</option><option value="Saída" {{ 'selected' if tipo=='Saída' }}>A pagar</option></select>
+      <select name="conta"><option value="">Todas as contas</option>{% for c in contas %}<option value="{{ c.account }}" {{ 'selected' if conta==c.account }}>{{ c.account }}</option>{% endfor %}</select>
+      <button>Aplicar filtros</button>
+    </div>
+  </form>
+</article>
+
+<article class="card calendar-card">
+  <header class="section-header calendar-title">
+    <a class="small-button" href="{{ url_for('financeiro.calendario_financeiro', mes=mes_anterior, conta=conta, tipo=tipo) }}">← Mês anterior</a>
+    <div><h2>{{ mes_titulo }}</h2><p>Clique em uma conta para editar ou quitar</p></div>
+    <a class="small-button" href="{{ url_for('financeiro.calendario_financeiro', mes=proximo_mes, conta=conta, tipo=tipo) }}">Próximo mês →</a>
+  </header>
+  <div class="calendar-grid calendar-weekdays">
+    {% for name in ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'] %}<div>{{ name }}</div>{% endfor %}
+  </div>
+  <div class="calendar-grid calendar-days">
+    {% for semana in semanas %}
+      {% for d in semana %}
+      <section class="calendar-day {{ 'outside' if not d.in_month }} {{ 'today' if d.is_today }} {{ 'has-overdue' if d.is_past and d.open_count > 0 }}">
+        <header><strong>{{ d.day }}</strong>{% if d.is_today %}<span class="badge info">Hoje</span>{% elif d.open_count %}<span class="badge {{ 'danger' if d.is_past else 'warning' }}">{{ d.open_count }}</span>{% endif %}</header>
+        {% if d.entries or d.exits %}<div class="day-totals"><small class="positive">+ R$ {{ '%.2f'|format(d.entries) }}</small><small class="negative">− R$ {{ '%.2f'|format(d.exits) }}</small></div>{% endif %}
+        <div class="calendar-items">
+          {% for l in d['items'] %}
+          <a href="{{ url_for('financeiro.editar_lancamento', lancamento_id=l.id) }}" class="calendar-item {{ 'entry' if l.type=='Entrada' else 'exit' }} {{ 'paid' if l.status=='Pago' }}">
+            <span>{{ l.description }}</span><strong>R$ {{ '%.2f'|format(l.amount or 0) }}</strong><small>{{ l.status }}</small>
+          </a>
+          {% endfor %}
+        </div>
+      </section>
+      {% endfor %}
+    {% endfor %}
+  </div>
+</article>
+
+<article class="card table-card">
+  <header class="section-header"><div><h2>Alertas dos próximos 7 dias</h2><p>Inclui contas vencidas e próximas do vencimento</p></div><span class="badge warning">{{ alertas|length }}</span></header>
+  <div class="table-responsive"><table><thead><tr><th>Vencimento</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody>
+  {% for l in alertas %}
+    <tr><td><strong>{{ l.due_date }}</strong></td><td>{{ l.description }}<small class="block">{{ l.category or 'Sem categoria' }}</small></td><td><span class="badge {{ 'success' if l.type=='Entrada' else 'danger' }}">{{ 'Receber' if l.type=='Entrada' else 'Pagar' }}</span></td><td><strong>R$ {{ '%.2f'|format(l.amount or 0) }}</strong></td><td><span class="badge status-{{ (l.status or 'pendente')|lower }}">{{ l.status }}</span></td><td><div class="actions-row">{% if l.status!='Pago' %}<form method="post" action="{{ url_for('financeiro.alterar_status', lancamento_id=l.id) }}"><input type="hidden" name="status" value="Pago"><button class="small-button">Marcar pago</button></form>{% endif %}<a class="small-button" href="{{ url_for('financeiro.editar_lancamento', lancamento_id=l.id) }}">Editar</a></div></td></tr>
+  {% else %}<tr><td colspan="6">Nenhum alerta financeiro para os próximos dias.</td></tr>{% endfor %}
+  </tbody></table></div>
+</article>
+
+<style>
+.calendar-title{align-items:center;text-align:center}.calendar-title>div{flex:1}.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(140px,1fr));gap:8px}.calendar-weekdays{font-weight:700;text-align:center;margin:12px 0}.calendar-days{min-width:980px}.calendar-card{overflow-x:auto}.calendar-day{min-height:160px;border:1px solid var(--border,#343044);border-radius:12px;padding:10px;background:rgba(255,255,255,.025)}.calendar-day.outside{opacity:.35}.calendar-day.today{outline:2px solid #9b4dff}.calendar-day.has-overdue{border-color:#e74c5b}.calendar-day>header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.day-totals{display:flex;justify-content:space-between;gap:5px;margin-bottom:6px}.calendar-items{display:grid;gap:5px}.calendar-item{display:grid;grid-template-columns:1fr auto;gap:2px 6px;padding:6px 7px;border-radius:8px;text-decoration:none;background:rgba(78,201,176,.12);border-left:3px solid #4ec9b0;color:inherit;font-size:.78rem}.calendar-item.exit{background:rgba(231,76,91,.12);border-left-color:#e74c5b}.calendar-item.paid{opacity:.5}.calendar-item small{grid-column:1/-1}.positive{color:#35c98a}.negative{color:#ff6b7a}@media(max-width:900px){.calendar-filter .form-row{display:grid}.calendar-title{display:grid;gap:10px}.calendar-grid{grid-template-columns:repeat(7,130px)}}@media print{.page-actions,.calendar-filter,.sidebar,.topbar{display:none!important}.calendar-days{min-width:0}.calendar-grid{grid-template-columns:repeat(7,1fr)}.calendar-day{min-height:120px}}
+</style>
+{% endblock %}

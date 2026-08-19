@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Despesas da Loja{% endblock %}
+{% block page_title %}Despesas da Loja{% endblock %}
+{% block page_subtitle %}Cadastre aluguel, água, luz, internet, boletos e outras dívidas{% endblock %}
+{% block content %}
+<div class="actions-row page-actions">
+  <a class="small-button" href="{{ url_for('financeiro.financeiro') }}">← Voltar ao Financeiro</a>
+  <a class="small-button" href="{{ url_for('financeiro.contas_pagar_receber') }}">Contas a pagar e receber</a>
+  <a class="small-button" href="{{ url_for('financeiro.previsao_fluxo_caixa') }}">Fluxo projetado</a>
+</div>
+
+<section class="finance-kpis">
+  <article class="negative"><span>Total em aberto</span><strong>R$ {{ '%.2f'|format(resumo.open_total or 0) }}</strong><small>{{ resumo.open_count or 0 }} conta(s)</small></article>
+  <article class="negative"><span>Total vencido</span><strong>R$ {{ '%.2f'|format(resumo.overdue_total or 0) }}</strong><small>Exige atenção</small></article>
+  <article class="positive"><span>Total já pago</span><strong>R$ {{ '%.2f'|format(resumo.paid_total or 0) }}</strong><small>Histórico das despesas</small></article>
+</section>
+
+<article class="card">
+  <header class="section-header"><div><h2>Nova despesa ou dívida</h2><p>Marque como recorrente para aluguel, água, luz, internet e outras contas periódicas.</p></div></header>
+  <form method="post" class="form">
+    <div class="form-row">
+      <input name="description" required placeholder="Descrição: Aluguel, Cemig, Copasa, Internet...">
+      <input name="amount" required inputmode="decimal" placeholder="Valor: 1.500,00">
+    </div>
+    <div class="form-row">
+      <select name="category">
+        <option>Aluguel</option><option>Água</option><option>Energia elétrica</option>
+        <option>Internet e telefone</option><option>Fornecedores</option><option>Impostos</option>
+        <option>Salários</option><option>Manutenção</option><option>Marketing</option><option>Outros</option>
+      </select>
+      <input type="date" name="due_date" value="{{ hoje }}" required>
+      <select name="payment_method">{% for f in formas_pagamento %}<option>{{ f }}</option>{% endfor %}</select>
+      <input name="account" value="Caixa" placeholder="Conta/Caixa">
+    </div>
+    <label class="check-line"><input type="checkbox" name="recurring" value="1" id="recurring-toggle"> Esta despesa se repete</label>
+    <div id="recurrence-fields" class="form-row" style="display:none">
+      <select name="frequency"><option>Mensal</option><option>Semanal</option><option>Quinzenal</option><option>Bimestral</option><option>Trimestral</option><option>Semestral</option><option>Anual</option></select>
+      <label>Data final (opcional)<input type="date" name="end_date"></label>
+    </div>
+    <textarea name="notes" placeholder="Observações, número do boleto, fornecedor ou detalhes"></textarea>
+    <div class="actions-row"><button>Cadastrar despesa</button></div>
+  </form>
+</article>
+
+<article class="card table-card">
+  <header class="section-header"><div><h2>Despesas cadastradas</h2><p>As contas entram automaticamente na previsão do fluxo de caixa.</p></div></header>
+  <div class="table-responsive"><table><thead><tr><th>Vencimento</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody>
+  {% for d in despesas %}
+  <tr>
+    <td>{{ d.due_date }}</td><td><strong>{{ d.description }}</strong><small class="block">{{ d.notes or '' }}</small></td>
+    <td>{{ d.category or 'Outros' }}</td><td>R$ {{ '%.2f'|format(d.amount or 0) }}</td><td>{{ d.status }}</td>
+    <td><div class="actions-row">
+      {% if d.status != 'Pago' %}<form method="post" action="{{ url_for('financeiro.alterar_status', lancamento_id=d.id) }}"><input type="hidden" name="status" value="Pago"><button class="tiny-button">Marcar paga</button></form>{% endif %}
+      <a class="tiny-button" href="{{ url_for('financeiro.editar_lancamento', lancamento_id=d.id) }}">Editar</a>
+    </div></td>
+  </tr>
+  {% else %}<tr><td colspan="6">Nenhuma despesa cadastrada.</td></tr>{% endfor %}
+  </tbody></table></div>
+</article>
+<script>
+const toggle=document.getElementById('recurring-toggle');
+const fields=document.getElementById('recurrence-fields');
+if(toggle){toggle.addEventListener('change',()=>fields.style.display=toggle.checked?'grid':'none')}
+</script>
+{% endblock %}

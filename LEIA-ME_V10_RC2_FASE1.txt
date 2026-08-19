@@ -1,0 +1,24 @@
+PET & GATÔ BUSINESS — V10 RC2 FASE 1
+
+ENTREGA DESTA FASE
+- Perfil Super Administrador criado para o usuário principal "admin".
+- O Super Administrador não pode ser rebaixado, arquivado ou excluído.
+- Administradores comuns continuam com acesso de gestão da empresa.
+- Exclusão definitiva de usuários disponível somente ao Super Administrador.
+- Tela de usuários reorganizada, com edição mais clara.
+- Clientes: arquivar, listar arquivados e restaurar.
+- Pets: arquivar, listar arquivados e restaurar.
+- Funcionários: ações renomeadas para Arquivar/Restaurar.
+- Versão atualizada para 10.0.0-rc.2.
+
+INSTALAÇÃO
+1. Faça backup da pasta atual e do banco.
+2. Extraia e substitua os arquivos do sistema.
+3. Preserve o arquivo .env e a pasta instance.
+4. Execute: py scripts\migrate_database.py
+5. Execute: py scripts\check_db_compat.py
+6. Inicie: py main.py
+
+IMPORTANTE
+Na primeira inicialização, o login principal "admin" será promovido automaticamente para Super Administrador.
+Esta fase não altera nem apaga clientes, pets, funcionários, atendimentos ou registros financeiros.

@@ -1,0 +1,15 @@
+PET & GATÔ BUSINESS V10.0.0 BETA 9
+AUTOMAÇÕES CRM + FILA DE WHATSAPP
+
+Novidades:
+- Geração automática de tarefas para clientes sem retorno.
+- Tarefas para aniversários de tutores e pets.
+- Tarefas para vacinas próximas ou vencidas.
+- Proteção contra tarefas pendentes duplicadas.
+- Botão WhatsApp dentro de cada tarefa.
+- Registro na Central de Comunicação e histórico CRM.
+- Origem Manual/Automática nas tarefas.
+- Compatível com PostgreSQL e SQLite.
+
+Após instalar, inicie o sistema e abra CRM Inteligente.
+Clique em "Gerar tarefas automáticas".

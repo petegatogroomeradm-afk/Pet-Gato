@@ -116,6 +116,8 @@ def calculate_employee_month(employee_id, reference_month):
     deductions = sum(float(x["total"] or 0) for x in adjustments
                      if x["adjustment_type"] in ("Desconto", "Vale", "Falta"))
     balance = worked - expected
+    salary = float(employee["salary"] or 0)
+    estimated_net = max(0, salary + float(commission["total"] or 0) + additions - deductions)
 
     return {
         "employee": employee,
@@ -130,10 +132,16 @@ def calculate_employee_month(employee_id, reference_month):
         "commission_amount": float(commission["total"] or 0),
         "additions": additions,
         "deductions": deductions,
+        "salary": salary,
+        "estimated_net": estimated_net,
     }
 
 
 def get_rh_dashboard(reference_month):
+    # Define o intervalo do mês antes das consultas de férias, faltas e afastamentos.
+    # Sem isso, a tela /rh/gestao gera NameError e retorna Erro 500.
+    first, last = month_range(reference_month)
+
     employees = query_db("""
         SELECT e.*, w.description schedule_name
         FROM employees e LEFT JOIN work_schedules w ON w.id=e.schedule_id
@@ -154,6 +162,18 @@ def get_rh_dashboard(reference_month):
 
     vacations = query_db("""SELECT v.*, e.name employee_name FROM employee_vacations v
         LEFT JOIN employees e ON e.id=v.employee_id ORDER BY v.start_date DESC LIMIT 30""")
+    absences = query_db("""SELECT a.*, e.name employee_name FROM employee_absences a
+        LEFT JOIN employees e ON e.id=a.employee_id
+        WHERE a.start_date<=? AND COALESCE(NULLIF(a.end_date,''),a.start_date)>=?
+        ORDER BY a.start_date DESC, e.name LIMIT 50""",
+        (last.isoformat(), first.isoformat()))
+    closings = query_db("""SELECT c.*, e.name employee_name FROM employee_monthly_closings c
+        LEFT JOIN employees e ON e.id=c.employee_id
+        WHERE c.reference_month=? ORDER BY e.name""", (reference_month,))
+    closing_by_employee = {int(c["employee_id"]): c for c in closings}
+    for summary in summaries:
+        summary["closing"] = closing_by_employee.get(int(summary["employee"]["id"]))
+
     adjustments = query_db("""SELECT a.*, e.name employee_name FROM employee_adjustments a
         LEFT JOIN employees e ON e.id=a.employee_id
         WHERE a.reference_month=? ORDER BY a.created_at DESC LIMIT 30""", (reference_month,))
@@ -163,6 +183,8 @@ def get_rh_dashboard(reference_month):
         "summaries": summaries,
         "vacations": vacations,
         "adjustments": adjustments,
+        "absences": absences,
+        "closings": closings,
         "metrics": {
             "active": len(employees),
             "present": int(present["total"] or 0),

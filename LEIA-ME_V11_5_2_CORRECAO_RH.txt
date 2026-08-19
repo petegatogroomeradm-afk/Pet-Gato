@@ -1,0 +1,15 @@
+PET & GATÔ BUSINESS 11.5.2 - CORREÇÃO DO RH
+
+Correção aplicada:
+- O Python estava carregando modules/rh/__init__.py, mas as rotas completas estavam apenas em modules/rh.py.
+- As rotas de exportação, ausências, exclusões, ajustes e reabertura foram incorporadas ao blueprint realmente carregado.
+- Corrigido o BuildError de rh.export_csv.
+
+Instalação:
+1. Feche o sistema.
+2. Substitua os arquivos mantendo .env, instance e logs.
+3. Execute:
+   py scripts\migrate_database.py
+   py scripts\check_db_compat.py
+   py scripts\check_release.py
+   py main.py

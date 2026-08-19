@@ -1,0 +1,23 @@
+SPRINT 7.3 — AUTOMAÇÃO DO CRM
+
+IMPLEMENTADO
+- Botão para gerar tarefas automáticas no painel CRM.
+- Tarefas de retorno para clientes inativos ou nunca atendidos.
+- Tarefas de aniversário para tutores e pets nos próximos 30 dias.
+- Tarefas de aviso para vacinas vencidas ou próximas.
+- Prioridade automática conforme a urgência.
+- Proteção contra duplicidade: tarefas pendentes equivalentes não são recriadas.
+- Resumo informando quantas tarefas foram criadas e quantas foram ignoradas.
+
+ARQUIVOS ALTERADOS
+- modules/crm.py
+- services/crm_service.py
+- templates/crm.html
+- static/css/crm.css
+
+TESTE
+1. Abra o menu CRM.
+2. Ajuste o prazo de inatividade, se necessário.
+3. Clique em “Gerar tarefas automáticas”.
+4. Confirme que as tarefas aparecem na tabela.
+5. Clique novamente e confirme que não há duplicação.

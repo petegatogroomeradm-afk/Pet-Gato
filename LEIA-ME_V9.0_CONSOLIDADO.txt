@@ -1,0 +1,27 @@
+PET & GATÔ BUSINESS V9.0 — FINANCEIRO CONSOLIDADO
+
+Esta versão usa a V8.7 completa como base e incorpora a conciliação financeira da V8.8 sem remover funcionalidades anteriores.
+
+TELAS PRESERVADAS E CONSOLIDADAS:
+- Visão geral financeira
+- Contas a pagar e receber
+- Despesas da loja
+- Fluxo de caixa projetado
+- Fechamento mensal / DRE
+- Orçamento mensal
+- Calendário financeiro
+- Painel gerencial
+- Comparativo mensal
+- Conciliação financeira
+
+BANCO DE DADOS:
+- Mantém financial_accounts
+- Adiciona automaticamente reconciliation_status, reconciled_at e bank_reference em financial_transactions
+- Compatível com SQLite e PostgreSQL
+
+INSTALAÇÃO:
+1. Pare o sistema.
+2. Faça backup da pasta instance.
+3. Extraia o ZIP sobre a pasta do projeto e confirme a substituição.
+4. Apague pastas __pycache__.
+5. Execute py main.py.

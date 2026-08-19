@@ -1,0 +1,15 @@
+PET & GATÔ BUSINESS — V12.0.0-RC5
+TESTES FINAIS E GO-LIVE
+
+Esta release não adiciona módulos novos. O foco é validar a base consolidada antes da V12 Stable.
+
+VALIDAÇÃO RECOMENDADA
+1. py scripts/check_release.py
+2. py scripts/check_db_compat.py
+3. py scripts/go_live_check.py
+4. py main.py
+5. Testar os fluxos do CHECKLIST_GO_LIVE.md
+
+O go_live_check.py verifica arquivos críticos, compilação Python, templates/rotas,
+estrutura crítica do SQLite, permissões de pastas, backup recente e requisitos básicos
+de segurança. Em PostgreSQL, complemente a validação com check_db_compat.py.

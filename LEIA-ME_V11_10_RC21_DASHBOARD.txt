@@ -1,0 +1,7 @@
+PET & GATÔ BUSINESS 11.10.0-RC21
+Dashboard Executivo Premium
+
+- Novo painel Operação Agora com etapas do Banho & Tosa.
+- Central de prioridades financeiras, CRM, estoque e saúde dos pets.
+- Mantidos todos os módulos e integrações da RC20.
+- Nenhuma alteração estrutural no banco de dados.

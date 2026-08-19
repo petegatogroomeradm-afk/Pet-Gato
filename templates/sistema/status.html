@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Status do Sistema - Pet & Gatô{% endblock %}
+{% block page_title %}Status do Sistema{% endblock %}
+{% block page_subtitle %}Arquitetura, módulos e integridade da versão instalada{% endblock %}
+{% block content %}
+<div class="v10-status-page">
+  <section class="v10-hero">
+    <div><span class="v10-badge">V10 Alpha</span><h2>{{ app_info.name }}</h2><p>Versão {{ app_info.version }} · {{ app_info.stage }}</p></div>
+    <div class="v10-route-count"><strong>{{ route_count }}</strong><span>rotas registradas</span></div>
+  </section>
+  <section class="v10-status-grid">
+    {% for check in checks %}<article class="card v10-check {{ check.status }}"><span>{{ '✅' if check.status == 'ok' else '⚠️' }}</span><div><strong>{{ check.nome }}</strong><small>{{ check.detalhe }}</small></div></article>{% endfor %}
+  </section>
+  <section class="card v10-module-card">
+    <div class="section-head"><div><span class="eyebrow">Arquitetura modular</span><h2>Módulos registrados</h2></div><small>Atualizado em {{ generated_at.strftime('%d/%m/%Y %H:%M') }}</small></div>
+    <div class="v10-module-grid">
+      {% for module in modules %}<article><span>{{ module.icon }}</span><div><strong>{{ module.label }}</strong><small>{{ module.group }}</small></div><b class="{{ 'online' if module.disponivel else 'offline' }}">{{ 'Ativo' if module.disponivel else 'Indisponível' }}</b></article>{% endfor %}
+    </div>
+  </section>
+
+  <section class="card v10-route-audit">
+    <div class="section-head">
+      <div><span class="eyebrow">Proteção contra regressões</span><h2>Integridade das abas internas</h2></div>
+      <small>Financeiro e CRM</small>
+    </div>
+    <div class="v10-route-groups">
+      {% for group in route_groups %}
+      <article class="v10-route-group {{ group.integridade }}">
+        <header>
+          <span>{{ group.icon }}</span>
+          <div><strong>{{ group.label }}</strong><small>{{ group.available_count }} de {{ group.total_count }} rotas disponíveis</small></div>
+          <b>{{ 'Completo' if group.integridade == 'ok' else 'Atenção' }}</b>
+        </header>
+        <div class="v10-route-list">
+          {% for item in group.routes %}
+          <div class="{{ 'online' if item.disponivel else 'offline' }}">
+            <span>{{ '✅' if item.disponivel else '❌' }}</span>
+            <strong>{{ item.label }}</strong>
+            <small>{{ item.endpoint }}</small>
+          </div>
+          {% endfor %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card v10-foundation">
+    <div class="section-head"><div><span class="eyebrow">Fundação Enterprise</span><h2>Entregue nesta versão</h2></div></div>
+    <div class="v10-foundation-grid"><div>🧩<strong>Registro central de módulos</strong><small>Base única para menu, permissões e futuras integrações.</small></div><div>🏷️<strong>Versionamento semântico</strong><small>Versão oficial 10.0.0-alpha.4 disponível no sistema.</small></div><div>🩺<strong>Diagnóstico interno</strong><small>Banco, rotas e disponibilidade dos módulos em uma tela.</small></div><div>🧪<strong>Smoke tests</strong><small>Validações automáticas para impedir perda de rotas essenciais.</small></div></div>
+  </section>
+</div>
+{% endblock %}

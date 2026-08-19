@@ -4,11 +4,23 @@
 {% block page_subtitle %}Calendário operacional, bloqueios, ocupação e lista de espera{% endblock %}
 {% block content %}
 
-<div class="cards agenda-enterprise-kpis">
-  <div class="card metric"><span>Agendamentos</span><strong>{{ resumo.total or 0 }}</strong></div>
-  <div class="card metric"><span>Confirmados</span><strong>{{ resumo.confirmados or 0 }}</strong></div>
-  <div class="card metric"><span>Em atendimento</span><strong>{{ resumo.em_atendimento or 0 }}</strong></div>
-  <div class="card metric"><span>Valor previsto</span><strong>R$ {{ '%.2f'|format(resumo.valor_previsto or 0) }}</strong></div>
+<div class="cards agenda-enterprise-kpis agenda-operational-kpis">
+  <div class="card metric"><span>Agendamentos</span><strong>{{ resumo.total or 0 }}</strong><small>{{ resumo.confirmados or 0 }} confirmados</small></div>
+  <div class="card metric metric-warning"><span>Aguardando aprovação</span><strong>{{ resumo.aguardando_aprovacao or 0 }}</strong><small>Pedidos online</small></div>
+  <div class="card metric metric-arrival"><span>Na loja</span><strong>{{ resumo.na_loja or 0 }}</strong><small>Check-in realizado</small></div>
+  <div class="card metric metric-service"><span>Em atendimento</span><strong>{{ resumo.em_atendimento or 0 }}</strong><small>Banho e tosa</small></div>
+  <div class="card metric metric-ready"><span>Prontos</span><strong>{{ resumo.prontos or 0 }}</strong><small>Aguardando retirada</small></div>
+  <div class="card metric metric-taxi"><span>Táxi Dog</span><strong>{{ resumo.taxi_dog or 0 }}</strong><small>Coletas e entregas</small></div>
+</div>
+
+<div class="agenda-status-legend card">
+  <span><i class="legend-dot status-waiting"></i>Aguardando</span>
+  <span><i class="legend-dot status-confirmed"></i>Confirmado</span>
+  <span><i class="legend-dot status-arrived"></i>Na loja</span>
+  <span><i class="legend-dot status-service"></i>Em atendimento</span>
+  <span><i class="legend-dot status-ready"></i>Pronto</span>
+  <span><i class="legend-dot status-delivered"></i>Entregue</span>
+  <span><i class="legend-dot status-overbook"></i>Encaixe</span>
 </div>
 
 <div class="card agenda-enterprise-toolbar">
@@ -66,9 +78,14 @@
                 <div class="calendar-block" title="{{ b.title or b.block_type }}">🔒 {{ b.start_time }} {{ b.title or b.block_type }}</div>
               {% endfor %}
               {% for a in dia.events[:4] %}
-                <article class="calendar-event event-{{ a.status|lower|replace(' ','-')|replace('ã','a')|replace('ç','c') }}" draggable="true" data-id="{{ a.id }}" data-duration="{{ a.duration_minutes or 60 }}">
+                <article class="calendar-event event-{{ a.status|lower|replace(' ','-')|replace('ã','a')|replace('ç','c') }} {% if a.capacity_override %}event-overbook{% endif %} {% if a.tem_conflito %}event-conflict{% endif %}" draggable="true"
+                  data-id="{{ a.id }}" data-duration="{{ a.duration_minutes or 60 }}" data-pet="{{ a.pet_nome }}"
+                  data-tutor="{{ a.cliente_nome }}" data-phone="{{ a.whatsapp or '' }}" data-service="{{ a.servico }}"
+                  data-status="{{ a.status }}" data-time="{{ a.horario }}" data-date="{{ a.data_agendamento }}"
+                  data-employee-id="{{ a.employee_id or '' }}" data-employee="{{ a.funcionario_nome or 'Sem profissional' }}" data-transport="{{ 'Sim' if a.transport_required else 'Não' }}">
                   <strong>{{ a.horario }} · {{ a.pet_nome }}</strong>
                   <small>{{ a.servico }}{% if a.funcionario_nome %} · {{ a.funcionario_nome }}{% endif %}</small>
+                  {% if a.capacity_override %}<em class="event-badge-overbook">Encaixe</em>{% endif %}{% if a.tem_conflito %}<em class="event-badge-conflict">Conflito</em>{% endif %}
                 </article>
               {% endfor %}
               {% if dia.events|length > 4 %}<a class="more-events" href="{{ url_for('agenda.agenda', modo='dia', referencia=dia.iso) }}">+{{ dia.events|length - 4 }} mais</a>{% endif %}
@@ -90,19 +107,43 @@
           <div class="time-label">{{ hora }}</div>
           {% for dia in calendario %}
             <div class="time-slot drop-zone" data-date="{{ dia.iso }}" data-time="{{ hora }}">
+              {% set cap = ocupacao_slots.get(dia.iso ~ '|' ~ hora) %}
+              <div class="slot-capacity {% if cap and cap.excedido %}over{% elif cap and cap.lotado %}full{% endif %}">{{ cap.ocupados if cap else 0 }}/{{ capacidade_config.default_capacity or 3 }}</div>
               {% for b in dia.blocks if b.start_time[:2] == hora[:2] %}
                 <div class="calendar-block" title="{{ b.notes or '' }}">🔒 {{ b.title or b.block_type }}</div>
               {% endfor %}
               {% for a in dia.events if a.horario[:2] == hora[:2] %}
-                <article class="calendar-event event-{{ a.status|lower|replace(' ','-')|replace('ã','a')|replace('ç','c') }}" draggable="true" data-id="{{ a.id }}" data-duration="{{ a.duration_minutes or 60 }}">
-                  <strong>{{ a.horario }} · {{ a.pet_nome }}</strong>
-                  <small>{{ a.servico }}</small>
+                <article class="calendar-event event-{{ a.status|lower|replace(' ','-')|replace('ã','a')|replace('ç','c') }} {% if a.capacity_override %}event-overbook{% endif %} {% if a.tem_conflito %}event-conflict{% endif %}" draggable="true"
+                  data-id="{{ a.id }}" data-duration="{{ a.duration_minutes or 60 }}" data-pet="{{ a.pet_nome }}"
+                  data-tutor="{{ a.cliente_nome }}" data-phone="{{ a.whatsapp or '' }}" data-service="{{ a.servico }}"
+                  data-status="{{ a.status }}" data-time="{{ a.horario }}" data-date="{{ a.data_agendamento }}"
+                  data-employee-id="{{ a.employee_id or '' }}" data-employee="{{ a.funcionario_nome or 'Sem profissional' }}" data-transport="{{ 'Sim' if a.transport_required else 'Não' }}">
+                  <div class="event-card-head"><strong>{{ a.horario }} · {{ a.pet_nome }}</strong>{% if a.transport_required %}<span title="Táxi Dog">🚐</span>{% endif %}</div>
+                  <small>{{ a.servico }} · {{ a.duration_minutes or 60 }} min</small>
                   <small>{{ a.funcionario_nome or 'Sem profissional' }}</small>
+                  {% if a.capacity_override %}<em class="event-badge-overbook">Encaixe</em>{% endif %}{% if a.tem_conflito %}<em class="event-badge-conflict">Conflito</em>{% endif %}
                   <div class="calendar-event-actions">
-                    <a href="{{ url_for('agenda.editar_agendamento', agendamento_id=a.id) }}">Editar</a>
-                    {% if a.status not in ['Finalizado','Cancelado'] %}
+                    {% if a.status in ['Agendado','Confirmado','Reagendado','Aguardando aprovação'] %}
+                    <form method="post" class="js-smart-checkin" action="{{ url_for('agenda.checkin_inteligente', agendamento_id=a.id) }}"><button title="Registrar chegada e iniciar o tempo total">✓ Chegou</button></form>
+                    {% elif a.status == 'Na loja' %}
                     <form method="post" action="{{ url_for('agenda.iniciar_atendimento', agendamento_id=a.id) }}"><button>Iniciar</button></form>
+                    {% elif a.status == 'Em atendimento' %}
+                    <form method="post" action="{{ url_for('agenda.atualizar_status_rapido', agendamento_id=a.id) }}"><input type="hidden" name="status" value="Pronto"><button>Pronto</button></form>
+                    {% elif a.status == 'Pronto' %}
+                    <form method="post" action="{{ url_for('agenda.atualizar_status_rapido', agendamento_id=a.id) }}"><input type="hidden" name="status" value="Entregue"><button>Entregue</button></form>
                     {% endif %}
+                    <a href="{{ url_for('agenda.editar_agendamento', agendamento_id=a.id) }}">Editar</a>
+                    <details class="agenda-whatsapp-menu">
+                      <summary>WhatsApp</summary>
+                      <div>
+                        <a target="_blank" href="{{ url_for('agenda.whatsapp_agendamento', agendamento_id=a.id, action='confirmacao') }}">Confirmar</a>
+                        <a target="_blank" href="{{ url_for('agenda.whatsapp_agendamento', agendamento_id=a.id, action='lembrete') }}">Lembrete</a>
+                        <a target="_blank" href="{{ url_for('agenda.whatsapp_agendamento', agendamento_id=a.id, action='atraso') }}">Atraso</a>
+                        <a target="_blank" href="{{ url_for('agenda.whatsapp_agendamento', agendamento_id=a.id, action='pronto') }}">Pet pronto</a>
+                        <a target="_blank" href="{{ url_for('agenda.whatsapp_agendamento', agendamento_id=a.id, action='cancelamento') }}">Cancelamento</a>
+                        <a target="_blank" href="{{ url_for('agenda.whatsapp_agendamento', agendamento_id=a.id, action='avaliacao') }}">Avaliação</a>
+                      </div>
+                    </details>
                   </div>
                 </article>
               {% endfor %}
@@ -114,21 +155,11 @@
   </section>
 
   <aside class="agenda-enterprise-sidebar">
-    <details class="card agenda-panel" open>
-      <summary>Novo agendamento</summary>
-      <form method="post" class="form compact-form">
-        <select name="client_id" id="agenda-client" required><option value="">Tutor</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nome }}</option>{% endfor %}</select>
-        <select name="pet_id" id="agenda-pet" required><option value="">Pet</option>{% for p in pets %}<option value="{{ p.id }}" data-client="{{ p.client_id }}">{{ p.nome }} — {{ p.cliente_nome }}</option>{% endfor %}</select>
-        <div class="form-grid-2"><input type="date" name="data" value="{{ referencia }}" required><input type="time" name="hora" required></div>
-        <select name="servico" required><option value="">Serviço</option>{% for s in servicos %}<option>{{ s }}</option>{% endfor %}</select>
-        <div class="form-grid-2"><input type="number" name="duration_minutes" value="60" min="15" step="15"><input name="valor" placeholder="Valor"></div>
-        <select name="employee_id"><option value="">Profissional</option>{% for e in funcionarios %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select>
-        <select name="status">{% for s in status_lista %}<option>{{ s }}</option>{% endfor %}</select>
-        <label class="check-inline"><input type="checkbox" name="transport_required"> Necessita Táxi Dog</label>
-        <textarea name="observacoes" placeholder="Observações"></textarea>
-        <button>Criar agendamento</button>
-      </form>
-    </details>
+    <section class="card agenda-panel agenda-new-summary">
+      <h3>Novo agendamento</h3>
+      <p class="muted">Cadastre um atendimento sem apertar os campos na lateral.</p>
+      <button type="button" class="agenda-new-button" id="open-new-appointment">+ Novo agendamento</button>
+    </section>
 
     <details class="card agenda-panel">
       <summary>Bloquear horário</summary>
@@ -180,7 +211,71 @@
   </aside>
 </div>
 
+
+<dialog id="new-appointment-dialog" class="agenda-form-dialog">
+  <form method="dialog" class="dialog-cancel-form"><button type="submit" class="dialog-close" aria-label="Fechar">×</button></form>
+  <div class="agenda-form-dialog-head">
+    <div><span class="eyebrow">Agenda</span><h2>Novo agendamento</h2><p>Preencha os dados do tutor, pet e serviço.</p></div>
+  </div>
+  <form method="post" class="form agenda-new-form" id="new-appointment-form">
+    <label>Tutor<select name="client_id" id="agenda-client" required><option value="">Selecione o tutor</option>{% for c in clientes %}<option value="{{ c.id }}" {% if prefill_client_id|string == c.id|string %}selected{% endif %}>{{ c.nome }}</option>{% endfor %}</select></label>
+    <label>Pet<select name="pet_id" id="agenda-pet" required><option value="">Selecione o pet</option>{% for p in pets %}<option value="{{ p.id }}" data-client="{{ p.client_id }}" {% if prefill_pet_id|string == p.id|string %}selected{% endif %}>{{ p.nome }} — {{ p.cliente_nome }}</option>{% endfor %}</select></label>
+    <label>Data<input type="date" name="data" value="{{ referencia }}" required></label>
+    <label>Horário<div class="agenda-time-row"><input type="time" name="hora" id="agenda-time" required><button type="button" class="secondary-button agenda-suggest-button" id="suggest-times">Sugerir horários</button></div><div id="suggested-times" class="suggested-times" aria-live="polite"></div></label>
+    <label>Serviço<select name="servico" required><option value="">Selecione o serviço</option>{% for s in servicos %}<option>{{ s }}</option>{% endfor %}</select></label>
+    <label>Duração (minutos)<input type="number" id="agenda-duration" name="duration_minutes" value="60" min="15" step="15"></label>
+    <label>Valor<input name="valor" placeholder="R$ 0,00"></label>
+    <label>Profissional<select name="employee_id" id="agenda-employee"><option value="">Sem profissional definido</option>{% for e in funcionarios %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select></label>
+    <label>Status<select name="status">{% for s in status_lista %}<option>{{ s }}</option>{% endfor %}</select></label>
+    <div class="agenda-new-checks">
+      <label class="check-inline"><input type="checkbox" name="transport_required"> Necessita Táxi Dog</label>
+      {% if pode_encaixar %}<label class="check-inline warning-check"><input type="checkbox" name="capacity_override"> Confirmar encaixe se o horário estiver lotado</label>{% endif %}
+    </div>
+    <label class="agenda-new-notes">Observações<textarea name="observacoes" placeholder="Observações importantes sobre o pet ou atendimento"></textarea></label>
+    <div class="agenda-form-actions"><button type="button" class="secondary-button" id="cancel-new-appointment">Cancelar</button><button type="submit">Criar agendamento</button></div>
+  </form>
+</dialog>
+
+<dialog id="agenda-event-dialog" class="agenda-event-dialog">
+  <button type="button" class="dialog-close" aria-label="Fechar">×</button>
+  <div class="dialog-pet-avatar">🐶</div>
+  <h2 id="dialog-pet">Pet</h2>
+  <p id="dialog-status" class="dialog-status"></p>
+  <div class="dialog-info-grid">
+    <div><span>Tutor</span><strong id="dialog-tutor">—</strong></div>
+    <div><span>Contato</span><strong id="dialog-phone">—</strong></div>
+    <div><span>Serviço</span><strong id="dialog-service">—</strong></div>
+    <div><span>Profissional</span><strong id="dialog-employee">—</strong></div>
+    <div><span>Data e horário</span><strong id="dialog-datetime">—</strong></div>
+    <div><span>Táxi Dog</span><strong id="dialog-transport">—</strong></div>
+  </div>
+  <div class="agenda-reschedule-box">
+    <h3>Reagendamento rápido</h3>
+    <div class="agenda-reschedule-grid">
+      <label>Data<input type="date" id="dialog-move-date"></label>
+      <label>Horário<input type="time" id="dialog-move-time"></label>
+      <label>Profissional<select id="dialog-move-employee"><option value="">Manter profissional atual</option>{% for e in funcionarios %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select></label>
+      <button type="button" id="dialog-move-save">Salvar reagendamento</button>
+    </div>
+  </div>
+  <div class="dialog-actions" id="dialog-actions"></div>
+</dialog>
+
 <div id="agenda-toast" class="agenda-toast" role="status"></div>
-<script>window.AGENDA_MOVE_URL = "{{ url_for('agenda.mover_agendamento', agendamento_id=0) }}";</script>
+<script>window.AGENDA_MOVE_URL = "{{ url_for('agenda.mover_agendamento', agendamento_id=0) }}"; window.AGENDA_AVAILABILITY_URL = "{{ url_for('agenda.disponibilidade_agenda') }}";</script>
+<script>
+(() => {
+  const dialog = document.getElementById('new-appointment-dialog');
+  const openButton = document.getElementById('open-new-appointment');
+  const cancelButton = document.getElementById('cancel-new-appointment');
+  if (dialog && openButton) openButton.addEventListener('click', () => dialog.showModal());
+  if (dialog && cancelButton) cancelButton.addEventListener('click', () => dialog.close());
+  if (dialog) dialog.addEventListener('click', (event) => {
+    const box = dialog.getBoundingClientRect();
+    const inside = event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
+    if (!inside) dialog.close();
+  });
+})();
+</script>
 <script src="{{ url_for('static', filename='js/agenda.js') }}"></script>
 {% endblock %}

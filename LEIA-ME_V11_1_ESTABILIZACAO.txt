@@ -1,0 +1,20 @@
+PET & GATÔ BUSINESS ENTERPRISE V11.1
+
+FOCO DESTA ENTREGA
+- Correção do arquivamento/restauração de usuários.
+- Reset de senha com troca obrigatória no próximo acesso.
+- Proteção adicional do Super Administrador.
+- Refinamento visual de Usuários, Permissões e Auditoria.
+- Validação de sintaxe e compatibilidade antes da entrega.
+
+INSTALAÇÃO
+1. Faça backup da pasta atual e do banco.
+2. Preserve .env, instance e logs.
+3. Substitua os arquivos.
+4. Execute:
+   py scripts\migrate_database.py
+   py scripts\check_db_compat.py
+   py scripts\check_release.py
+   py main.py
+
+VERSÃO: 11.1.0

@@ -3,19 +3,20 @@
 {% block title %}Dashboard Enterprise{% endblock %}
 {% block page_title %}Dashboard Enterprise{% endblock %}
 {% block page_subtitle %}Gestão inteligente da operação em tempo real{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_premium.css') }}">{% endblock %}
 
 {% block content %}
 <div id="enterprise-dashboard" data-api="{{ url_for('dashboard_api') }}">
     <section class="enterprise-hero">
         <div>
-            <span class="eyebrow">Pet & Gatô Business V5.2.1</span>
+            <span class="eyebrow">Pet & Gatô Business {{ app_version }}</span>
             <h2>{{ saudacao }}, {{ session.get('user_name', 'Administrador') }}</h2>
             <p>Veja o desempenho financeiro, operacional e os alertas que precisam da sua atenção.</p>
         </div>
         <div class="enterprise-status">
             <span class="live-dot"></span>
             <div>
-                <strong>Sistema atualizado</strong>
+                <strong id="dashboard-connection-status">Sistema atualizado</strong>
                 <small id="dashboard-updated">{{ gerado_em }}</small>
             </div>
             <button class="icon-button" id="refresh-dashboard" type="button" title="Atualizar painel">↻</button>
@@ -31,6 +32,36 @@
         <a href="{{ url_for('crm.dashboard') }}">📣 <span>CRM</span></a>
         <a href="{{ url_for('fidelidade.dashboard') }}">🎁 <span>Fidelidade</span></a>
         <button id="dashboard-global-search" type="button">🔎 <span>Busca global</span></button>
+    </section>
+
+    <section class="dashboard-command-grid">
+        <article class="card dashboard-command-panel">
+            <div class="section-head">
+                <div><span class="eyebrow">Operação agora</span><h2>Fluxo do Banho & Tosa</h2></div>
+                <a href="{{ url_for('banho_tosa.banho_tosa') }}">Abrir Kanban</a>
+            </div>
+            <div class="operation-flow">
+                <div><span>⏳</span><strong><span data-dashboard-value="operation_status.aguardando">{{ operation_status.aguardando }}</span></strong><small>Aguardando</small></div>
+                <div><span>🛁</span><strong><span data-dashboard-value="operation_status.banho">{{ operation_status.banho }}</span></strong><small>No banho</small></div>
+                <div><span>💨</span><strong><span data-dashboard-value="operation_status.secagem">{{ operation_status.secagem }}</span></strong><small>Secagem</small></div>
+                <div><span>✂️</span><strong><span data-dashboard-value="operation_status.tosa">{{ operation_status.tosa }}</span></strong><small>Na tosa</small></div>
+                <div><span>✅</span><strong><span data-dashboard-value="operation_status.prontos">{{ operation_status.prontos }}</span></strong><small>Prontos</small></div>
+            </div>
+        </article>
+
+        <article class="card dashboard-priority-panel">
+            <div class="section-head">
+                <div><span class="eyebrow">Prioridade do gestor</span><h2>O que exige atenção</h2></div>
+                <span class="priority-total">{{ prioridades.contas_vencidas + prioridades.crm_atrasadas + prioridades.estoque_critico + prioridades.vacinas_alerta }}</span>
+            </div>
+            <div class="priority-list">
+                <a href="{{ url_for('financeiro.contas_pagar_receber') }}"><span>💳 Contas vencidas</span><strong data-dashboard-value="prioridades.contas_vencidas">{{ prioridades.contas_vencidas }}</strong><small>R$ {{ '%.2f'|format(prioridades.valor_vencido or 0) }}</small></a>
+                <a href="{{ url_for('financeiro.contas_pagar_receber') }}"><span>📅 Vencem hoje</span><strong data-dashboard-value="prioridades.contas_hoje">{{ prioridades.contas_hoje }}</strong><small>Compromissos</small></a>
+                <a href="{{ url_for('crm.dashboard') }}"><span>📌 CRM atrasado</span><strong data-dashboard-value="prioridades.crm_atrasadas">{{ prioridades.crm_atrasadas }}</strong><small>Tarefas</small></a>
+                <a href="{{ url_for('estoque.estoque') }}"><span>📦 Estoque crítico</span><strong data-dashboard-value="prioridades.estoque_critico">{{ prioridades.estoque_critico }}</strong><small>Produtos</small></a>
+                <a href="{{ url_for('pets.central_saude') }}"><span>💉 Saúde dos pets</span><strong data-dashboard-value="prioridades.vacinas_alerta">{{ prioridades.vacinas_alerta }}</strong><small>Alertas</small></a>
+            </div>
+        </article>
     </section>
 
     <section class="enterprise-kpis">
@@ -73,6 +104,29 @@
                 <i style="width: {{ [financeiro.meta_percentual, 100]|min }}%"></i>
             </div>
             <small>Faltam R$ {{ "%.2f"|format(financeiro.falta_meta or 0) }}</small>
+        </article>
+    </section>
+
+    <section class="executive-snapshot" aria-label="Resumo executivo">
+        <article class="snapshot-card">
+            <span>💵 Resultado do mês</span>
+            <strong class="{{ 'positive-value' if operacao_resumo.resultado_mes >= 0 else 'negative-value' }}" data-dashboard-value="operacao_resumo.resultado_mes" data-format="currency">R$ {{ "%.2f"|format(operacao_resumo.resultado_mes or 0) }}</strong>
+            <small>Receitas menos despesas pagas</small>
+        </article>
+        <article class="snapshot-card">
+            <span>🧾 Ticket médio</span>
+            <strong data-dashboard-value="operacao_resumo.ticket_medio" data-format="currency">R$ {{ "%.2f"|format(operacao_resumo.ticket_medio or 0) }}</strong>
+            <small>Atendimentos do mês</small>
+        </article>
+        <article class="snapshot-card">
+            <span>👔 Equipe presente</span>
+            <strong data-dashboard-value="operacao_resumo.equipe_percentual" data-format="percent">{{ "%.1f"|format(operacao_resumo.equipe_percentual or 0) }}%</strong>
+            <small>{{ cards.presentes_hoje }} de {{ cards.funcionarios }} funcionário(s)</small>
+        </article>
+        <article class="snapshot-card {{ 'snapshot-alert' if operacao_resumo.pendencias_criticas else 'snapshot-ok' }}">
+            <span>🚨 Pendências críticas</span>
+            <strong data-dashboard-value="operacao_resumo.pendencias_criticas">{{ operacao_resumo.pendencias_criticas }}</strong>
+            <small>{{ 'Atenção necessária' if operacao_resumo.pendencias_criticas else 'Operação sem alertas críticos' }}</small>
         </article>
     </section>
 

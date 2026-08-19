@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Fechamento do Atendimento{% endblock %}
+{% block page_title %}Fechamento do Atendimento{% endblock %}
+{% block page_subtitle %}Confira pagamento, estoque e comissão antes de concluir{% endblock %}
+{% block content %}
+<div class="closure-grid">
+  <section class="card closure-main">
+    <div class="section-head"><div><h2>{{ atendimento.pet_nome }}</h2><p>{{ atendimento.cliente_nome }} · {{ atendimento.servico }}</p></div><span class="status-badge">{{ atendimento.status }}</span></div>
+    <div class="closure-summary">
+      <div><span>Profissional</span><strong>{{ atendimento.funcionario_nome or 'Não definido' }}</strong></div>
+      <div><span>Data</span><strong>{{ atendimento.data }}</strong></div>
+      <div><span>Horário</span><strong>{{ atendimento.hora_entrada or atendimento.horario_agendado or '--:--' }}</strong></div>
+      <div><span>Valor</span><strong>R$ {{ '%.2f'|format(atendimento.valor or 0) }}</strong></div>
+    </div>
+    {% if atendimento.status != 'Finalizado' %}
+    <form method="post" class="form closure-form">
+      <label>Valor final<input name="valor" value="{{ '%.2f'|format(atendimento.valor or 0) }}" required></label>
+      <label>Forma de pagamento<select name="payment_method" required>{% for item in ['A definir','PIX','Dinheiro','Cartão Débito','Cartão Crédito','Voucher'] %}<option {% if atendimento.payment_method==item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></label>
+      <label class="full">Observações do check-out<textarea name="checkout_notes" rows="4">{{ checklist.checkout_notes if checklist else '' }}</textarea></label>
+      <div class="closure-warning full">Ao confirmar, o atendimento será finalizado e o sistema tentará lançar Financeiro, Estoque e Comissão com proteção contra duplicidade.</div>
+      <div class="form-actions full"><a class="button secondary" href="{{ url_for('banho_tosa.banho_tosa') }}">Voltar</a><button type="submit">Confirmar fechamento</button></div>
+    </form>
+    {% else %}
+      <div class="success-panel">✓ Atendimento finalizado.</div>
+      <div class="form-actions"><a class="button secondary" href="{{ url_for('banho_tosa.banho_tosa') }}">Voltar ao Kanban</a>{% if atendimento.whatsapp %}<a class="button" target="_blank" href="{{ url_for('banho_tosa.whatsapp_atendimento',atendimento_id=atendimento.id,action='pronto') }}">Avisar tutor</a>{% endif %}</div>
+    {% endif %}
+  </section>
+  <aside class="closure-side">
+    <section class="card"><h3>Integrações</h3><div class="integration-list">
+      <div class="{{ 'done' if atendimento.financeiro_lancado else 'pending' }}"><span>Financeiro</span><strong>{{ 'Concluído' if atendimento.financeiro_lancado else 'Pendente' }}</strong></div>
+      <div class="{{ 'done' if atendimento.estoque_baixado else ('neutral' if not produtos else 'pending') }}"><span>Estoque</span><strong>{{ 'Concluído' if atendimento.estoque_baixado else ('Sem consumo' if not produtos else 'Pendente') }}</strong></div>
+      <div class="{{ 'done' if atendimento.commission_lancada else ('neutral' if not atendimento.employee_id else 'pending') }}"><span>Comissão</span><strong>{{ 'Concluída' if atendimento.commission_lancada else ('Sem profissional' if not atendimento.employee_id else 'Pendente') }}</strong></div>
+    </div>{% if atendimento.status=='Finalizado' %}<form method="post" action="{{ url_for('banho_tosa.reprocessar_integracoes_atendimento',atendimento_id=atendimento.id) }}"><button class="secondary-button full-button">Reprocessar pendências</button></form>{% endif %}</section>
+    <section class="card"><h3>Consumo previsto</h3>{% if produtos %}{% for p in produtos %}<div class="line-item"><span>{{ p.product_name }}</span><strong>{{ p.quantity }} {{ p.unit or p.product_unit or '' }}</strong></div>{% endfor %}{% else %}<p class="muted">Nenhum produto vinculado. O estoque não será alterado.</p>{% endif %}</section>
+    <section class="card"><h3>Comissão</h3>{% if comissao %}<div class="line-item"><span>{{ comissao.rate }}%</span><strong>R$ {{ '%.2f'|format(comissao.amount or 0) }}</strong></div>{% elif atendimento.employee_id %}<p class="muted">Será calculada ao confirmar.</p>{% else %}<p class="muted">Defina um profissional para gerar comissão.</p>{% endif %}</section>
+  </aside>
+</div>
+<style>
+.closure-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:20px}.closure-side{display:grid;gap:16px;align-content:start}.closure-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.closure-summary div,.integration-list div{padding:14px;border:1px solid var(--border,#e5e7eb);border-radius:12px}.closure-summary span,.integration-list span{display:block;font-size:.8rem;color:var(--muted,#6b7280)}.closure-form{display:grid;grid-template-columns:1fr 1fr;gap:14px}.closure-form label{display:grid;gap:6px}.full{grid-column:1/-1}.closure-warning{padding:12px;border-radius:10px;background:#fff7ed;color:#9a3412}.form-actions{display:flex;gap:10px;justify-content:flex-end}.integration-list{display:grid;gap:10px}.integration-list .done{border-color:#86efac;background:#f0fdf4}.integration-list .pending{border-color:#fde68a;background:#fffbeb}.integration-list .neutral{background:#f8fafc}.line-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border,#eee)}.success-panel{padding:18px;margin:18px 0;background:#f0fdf4;border:1px solid #86efac;border-radius:12px;color:#166534}.full-button{width:100%;margin-top:12px}@media(max-width:900px){.closure-grid{grid-template-columns:1fr}.closure-summary{grid-template-columns:1fr 1fr}}@media(max-width:600px){.closure-form,.closure-summary{grid-template-columns:1fr}.full{grid-column:auto}}
+</style>
+{% endblock %}

@@ -1,0 +1,9 @@
+PET & GATÔ BUSINESS 11.9.1-RC13.1
+
+Correções:
+- Perfil superadmin reconhecido como acesso total.
+- Menu Equipe e RH e Gestão volta a aparecer para o Super Administrador.
+- Versão do topo do menu deixa de exibir Business V6.1 fixo.
+- O topo agora usa a versão real definida em core/version.py.
+
+Preserve: .env, instance, uploads, backups e logs.

@@ -1,0 +1,7 @@
+PET & GATÔ BUSINESS 10.0.0-beta.4
+
+NOVIDADE: CENTRAL DE COMUNICAÇÃO
+Acesse pelo menu Comunicação. Cadastre modelos, selecione o cliente e abra a mensagem no WhatsApp.
+O sistema registra a preparação no histórico, mas o envio depende da confirmação no WhatsApp.
+
+VARIÁVEIS: {cliente}, {pet}, {empresa}

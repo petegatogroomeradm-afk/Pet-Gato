@@ -1,0 +1,15 @@
+PET & GATÔ BUSINESS V10.0.0 ALPHA 4
+
+Esta atualização adiciona proteção contra regressões nas abas internas.
+
+NOVO:
+- Auditoria das 10 principais rotas do Financeiro.
+- Auditoria das rotas essenciais do CRM.
+- Indicador Completo/Atenção na tela Status do Sistema.
+- Contagem de rotas disponíveis.
+- Versão atualizada para 10.0.0-alpha.4.
+
+TESTE APÓS INSTALAR:
+1. Abra Configurações > Status do Sistema.
+2. Confira Integridade das abas internas.
+3. Financeiro Enterprise e CRM Inteligente devem aparecer como Completo.

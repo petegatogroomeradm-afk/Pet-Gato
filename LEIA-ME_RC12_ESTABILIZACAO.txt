@@ -1,0 +1,23 @@
+PET & GATÔ BUSINESS — V11.8.1 RC12 ESTABILIZAÇÃO
+
+Esta entrega foi reconstruída diretamente sobre o ZIP enviado pelo usuário.
+
+CORREÇÕES PRINCIPAIS
+- Remove a dependência quebrada do módulo Sistema que causava ImportError.
+- Adiciona core/version.py com version_info compatível.
+- Mantém o RH usando modules/rh/__init__.py, evitando conflito com arquivo antigo.
+- Inclui limpeza segura de resíduos de atualizações anteriores.
+- Inclui verificador de sintaxe, arquivos obrigatórios e endpoints dos templates.
+- Não inclui banco de dados do usuário no pacote de distribuição.
+
+INSTALAÇÃO RECOMENDADA
+1. Feche o sistema.
+2. Faça backup da pasta atual.
+3. Extraia este pacote e substitua os arquivos do projeto.
+4. Preserve .env, instance, uploads, backups e logs.
+5. Execute:
+   py scripts/cleanup_stale_updates.py
+   py scripts/check_release.py
+   py main.py
+
+A limpeza não apaga banco, clientes, pets, agenda, uploads ou configurações privadas.

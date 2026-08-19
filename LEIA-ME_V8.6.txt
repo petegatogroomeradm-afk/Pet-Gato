@@ -1,0 +1,9 @@
+PET & GATÔ BUSINESS V8.6
+Sprint 8.6 — Painel Financeiro Gerencial
+
+- Resumo executivo mensal
+- Prioridades dos próximos 7 dias
+- Alertas de orçamento acima de 80%
+- Maiores categorias de despesas
+- Movimento financeiro diário
+- Sem alteração estrutural no banco de dados

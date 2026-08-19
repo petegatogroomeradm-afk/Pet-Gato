@@ -1,0 +1,19 @@
+PET & GATÔ BUSINESS 12.0.0-RC2
+
+FOCO DA RELEASE
+- Padronização visual e de experiência sem alterar regras de negócio.
+- Nova camada final static/css/v12_design_system.css.
+- Cards, métricas, formulários, botões, tabelas, modais e filtros padronizados.
+- Melhorias de acessibilidade, foco e responsividade.
+- Mantidas as correções de banco e Financeiro da RC1.
+
+INSTALAÇÃO
+1. Faça backup da pasta atual.
+2. Substitua os arquivos da aplicação.
+3. Preserve .env, instance, uploads, backups e logs.
+4. Execute: py scripts/check_release.py
+5. Execute: py main.py
+6. No navegador use Ctrl+F5.
+
+VALIDAÇÃO RECOMENDADA
+Dashboard, Agenda, Banho e Tosa, Clientes, Pets, Financeiro, RH, Estoque, Usuários, Auditoria e Configurações.

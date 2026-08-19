@@ -1,0 +1,24 @@
+PET & GATÔ BUSINESS V6.2 — USUÁRIOS E SEGURANÇA
+
+Principais entregas:
+- Cadastro completo: CPF, telefone, e-mail, cargo e admissão.
+- Busca e filtros por perfil/status.
+- Edição em janela modal e visual responsivo.
+- Último login, IP, navegador e contador de acessos.
+- Histórico de sucessos e falhas de login.
+- Bloqueio automático por 30 minutos após 5 tentativas inválidas.
+- Desbloqueio manual pelo administrador.
+- Troca obrigatória de senha no primeiro acesso.
+- Auditoria de criação, edição, status, desbloqueio e troca de senha.
+
+Instalação:
+1. Confirme que está na branch develop.
+2. Faça backup da pasta atual e preserve a pasta instance.
+3. Copie o conteúdo deste pacote sobre a pasta petegato_business_v3.
+4. Execute: py main.py
+5. Teste localmente antes do commit.
+
+Commit sugerido:
+git add .
+git commit -m "Implementar V6.2 gestao de usuarios e seguranca"
+git push origin develop

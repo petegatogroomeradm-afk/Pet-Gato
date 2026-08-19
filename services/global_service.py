@@ -5,6 +5,19 @@ from datetime import date, timedelta
 from database import query_db
 
 
+def _safe_query(sql: str, params=()):
+    """Executa consultas auxiliares sem derrubar toda a interface.
+
+    Alguns módulos são opcionais e bancos antigos podem ainda não possuir todas
+    as tabelas. Busca global e notificações devem continuar disponíveis mesmo
+    durante uma migração parcial.
+    """
+    try:
+        return query_db(sql, params)
+    except Exception:
+        return []
+
+
 def buscar_global(termo: str, limite: int = 8):
     termo = (termo or "").strip()
     if len(termo) < 2:
@@ -13,7 +26,7 @@ def buscar_global(termo: str, limite: int = 8):
     padrao = f"%{termo}%"
     resultados = []
 
-    clientes = query_db(
+    clientes = _safe_query(
         """
         SELECT id, nome, telefone, whatsapp
         FROM clients
@@ -40,7 +53,7 @@ def buscar_global(termo: str, limite: int = 8):
             }
         )
 
-    pets = query_db(
+    pets = _safe_query(
         """
         SELECT p.id, p.nome, p.raca, c.nome AS tutor
         FROM pets p
@@ -70,7 +83,7 @@ def buscar_global(termo: str, limite: int = 8):
             }
         )
 
-    funcionarios = query_db(
+    funcionarios = _safe_query(
         """
         SELECT id, name, role
         FROM employees
@@ -95,7 +108,7 @@ def buscar_global(termo: str, limite: int = 8):
             }
         )
 
-    produtos = query_db(
+    produtos = _safe_query(
         """
         SELECT id, name, category, quantity, unit
         FROM stock_products
@@ -125,7 +138,7 @@ def buscar_global(termo: str, limite: int = 8):
             }
         )
 
-    agendamentos = query_db(
+    agendamentos = _safe_query(
         """
         SELECT a.id, a.data_agendamento, a.horario, a.servico,
                c.nome AS cliente, p.nome AS pet
@@ -166,7 +179,7 @@ def obter_notificacoes():
     limite_preventivos = hoje + timedelta(days=30)
     notificacoes = []
 
-    estoque = query_db(
+    estoque = _safe_query(
         """
         SELECT name, quantity, min_quantity, unit
         FROM stock_products
@@ -190,7 +203,7 @@ def obter_notificacoes():
             }
         )
 
-    vacinas = query_db(
+    vacinas = _safe_query(
         """
         SELECT v.vacina, v.proxima_dose, p.nome AS pet, p.id AS pet_id
         FROM pet_vaccines v
@@ -219,7 +232,7 @@ def obter_notificacoes():
             }
         )
 
-    preventivos = query_db(
+    preventivos = _safe_query(
         """
         SELECT t.treatment_type, t.next_date, p.nome AS pet, p.id AS pet_id
         FROM pet_health_treatments t
@@ -248,7 +261,7 @@ def obter_notificacoes():
             }
         )
 
-    financeiro = query_db(
+    financeiro = _safe_query(
         """
         SELECT description, amount, due_date
         FROM financial_transactions
@@ -275,7 +288,7 @@ def obter_notificacoes():
             }
         )
 
-    agenda = query_db(
+    agenda = _safe_query(
         """
         SELECT a.horario, a.servico, p.nome AS pet
         FROM appointments a

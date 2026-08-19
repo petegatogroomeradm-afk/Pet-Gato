@@ -1,0 +1,10 @@
+Pet & Gatô Business 11.15.0-RC26
+
+Novidades:
+- pagamentos parciais e histórico por conta;
+- estorno de pagamentos;
+- saldo restante por lançamento;
+- status Parcial;
+- gestão de contas recorrentes;
+- geração manual da próxima recorrência;
+- compatibilidade SQLite e PostgreSQL.

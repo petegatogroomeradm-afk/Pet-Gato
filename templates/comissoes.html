@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Comissões{% endblock %}
+{% block page_title %}Comissões da Equipe{% endblock %}
+{% block page_subtitle %}Cálculo automático, aprovação, pagamento, ajustes e ranking por profissional{% endblock %}
+{% block content %}
+<nav class="finance-module-nav" aria-label="Navegação financeira">
+  <a href="{{ url_for('financeiro.financeiro') }}">📊 Visão geral</a>
+  <a href="{{ url_for('financeiro.contas_pagar_receber') }}">🧾 Contas</a>
+  <a class="active" href="{{ url_for('comissoes.painel') }}">👥 Comissões</a>
+  <a href="{{ url_for('financeiro.conciliacao_financeira') }}">🏦 Conciliação</a>
+  <a href="{{ url_for('financeiro.relatorio_mensal') }}">📄 Relatório mensal</a>
+</nav>
+
+<section class="commission-kpis">
+  <article><span>Gerado no período</span><strong>R$ {{ '%.2f'|format(resumo.total_gerado or 0)|replace('.', ',') }}</strong><small>{{ resumo.total_lancamentos or 0 }} lançamentos automáticos</small></article>
+  <article class="warning"><span>Pendente</span><strong>R$ {{ '%.2f'|format(resumo.pendente or 0)|replace('.', ',') }}</strong><small>Aguardando conferência</small></article>
+  <article><span>Aprovado</span><strong>R$ {{ '%.2f'|format(resumo.aprovada or 0)|replace('.', ',') }}</strong><small>Pronto para pagamento</small></article>
+  <article class="success"><span>Pago</span><strong>R$ {{ '%.2f'|format(resumo.paga or 0)|replace('.', ',') }}</strong><small>Quitado no período</small></article>
+  <article><span>Ajustes</span><strong>R$ {{ '%.2f'|format(total_ajustes)|replace('.', ',') }}</strong><small>Bônus e descontos manuais</small></article>
+</section>
+
+<section class="commission-layout">
+  <article class="card commission-filter-card">
+    <header class="section-header"><div><h2>Filtros</h2><p>Selecione o período e refine a consulta</p></div><a class="small-button" href="{{ url_for('comissoes.exportar_csv',mes=mes,funcionario_id=funcionario_id,status=status,busca=busca) }}">Exportar CSV</a></header>
+    <form method="get" class="form commission-filter-form">
+      <input type="month" name="mes" value="{{ mes }}">
+      <select name="funcionario_id"><option value="">Todos os funcionários</option>{% for f in funcionarios %}<option value="{{ f.id }}" {{ 'selected' if funcionario_id|string == f.id|string }}>{{ f.name }}</option>{% endfor %}</select>
+      <select name="status"><option value="">Todos os status</option>{% for s in status_opcoes %}<option {{ 'selected' if status==s }}>{{ s }}</option>{% endfor %}</select>
+      <input name="busca" value="{{ busca }}" placeholder="Funcionário, cliente, pet ou serviço">
+      <div class="actions-row"><button>Filtrar</button><a class="small-button" href="{{ url_for('comissoes.painel') }}">Limpar</a></div>
+    </form>
+  </article>
+
+  <article class="card">
+    <header class="section-header"><div><h2>Ajuste manual</h2><p>Lance bônus, desconto ou correção</p></div></header>
+    <form method="post" action="{{ url_for('comissoes.adicionar_ajuste') }}" class="form">
+      <div class="form-row"><select name="employee_id" required><option value="">Funcionário</option>{% for f in funcionarios %}<option value="{{ f.id }}">{{ f.name }}</option>{% endfor %}</select><input type="month" name="reference_month" value="{{ mes }}" required></div>
+      <div class="form-row"><select name="adjustment_type"><option>Bônus</option><option>Desconto</option><option>Correção</option></select><input name="amount" placeholder="Valor: use negativo para desconto" required></div>
+      <input name="description" placeholder="Descrição do ajuste" required><textarea name="notes" placeholder="Observações"></textarea><button>Salvar ajuste</button>
+    </form>
+  </article>
+</section>
+
+<section class="commission-layout">
+  <article class="card ranking-card">
+    <header class="section-header"><div><h2>Ranking do mês</h2><p>Produção e comissão por profissional</p></div></header>
+    <div class="ranking-list">{% for r in ranking %}<div class="ranking-item"><span class="ranking-position">{{ loop.index }}º</span><div><strong>{{ r.name }}</strong><small>{{ r.role_name or 'Profissional' }} · {{ r.atendimentos }} atendimento(s)</small></div><span><strong>R$ {{ '%.2f'|format(r.total or 0)|replace('.', ',') }}</strong><small>Pago: R$ {{ '%.2f'|format(r.pago or 0)|replace('.', ',') }}</small></span></div>{% else %}<p>Sem profissionais ativos.</p>{% endfor %}</div>
+  </article>
+  <article class="card">
+    <header class="section-header"><div><h2>Percentuais</h2><p>Taxa padrão aplicada no fechamento do atendimento</p></div></header>
+    <div class="rate-list">{% for f in funcionarios %}<form method="post" action="{{ url_for('comissoes.atualizar_taxa',employee_id=f.id) }}"><span><strong>{{ f.name }}</strong><small>{{ f.role_name or 'Profissional' }}</small></span><div><input name="commission_rate" value="{{ f.commission_rate or 0 }}" inputmode="decimal"><span>%</span><button class="small-button">Salvar</button></div></form>{% else %}<p>Nenhum funcionário ativo.</p>{% endfor %}</div>
+  </article>
+</section>
+
+<article class="card table-card">
+  <header class="section-header"><div><h2>Comissões automáticas</h2><p>Geradas quando o atendimento de banho e tosa é finalizado</p></div></header>
+  <form method="post" action="{{ url_for('comissoes.alterar_lote') }}">
+    <div class="batch-actions"><select name="status" required><option value="">Ação em lote</option><option>Aprovada</option><option>Paga</option><option>Cancelada</option><option>Pendente</option></select><button class="small-button">Aplicar às selecionadas</button></div>
+    <div class="table-responsive"><table><thead><tr><th><input type="checkbox" id="select-all-commissions"></th><th>Data</th><th>Funcionário</th><th>Atendimento</th><th>Valor serviço</th><th>Taxa</th><th>Comissão</th><th>Status</th><th>Ação</th></tr></thead><tbody>
+    {% for c in comissoes %}<tr><td><input type="checkbox" name="commission_ids" value="{{ c.id }}"></td><td>{{ c.atendimento_data or (c.created_at or '')[:10] }}</td><td><strong>{{ c.funcionario_nome }}</strong><small class="block">{{ c.role_name or '-' }}</small></td><td>{{ c.servico or '-' }}<small class="block">{{ c.pet_nome or '-' }} · {{ c.cliente_nome or '-' }}</small></td><td>R$ {{ '%.2f'|format(c.valor_servico or 0)|replace('.', ',') }}</td><td>{{ '%.2f'|format(c.rate or 0)|replace('.', ',') }}%</td><td><strong>R$ {{ '%.2f'|format(c.amount or 0)|replace('.', ',') }}</strong></td><td><span class="badge commission-status-{{ (c.status or 'pendente')|lower }}">{{ c.status }}</span></td><td><form method="post" action="{{ url_for('comissoes.alterar_status',comissao_id=c.id) }}" class="inline-status-form"><select name="status">{% for s in status_opcoes %}<option {{ 'selected' if c.status==s }}>{{ s }}</option>{% endfor %}</select><button class="tiny-button">Salvar</button></form></td></tr>{% else %}<tr><td colspan="9">Nenhuma comissão encontrada para os filtros selecionados.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </form>
+</article>
+
+<article class="card table-card">
+  <header class="section-header"><div><h2>Ajustes manuais</h2><p>Bônus, descontos e correções do mês</p></div></header>
+  <div class="table-responsive"><table><thead><tr><th>Funcionário</th><th>Tipo</th><th>Descrição</th><th>Valor</th><th>Status</th><th>Ação</th></tr></thead><tbody>{% for a in ajustes %}<tr><td>{{ a.funcionario_nome }}</td><td>{{ a.adjustment_type }}</td><td>{{ a.description }}<small class="block">{{ a.notes or '' }}</small></td><td class="{{ 'negative-text' if (a.amount or 0)<0 else 'positive-text' }}"><strong>R$ {{ '%.2f'|format(a.amount or 0)|replace('.', ',') }}</strong></td><td><span class="badge commission-status-{{ (a.status or 'pendente')|lower }}">{{ a.status }}</span></td><td><form method="post" action="{{ url_for('comissoes.alterar_status_ajuste',ajuste_id=a.id) }}" class="inline-status-form"><select name="status">{% for s in status_opcoes %}<option {{ 'selected' if a.status==s }}>{{ s }}</option>{% endfor %}</select><button class="tiny-button">Salvar</button></form></td></tr>{% else %}<tr><td colspan="6">Nenhum ajuste no período.</td></tr>{% endfor %}</tbody></table></div>
+</article>
+<script>document.getElementById('select-all-commissions')?.addEventListener('change',e=>document.querySelectorAll('input[name="commission_ids"]').forEach(i=>i.checked=e.target.checked));</script>
+{% endblock %}

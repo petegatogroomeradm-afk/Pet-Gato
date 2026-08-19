@@ -3,7 +3,10 @@
 {% block page_title %}CRM Inteligente{% endblock %}
 {% block page_subtitle %}Relacionamento, retornos, aniversários e campanhas{% endblock %}
 {% block content %}
+<div class="crm-toolbar">
 <form method="get" class="crm-filter"><label>Inativo após <input type="number" name="dias_inativos" value="{{ inactive_days }}" min="1"> dias</label><button>Atualizar</button></form>
+<div class="actions-row"><a class="small-button" href="{{ url_for('crm.task_agenda') }}">📅 Agenda CRM</a><a class="small-button" href="{{ url_for('crm.daily_brief') }}">📋 Resumo diário</a><a class="small-button" href="{{ url_for('crm.reports') }}">📊 Relatórios</a></div><form method="post" action="{{ url_for('crm.generate_automations') }}" class="crm-filter"><input type="hidden" name="dias_inativos" value="{{ inactive_days }}"><button type="submit">Gerar tarefas automáticas</button></form>
+</div>
 <section class="crm-metrics">
 <article><span>Clientes ativos</span><strong>{{ metrics.active_clients }}</strong></article>
 <article><span>Pets ativos</span><strong>{{ metrics.active_pets }}</strong></article>
@@ -52,8 +55,10 @@
 <section class="card crm-section"><div class="section-head"><h2>Tarefas CRM</h2><span class="pill">{{ tasks|length }}</span></div><div class="table-wrap"><table>
 <thead><tr><th>Status</th><th>Prazo</th><th>Tarefa</th><th>Cliente/Pet</th><th>Canal</th><th>Ação</th></tr></thead><tbody>
 {% for t in tasks %}<tr><td><span class="crm-status">{{ t.status }}</span></td><td>{{ t.due_date or '-' }}</td><td><strong>{{ t.title }}</strong><br><small>{{ t.task_type }} · {{ t.priority }}</small></td>
-<td>{{ t.client_name or '-' }}{% if t.pet_name %}<br><small>{{ t.pet_name }}</small>{% endif %}</td><td>{{ t.contact_channel }}</td><td>
-{% if t.status == 'Pendente' %}<form method="post" action="{{ url_for('crm.complete_task', task_id=t.id) }}" class="crm-complete"><input name="result" value="Contato realizado"><button class="small-button">Concluir</button></form>{% else %}<small>{{ t.completed_by or 'Sistema' }}<br>{{ t.completed_at or '' }}</small>{% endif %}</td></tr>
+<td>{{ t.client_name or '-' }}{% if t.pet_name %}<br><small>{{ t.pet_name }}</small>{% endif %}</td><td>{{ t.contact_channel }}<br><small>{{ t.source or 'Manual' }}</small></td><td>
+{% if t.status != 'Concluída' %}
+<div class="crm-task-actions">{% if t.contact_channel == 'WhatsApp' and t.client_id %}<a class="small-button" target="_blank" href="{{ url_for('crm.open_task_whatsapp', task_id=t.id) }}">WhatsApp</a>{% endif %}<form method="post" action="{{ url_for('crm.complete_task', task_id=t.id) }}" class="crm-complete"><input name="result" value="Contato realizado"><button class="small-button">Concluir</button></form></div>
+{% else %}<small>{{ t.completed_by or 'Sistema' }}<br>{{ t.completed_at or '' }}</small>{% endif %}</td></tr>
 {% else %}<tr><td colspan="6">Nenhuma tarefa.</td></tr>{% endfor %}</tbody></table></div></section>
 
 <section class="card crm-section"><div class="section-head"><h2>Histórico de contatos</h2><span class="pill">{{ contacts|length }}</span></div><div class="table-wrap"><table>

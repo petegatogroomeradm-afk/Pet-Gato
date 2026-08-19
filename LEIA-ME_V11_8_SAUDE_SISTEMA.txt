@@ -1,0 +1,19 @@
+PET & GATÔ BUSINESS ENTERPRISE V11.8.0
+
+NOVIDADES
+- Nova opção Saúde do Sistema no menu lateral.
+- Registro correto do blueprint técnico que já existia, mas não estava carregado no Flask.
+- Diagnóstico em tempo real do banco de dados.
+- Conferência das rotas críticas de Financeiro, CRM, Operação, Cadastros e RH.
+- Lista de módulos ativos e indisponíveis.
+- Tela modernizada para facilitar testes antes da entrada em produção.
+
+INSTALAÇÃO
+1. Faça backup da pasta atual.
+2. Substitua os arquivos, preservando .env, instance e logs.
+3. Execute:
+   py scripts\migrate_database.py
+   py scripts\check_db_compat.py
+   py scripts\check_release.py
+   py main.py
+4. Acesse Sistema > Saúde do Sistema.

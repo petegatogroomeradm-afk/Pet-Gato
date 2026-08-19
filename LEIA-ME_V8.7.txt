@@ -1,0 +1,21 @@
+PET & GATÔ BUSINESS V8.7
+
+SPRINT 8.7 — COMPARATIVO FINANCEIRO E TENDÊNCIAS
+
+Novidades:
+- Comparativo de 3, 6, 12, 18 ou 24 meses.
+- Evolução mensal de receitas, despesas, lucro e margem.
+- Variação percentual da receita em relação ao mês anterior.
+- Melhor e pior resultado do período.
+- Valores acumulados e médias mensais.
+- A receber, a pagar e vencidos por mês.
+- Ranking das maiores categorias de despesas.
+- Gráficos e versão para impressão.
+- Compatível com SQLite e PostgreSQL.
+
+Instalação:
+1. Pare o sistema.
+2. Extraia os arquivos na pasta atual do projeto e confirme a substituição.
+3. Remova pastas __pycache__.
+4. Execute: py main.py
+5. Acesse Financeiro > Comparativo mensal.

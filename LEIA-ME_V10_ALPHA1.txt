@@ -1,0 +1,20 @@
+PET & GATÔ BUSINESS V10.0.0-ALPHA.1
+
+ENTREGA: FUNDAÇÃO ENTERPRISE
+
+1. Mantém todos os módulos existentes da V9.0.
+2. Adiciona versionamento oficial e registro central de módulos.
+3. Adiciona a tela Configurações > Status do Sistema.
+4. Inclui teste automático para confirmar que as rotas principais continuam registradas.
+5. Não apaga nem recria o banco de dados.
+
+INSTALAÇÃO
+- Pare o sistema.
+- Faça backup da pasta instance.
+- Extraia os arquivos por cima da pasta atual.
+- Remova pastas __pycache__.
+- Execute: py main.py
+
+VALIDAÇÃO
+- Abra Configurações > Status do Sistema.
+- Todos os módulos devem aparecer como Ativo.

@@ -8,23 +8,27 @@
   <div class="card metric"><span>Em operação</span><strong>{{ resumo.em_andamento or 0 }}</strong></div>
   <div class="card metric"><span>Finalizados</span><strong>{{ resumo.finalizados or 0 }}</strong></div>
   <div class="card metric"><span>Valor previsto</span><strong>R$ {{ '%.2f'|format(resumo.valor_total or 0) }}</strong></div>
+  <div class="card metric metric-warning"><span>Fora do tempo</span><strong>{{ resumo.sla_atrasados or 0 }}</strong><small>etapas acima do limite</small></div>
+  <div class="card metric"><span>Tempo médio</span><strong>{{ resumo.tempo_medio_operacao or 0 }} min</strong><small>atendimentos em operação</small></div>
+  <div class="card metric metric-warning"><span>Sem profissional</span><strong>{{ resumo.sem_profissional or 0 }}</strong><small>precisam de responsável</small></div>
 </div>
 <div class="card grooming-toolbar">
-  <form method="get" class="search grooming-filters"><input type="date" name="data" value="{{ data_filtro }}"><select name="status"><option value="">Todos os status</option>{% for s in fluxo_status %}<option value="{{ s }}" {% if status_filtro==s %}selected{% endif %}>{{ s }}</option>{% endfor %}<option {% if status_filtro=='Cancelado' %}selected{% endif %}>Cancelado</option></select><input name="busca" value="{{ busca }}" placeholder="Cliente, pet ou serviço"><button>Filtrar</button></form>
+  <form method="get" class="search grooming-filters"><input type="date" name="data" value="{{ data_filtro }}"><select name="status"><option value="">Todos os status</option>{% for s in fluxo_status %}<option value="{{ s }}" {% if status_filtro==s %}selected{% endif %}>{{ s }}</option>{% endfor %}<option {% if status_filtro=='Cancelado' %}selected{% endif %}>Cancelado</option></select><input name="busca" value="{{ busca }}" placeholder="Cliente, pet ou serviço"><button>Filtrar</button><a class="button secondary" href="{{ url_for('banho_tosa.banho_tosa', data=hoje) }}">Hoje</a><a class="button secondary" href="{{ url_for('banho_tosa.banho_tosa') }}">Limpar</a></form>
   <button class="secondary-button" type="button" onclick="document.getElementById('new-grooming').classList.toggle('open')">＋ Novo atendimento</button>
 </div>
 <div id="new-grooming" class="card grooming-create-panel">
   <div class="section-head"><h2>Novo atendimento</h2><button type="button" class="icon-button" onclick="this.closest('.grooming-create-panel').classList.remove('open')">×</button></div>
-  <form method="post" class="form grooming-create-form"><select name="client_id" id="groom-client" required><option value="">Cliente</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nome }}</option>{% endfor %}</select><select name="pet_id" id="groom-pet" required><option value="">Pet</option>{% for p in pets %}<option value="{{ p.id }}" data-client="{{ p.client_id }}">{{ p.nome }} — {{ p.cliente_nome }}</option>{% endfor %}</select><select name="employee_id"><option value="">Profissional</option>{% for e in funcionarios %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select><input type="date" name="data" required><input type="time" name="hora_entrada"><select name="servico" required><option value="">Serviço</option><option>Banho</option><option>Tosa</option><option>Banho + Tosa</option><option>Higiênica</option><option>Hidratação</option><option>Corte de unha</option></select><input name="valor" placeholder="Valor"><select name="payment_method"><option>A definir</option><option>PIX</option><option>Dinheiro</option><option>Cartão Débito</option><option>Cartão Crédito</option></select><textarea name="observacoes" placeholder="Observações"></textarea><button>Salvar atendimento</button></form>
+  <form method="post" class="form grooming-create-form"><select name="client_id" id="groom-client" required><option value="">Cliente</option>{% for c in clientes %}<option value="{{ c.id }}" {% if prefill_client_id|string == c.id|string %}selected{% endif %}>{{ c.nome }}</option>{% endfor %}</select><select name="pet_id" id="groom-pet" required><option value="">Pet</option>{% for p in pets %}<option value="{{ p.id }}" data-client="{{ p.client_id }}" {% if prefill_pet_id|string == p.id|string %}selected{% endif %}>{{ p.nome }} — {{ p.cliente_nome }}</option>{% endfor %}</select><select name="employee_id"><option value="">Profissional</option>{% for e in funcionarios %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select><input type="date" name="data" required><input type="time" name="hora_entrada"><select name="servico" required><option value="">Serviço</option><option>Banho</option><option>Tosa</option><option>Banho + Tosa</option><option>Higiênica</option><option>Hidratação</option><option>Corte de unha</option></select><input name="valor" placeholder="Valor"><select name="payment_method"><option>A definir</option><option>PIX</option><option>Dinheiro</option><option>Cartão Débito</option><option>Cartão Crédito</option></select><textarea name="observacoes" placeholder="Observações"></textarea><button>Salvar atendimento</button></form>
 </div>
 <div class="grooming-kanban" id="grooming-kanban">
 {% for coluna in colunas %}
-<section class="kanban-column" data-status="{{ coluna['statuses'][0] }}"><header><div><h3>{{ coluna['titulo'] }}</h3><small>{{ coluna['items']|length }} pets</small></div><span>{{ coluna['items']|length }}</span></header><div class="kanban-dropzone">
+<section class="kanban-column" data-column="{{ coluna['codigo'] }}" data-status="{{ coluna['statuses'][0] }}"><header><div><h3>{{ coluna['titulo'] }}</h3><small>{{ coluna['items']|length }} pets</small></div><span>{{ coluna['items']|length }}</span></header><div class="kanban-dropzone">
 {% for a in coluna['items'] %}
-<article class="kanban-pet-card" draggable="true" data-id="{{ a.id }}" data-started="{{ a.started_at or '' }}">
+<article class="kanban-pet-card{% if a.sla_overdue %} sla-overdue{% endif %}" draggable="true" data-id="{{ a.id }}" data-status="{{ a.status }}" data-started="{{ a.stage_since or a.started_at or '' }}" data-sla="{{ a.sla_limit or 0 }}">
   <div class="kanban-pet-head">{% if a.pet_foto %}<img src="{{ url_for('static',filename='uploads/pets/' ~ a.pet_foto) }}" alt="{{ a.pet_nome }}">{% else %}<div class="pet-avatar">🐾</div>{% endif %}<div><h4>{{ a.pet_nome }}</h4><p>{{ a.cliente_nome }}</p></div><span class="status-dot" title="{{ a.status }}"></span></div>
   <div class="kanban-service"><strong>{{ a.servico }}</strong><span>{{ a.hora_entrada or '--:--' }}</span></div>
-  <div class="kanban-info"><span>👤 {{ a.funcionario_nome or 'A definir' }}</span><span class="grooming-timer">⏱ aguardando</span></div>
+  <div class="kanban-info"><span>👤 {{ a.funcionario_nome or 'A definir' }}</span><span class="grooming-timer">⏱ {{ a.stage_minutes or 0 }} min</span></div>
+  {% if a.sla_overdue %}<div class="sla-alert">⚠ Etapa acima de {{ a.sla_limit }} min</div>{% endif %}
   {% if a.pulgas or a.carrapatos or a.machucado or a.no_pelo or a.agressivo %}<div class="risk-tags">{% if a.pulgas %}<span>Pulgas</span>{% endif %}{% if a.carrapatos %}<span>Carrapatos</span>{% endif %}{% if a.machucado %}<span>Machucado</span>{% endif %}{% if a.no_pelo %}<span>Nó</span>{% endif %}{% if a.agressivo %}<span>Agressivo</span>{% endif %}</div>{% endif %}
   <div class="kanban-progress"><i style="width:{{ ((fluxo_status.index(a.status) if a.status in fluxo_status else 0) / (fluxo_status|length - 1) * 100)|round }}%"></i></div>
   <details class="grooming-details"><summary>Operação e detalhes</summary>
@@ -32,10 +36,10 @@
       <details><summary>Check-in</summary><form method="post" action="{{ url_for('banho_tosa.checkin',atendimento_id=a.id) }}" class="form compact-form"><input name="checkin_weight" value="{{ checks.get(a.id,{}).get('checkin_weight','') if checks.get(a.id) else '' }}" placeholder="Peso"><input name="coat_condition" value="{{ checks.get(a.id,{}).get('coat_condition','') if checks.get(a.id) else '' }}" placeholder="Condição da pelagem"><input name="ears_condition" value="{{ checks.get(a.id,{}).get('ears_condition','') if checks.get(a.id) else '' }}" placeholder="Ouvidos"><input name="nails_condition" value="{{ checks.get(a.id,{}).get('nails_condition','') if checks.get(a.id) else '' }}" placeholder="Unhas"><input name="behavior" value="{{ checks.get(a.id,{}).get('behavior','') if checks.get(a.id) else '' }}" placeholder="Comportamento"><textarea name="tutor_requests" placeholder="Pedidos do tutor">{{ checks.get(a.id,{}).get('tutor_requests','') if checks.get(a.id) else '' }}</textarea><button>Registrar check-in</button></form></details>
       <details><summary>Produtos</summary><form method="post" action="{{ url_for('banho_tosa.adicionar_produto',atendimento_id=a.id) }}" class="form compact-form"><select name="product_id"><option value="">Produto</option>{% for p in produtos %}<option value="{{ p.id }}">{{ p.name }} ({{ p.quantity }} {{ p.unit or '' }})</option>{% endfor %}</select><input name="quantity" placeholder="Quantidade"><button>Adicionar</button></form>{% for u in produtos_usados.get(a.id,[]) %}<div class="usage-row"><span>{{ u.product_name }} — {{ u.quantity }} {{ u.unit or u.product_unit or '' }}</span>{% if not u.stock_applied %}<form method="post" action="{{ url_for('banho_tosa.excluir_produto',uso_id=u.id) }}"><button class="link-danger">×</button></form>{% else %}<b>Baixado</b>{% endif %}</div>{% endfor %}</details>
       <details><summary>Fotos</summary><form method="post" enctype="multipart/form-data" action="{{ url_for('banho_tosa.adicionar_foto',atendimento_id=a.id) }}" class="form compact-form"><select name="category"><option>Antes</option><option>Durante</option><option>Depois</option></select><input type="file" name="photo" accept="image/*" required><input name="description" placeholder="Descrição"><button>Enviar foto</button></form><div class="grooming-photo-grid">{% for f in fotos.get(a.id,[]) %}<figure><img src="{{ url_for('static',filename='uploads/atendimentos/' ~ f.filename) }}"><figcaption>{{ f.category }}</figcaption><form method="post" action="{{ url_for('banho_tosa.excluir_foto',foto_id=f.id) }}"><button class="link-danger">Excluir</button></form></figure>{% endfor %}</div></details>
-      <details><summary>Fechamento</summary><form method="post" action="{{ url_for('banho_tosa.checkout',atendimento_id=a.id) }}" class="form compact-form"><textarea name="checkout_notes" placeholder="Observações do check-out">{{ checks.get(a.id,{}).get('checkout_notes','') if checks.get(a.id) else '' }}</textarea><button>Finalizar e fechar</button></form>{% if comissoes.get(a.id) %}<p class="commission-line">Comissão: <strong>R$ {{ '%.2f'|format(comissoes[a.id].amount or 0) }}</strong> ({{ comissoes[a.id].rate }}%)</p>{% endif %}<div class="integration-status"><span class="{% if a.financeiro_lancado %}done{% endif %}">Financeiro {{ '✓' if a.financeiro_lancado else 'pendente' }}</span><span class="{% if a.estoque_baixado %}done{% endif %}">Estoque {{ '✓' if a.estoque_baixado else 'pendente' }}</span><span class="{% if a.commission_lancada %}done{% endif %}">Comissão {{ '✓' if a.commission_lancada else 'pendente' }}</span></div></details>
+      <details><summary>Fechamento</summary><form method="post" action="{{ url_for('banho_tosa.checkout',atendimento_id=a.id) }}" class="form compact-form"><textarea name="checkout_notes" placeholder="Observações do check-out">{{ checks.get(a.id,{}).get('checkout_notes','') if checks.get(a.id) else '' }}</textarea><button>Revisar fechamento</button></form>{% if comissoes.get(a.id) %}<p class="commission-line">Comissão: <strong>R$ {{ '%.2f'|format(comissoes[a.id].amount or 0) }}</strong> ({{ comissoes[a.id].rate }}%)</p>{% endif %}<div class="integration-status"><span class="{% if a.financeiro_lancado %}done{% endif %}">Financeiro {{ '✓' if a.financeiro_lancado else 'pendente' }}</span><span class="{% if a.estoque_baixado %}done{% endif %}">Estoque {{ '✓' if a.estoque_baixado else 'pendente' }}</span><span class="{% if a.commission_lancada %}done{% endif %}">Comissão {{ '✓' if a.commission_lancada else 'pendente' }}</span></div></details>
     </div>
   </details>
-  <div class="kanban-card-actions"><form method="post" action="{{ url_for('banho_tosa.avancar_status',atendimento_id=a.id) }}"><button>Avançar</button></form><a href="{{ url_for('banho_tosa.editar_atendimento',atendimento_id=a.id) }}">Editar</a><a href="{{ url_for('banho_tosa.historico_atendimento',atendimento_id=a.id) }}">Histórico</a>{% if a.whatsapp %}<a target="_blank" href="https://wa.me/55{{ a.whatsapp|replace('(','')|replace(')','')|replace('-','')|replace(' ','') }}">WhatsApp</a>{% endif %}</div>
+  <div class="kanban-card-actions">{% if a.status not in ['Finalizado','Cancelado'] %}{% if a.status == 'Entregue' %}<a class="button" href="{{ url_for('banho_tosa.fechamento_atendimento',atendimento_id=a.id) }}">Finalizar atendimento</a>{% else %}<form method="post" class="js-advance-status" action="{{ url_for('banho_tosa.avancar_status',atendimento_id=a.id) }}"><button type="submit">Avançar</button></form>{% endif %}{% endif %}<a href="{{ url_for('banho_tosa.editar_atendimento',atendimento_id=a.id) }}">Editar</a><a href="{{ url_for('banho_tosa.historico_atendimento',atendimento_id=a.id) }}">Histórico</a>{% if a.whatsapp %}<a target="_blank" href="https://wa.me/55{{ a.whatsapp|replace('(','')|replace(')','')|replace('-','')|replace(' ','') }}?text={{ ('Olá! Aqui é da Pet & Gatô. O atendimento de ' ~ a.pet_nome ~ ' está na etapa: ' ~ a.status ~ '.')|urlencode }}">Avisar tutor</a>{% endif %}</div>
 </article>
 {% endfor %}</div></section>
 {% endfor %}
@@ -45,6 +49,58 @@
 const client=document.getElementById('groom-client'),pet=document.getElementById('groom-pet');function filterPets(){const v=client?.value;[...(pet?.options||[])].forEach((o,i)=>{if(i)o.hidden=!!v&&o.dataset.client!==v});if(pet?.selectedOptions[0]?.hidden)pet.value=''}client?.addEventListener('change',filterPets);filterPets();
 let dragged=null;document.querySelectorAll('.kanban-pet-card').forEach(card=>{card.addEventListener('dragstart',()=>{dragged=card;card.classList.add('dragging')});card.addEventListener('dragend',()=>card.classList.remove('dragging'))});document.querySelectorAll('.kanban-dropzone').forEach(zone=>{zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over')});zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));zone.addEventListener('drop',async e=>{e.preventDefault();zone.classList.remove('drag-over');if(!dragged)return;const status=zone.closest('.kanban-column').dataset.status,fd=new FormData();fd.append('status',status);const res=await fetch(`/banho-tosa/${dragged.dataset.id}/kanban-status`,{method:'POST',body:fd});const data=await res.json();showToast(data.ok?'Status atualizado':data.message,!data.ok);if(data.ok)location.reload()})});
 function showToast(msg,error=false){const t=document.getElementById('grooming-toast');t.textContent=msg;t.className='agenda-toast show'+(error?' error':'');setTimeout(()=>t.className='agenda-toast',2500)}
-function updateTimers(){document.querySelectorAll('.kanban-pet-card').forEach(card=>{const el=card.querySelector('.grooming-timer'),raw=card.dataset.started;if(!raw){el.textContent='⏱ aguardando';return}const start=new Date(raw.replace(' ','T')),mins=Math.max(0,Math.floor((Date.now()-start)/60000));el.textContent=`⏱ ${Math.floor(mins/60)}h ${mins%60}min`})}updateTimers();setInterval(updateTimers,60000);
+
+const FLOW={{ fluxo_status|tojson }};
+const COLUMN_BY_STATUS={};
+{% for coluna in colunas %}{% for status in coluna['statuses'] %}COLUMN_BY_STATUS[{{ status|tojson }}]={{ coluna['codigo']|tojson }};{% endfor %}{% endfor %}
+
+function updateColumnCount(column){
+  if(!column)return;
+  const count=column.querySelectorAll(':scope .kanban-dropzone > .kanban-pet-card').length;
+  const small=column.querySelector('header small');
+  const badge=column.querySelector('header > span');
+  if(small)small.textContent=`${count} ${count===1?'pet':'pets'}`;
+  if(badge)badge.textContent=count;
+}
+function moveCardToStatus(card,status){
+  const targetCode=COLUMN_BY_STATUS[status];
+  const target=document.querySelector(`.kanban-column[data-column="${targetCode}"]`);
+  if(target){
+    const old=card.closest('.kanban-column');
+    target.querySelector('.kanban-dropzone').appendChild(card);
+    updateColumnCount(old); updateColumnCount(target);
+  }
+  card.dataset.status=status;
+  const dot=card.querySelector('.status-dot'); if(dot)dot.title=status;
+  const button=card.querySelector('.js-advance-status button');
+  if(button)button.textContent=status==='Entregue'?'Finalizar atendimento':'Avançar';
+  if(status==='Finalizado')card.querySelector('.js-advance-status')?.remove();
+}
+
+document.querySelectorAll('.js-advance-status').forEach(form=>form.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const card=form.closest('.kanban-pet-card'),button=form.querySelector('button');
+  if(button.disabled)return;
+  const current=card.dataset.status||'';
+  const index=FLOW.indexOf(current);
+  const optimistic=index>=0&&index<FLOW.length-1?FLOW[index+1]:current;
+  const originalText=button.textContent;
+  button.disabled=true; button.textContent='Atualizando...';
+  if(optimistic)moveCardToStatus(card,optimistic);
+  try{
+    const res=await fetch(form.action,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}});
+    const data=await res.json();
+    if(!res.ok||!data.ok)throw new Error(data.message||'Falha ao atualizar');
+    if(data.requires_confirmation&&data.url){window.location.href=data.url;return;}
+    if(data.status!==optimistic)moveCardToStatus(card,data.status);
+    showToast(data.message||`Status atualizado para ${data.status}.`);
+  }catch(err){
+    showToast(err.message||'Erro ao atualizar o status.',true);
+    setTimeout(()=>location.reload(),700);
+  }finally{
+    if(document.body.contains(button)){button.disabled=false;if(button.textContent==='Atualizando...')button.textContent=originalText;}
+  }
+}));
+function updateTimers(){document.querySelectorAll('.kanban-pet-card').forEach(card=>{const el=card.querySelector('.grooming-timer'),raw=card.dataset.started;if(!raw){el.textContent='⏱ aguardando';return}const start=new Date(raw.replace(' ','T')),mins=Math.max(0,Math.floor((Date.now()-start)/60000));el.textContent=`⏱ ${Math.floor(mins/60)}h ${mins%60}min`;const sla=Number(card.dataset.sla||0);card.classList.toggle('sla-overdue',sla>0&&mins>sla)})}updateTimers();setInterval(updateTimers,60000);
 </script>
 {% endblock %}

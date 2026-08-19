@@ -1,0 +1,20 @@
+PET & GATÔ BUSINESS V6.5 — AGENDA COM CAPACIDADE E ENCAIXES
+
+Principais recursos:
+- Capacidade padrão configurável por horário.
+- Portal do cliente mostra apenas horários com vagas.
+- Administrador e recepção podem fazer encaixes acima da capacidade quando autorizados.
+- Indicador visual 0/3, 2/3, 3/3 e acima da capacidade na agenda.
+- Aprovação de solicitações online mostra ocupação e permite encaixe.
+- Arrastar e soltar pede confirmação quando o destino está lotado.
+- Auditoria do encaixe gravada no agendamento: responsável e data/hora.
+
+Configuração:
+Configurações > Capacidade da agenda.
+
+Teste sugerido:
+1. Defina capacidade 2.
+2. Crie dois agendamentos no mesmo horário.
+3. Confirme que o portal não oferece mais esse horário.
+4. Crie um terceiro pelo administrativo marcando "Confirmar encaixe".
+5. Confirme que a agenda mostra 3/2 acima da capacidade.

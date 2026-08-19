@@ -32,12 +32,25 @@
       const time = zone.dataset.time || dragged.querySelector('strong')?.textContent?.slice(0, 5) || '09:00';
       const url = window.AGENDA_MOVE_URL.replace('/0/', `/${id}/`);
       try {
-        const response = await fetch(url, {
+        let response = await fetch(url, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({date, time})
         });
-        const data = await response.json();
+        let data = await response.json();
+        if (!response.ok && data.requires_override) {
+          const confirmar = window.confirm(`${data.message}
+
+Deseja realizar o encaixe acima da capacidade?`);
+          if (confirmar) {
+            response = await fetch(url, {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({date, time, force_capacity_override: true})
+            });
+            data = await response.json();
+          }
+        }
         if (!response.ok || !data.ok) throw new Error(data.message || 'Não foi possível reagendar.');
         showToast(data.message || 'Agendamento reagendado.');
         setTimeout(() => location.reload(), 550);
@@ -64,4 +77,155 @@
   }
   bindPetFilter('agenda-client', 'agenda-pet');
   bindPetFilter('wait-client', 'wait-pet');
+
+
+
+  function serviceAccent(service) {
+    const text = String(service || '').toLowerCase();
+    if (text.includes('tosa')) return '#3b82f6';
+    if (text.includes('hotel')) return '#22c55e';
+    if (text.includes('táxi') || text.includes('taxi')) return '#f59e0b';
+    if (text.includes('urg')) return '#ef4444';
+    return '#8b5cf6';
+  }
+  document.querySelectorAll('.calendar-event').forEach((event) => {
+    event.style.setProperty('--service-accent', serviceAccent(event.dataset.service));
+  });
+
+  const now = new Date();
+  const todayIso = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const currentHour = `${String(now.getHours()).padStart(2,'0')}:00`;
+  document.querySelectorAll(`.time-slot[data-date="${todayIso}"][data-time="${currentHour}"]`).forEach((slot) => slot.classList.add('current-hour'));
+  document.querySelectorAll('.time-label').forEach((label) => { if (label.textContent.trim() === currentHour) label.classList.add('current-hour'); });
+
+  const suggestButton = document.getElementById('suggest-times');
+  const suggestedTimes = document.getElementById('suggested-times');
+  suggestButton?.addEventListener('click', async () => {
+    const date = document.querySelector('#new-appointment-form input[name="data"]')?.value;
+    const duration = document.getElementById('agenda-duration')?.value || 60;
+    const employee = document.getElementById('agenda-employee')?.value || '';
+    if (!date) { showToast('Selecione a data antes de buscar horários.', false); return; }
+    suggestButton.disabled = true; suggestButton.textContent = 'Buscando...';
+    try {
+      const params = new URLSearchParams({date, duration, employee_id: employee});
+      const response = await fetch(`${window.AGENDA_AVAILABILITY_URL}?${params}`);
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Não foi possível consultar horários.');
+      suggestedTimes.innerHTML = data.suggestions.length ? data.suggestions.map((item) => `<button type="button" data-time="${esc(item.time)}">${esc(item.label)}</button>`).join('') : '<small class="muted">Nenhum horário livre encontrado.</small>';
+    } catch (error) { showToast(error.message, false); }
+    finally { suggestButton.disabled = false; suggestButton.textContent = 'Sugerir horários'; }
+  });
+  suggestedTimes?.addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-time]');
+    if (!button) return;
+    const input = document.getElementById('agenda-time');
+    if (input) input.value = button.dataset.time;
+    suggestedTimes.querySelectorAll('button').forEach((item) => item.classList.toggle('active', item === button));
+  });
+
+  const eventDialog = document.getElementById('agenda-event-dialog');
+  const dialogClose = eventDialog?.querySelector('.dialog-close');
+
+  function esc(value) {
+    return String(value ?? '').replace(/[&<>'"]/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+  }
+
+  function statusAction(id, status, label) {
+    return `<form method="post" action="/agenda/${id}/status-rapido"><input type="hidden" name="status" value="${esc(status)}"><button>${esc(label)}</button></form>`;
+  }
+
+  function smartCheckinAction(id, label = 'Registrar chegada') {
+    return `<form method="post" class="js-smart-checkin" action="/agenda/${id}/checkin-inteligente"><button>${esc(label)}</button></form>`;
+  }
+
+  async function runSmartCheckin(form) {
+    const button = form.querySelector('button');
+    const card = form.closest('.calendar-event');
+    const original = button?.textContent || 'Chegou';
+    if (button) { button.disabled = true; button.textContent = 'Registrando...'; }
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        headers: {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json'}
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Não foi possível registrar o check-in.');
+      if (card) {
+        card.dataset.status = 'Na loja';
+        card.className = card.className.replace(/event-[^\s]+/g, '').trim() + ' event-na-loja';
+        const actions = card.querySelector('.calendar-event-actions');
+        if (actions) actions.innerHTML = `<form method="post" action="/agenda/${card.dataset.id}/iniciar"><button>Iniciar</button></form><a href="/agenda/${card.dataset.id}/editar">Editar</a>`;
+      }
+      if (eventDialog?.open) eventDialog.close();
+      showToast('Check-in registrado. Pet enviado para a Recepção.');
+    } catch (error) {
+      showToast(error.message, false);
+      if (button) { button.disabled = false; button.textContent = original; }
+    }
+  }
+
+  document.addEventListener('submit', (event) => {
+    const form = event.target.closest?.('.js-smart-checkin');
+    if (!form) return;
+    event.preventDefault();
+    runSmartCheckin(form);
+  });
+
+  document.querySelectorAll('.calendar-event').forEach((event) => {
+    event.addEventListener('click', (e) => {
+      if (e.target.closest('a,button,form')) return;
+      if (!eventDialog) return;
+      const d = event.dataset;
+      document.getElementById('dialog-pet').textContent = d.pet || 'Pet';
+      document.getElementById('dialog-status').textContent = d.status || '—';
+      document.getElementById('dialog-tutor').textContent = d.tutor || '—';
+      document.getElementById('dialog-phone').textContent = d.phone || '—';
+      document.getElementById('dialog-service').textContent = `${d.service || '—'} · ${d.duration || 60} min`;
+      document.getElementById('dialog-employee').textContent = d.employee || '—';
+      document.getElementById('dialog-datetime').textContent = `${d.date || '—'} às ${d.time || '—'}`;
+      document.getElementById('dialog-transport').textContent = d.transport || 'Não';
+      document.getElementById('dialog-move-date').value = d.date || '';
+      document.getElementById('dialog-move-time').value = d.time || '';
+      document.getElementById('dialog-move-employee').value = d.employeeId || '';
+      eventDialog.dataset.currentId = d.id;
+      const actions = document.getElementById('dialog-actions');
+      let html = `<a href="/agenda/${d.id}/editar">Editar</a>`;
+      if (['Agendado','Confirmado','Reagendado','Aguardando aprovação'].includes(d.status)) html += smartCheckinAction(d.id,'✓ Registrar chegada');
+      if (d.status === 'Na loja') html += `<form method="post" action="/agenda/${d.id}/iniciar"><button>Iniciar atendimento</button></form>`;
+      if (d.status === 'Em atendimento') html += statusAction(d.id,'Pronto','Marcar como pronto');
+      if (d.status === 'Pronto') html += statusAction(d.id,'Entregue','Registrar entrega');
+      if (!['Cancelado','Entregue','Finalizado'].includes(d.status)) html += statusAction(d.id,'Cancelado','Cancelar');
+      actions.innerHTML = html;
+      eventDialog.showModal();
+    });
+  });
+  dialogClose?.addEventListener('click', () => eventDialog.close());
+  eventDialog?.addEventListener('click', (e) => { if (e.target === eventDialog) eventDialog.close(); });
+
+
+  document.getElementById('dialog-move-save')?.addEventListener('click', async () => {
+    const id = eventDialog?.dataset.currentId;
+    if (!id) return;
+    const date = document.getElementById('dialog-move-date')?.value;
+    const time = document.getElementById('dialog-move-time')?.value;
+    const employee_id = document.getElementById('dialog-move-employee')?.value || null;
+    if (!date || !time) { showToast('Informe data e horário.', false); return; }
+    const button = document.getElementById('dialog-move-save');
+    button.disabled = true; button.textContent = 'Salvando...';
+    try {
+      const url = window.AGENDA_MOVE_URL.replace('/0/', `/${id}/`);
+      let response = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date,time,employee_id})});
+      let data = await response.json();
+      if (!response.ok && data.requires_override && window.confirm(`${data.message}\n\nDeseja confirmar o encaixe?`)) {
+        response = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date,time,employee_id,force_capacity_override:true})});
+        data = await response.json();
+      }
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Não foi possível reagendar.');
+      showToast(data.message || 'Agendamento reagendado.');
+      eventDialog.close();
+      setTimeout(() => location.reload(),500);
+    } catch (error) { showToast(error.message,false); }
+    finally { button.disabled = false; button.textContent = 'Salvar reagendamento'; }
+  });
+
 })();

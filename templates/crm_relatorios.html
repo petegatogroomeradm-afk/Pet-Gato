@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Relatórios CRM{% endblock %}
+{% block page_title %}Relatórios e Desempenho CRM{% endblock %}
+{% block page_subtitle %}Conversão, campanhas e produtividade da equipe{% endblock %}
+{% block content %}
+<div class="crm-report-toolbar no-print">
+  <div class="crm-brief-links">
+    <a class="small-button crm-secondary" href="{{ url_for('crm.dashboard') }}">← Voltar ao CRM</a>
+    <a class="small-button crm-secondary" href="{{ url_for('crm.daily_brief') }}">📋 Resumo diário</a>
+  </div>
+  <form method="get" class="crm-report-filter">
+    <label>Início <input type="date" name="inicio" value="{{ report_start }}"></label>
+    <label>Fim <input type="date" name="fim" value="{{ report_end }}"></label>
+    <button>Atualizar</button>
+  </form>
+  <a class="crm-export-button" href="{{ url_for('crm.export_report_csv', inicio=report_start, fim=report_end) }}">⬇ Exportar CSV</a>
+  <button class="crm-print-button" type="button" onclick="window.print()">🖨️ Imprimir</button>
+</div>
+<header class="crm-brief-print-header"><h2>Pet & Gatô · Relatório CRM</h2><p>{{ report_start_label }} a {{ report_end_label }}</p></header>
+
+<section class="crm-report-metrics">
+  <article><span>Contatos</span><strong>{{ report_metrics.contacts }}</strong></article>
+  <article><span>Tarefas concluídas</span><strong>{{ report_metrics.completed }}</strong></article>
+  <article><span>Agendamentos</span><strong>{{ report_metrics.scheduled }}</strong></article>
+  <article class="is-success"><span>Conversão</span><strong>{{ report_metrics.conversion_rate }}%</strong></article>
+  <article><span>Taxa de resposta</span><strong>{{ report_metrics.response_rate }}%</strong></article>
+  <article><span>Pendentes no período</span><strong>{{ report_metrics.pending }}</strong></article>
+</section>
+
+<div class="crm-report-grid">
+<section class="card">
+  <div class="section-head"><div><h2>Resultados dos contatos</h2><small>Classificação das tarefas concluídas.</small></div></div>
+  <div class="crm-outcome-grid">
+    {% for label, value in outcomes.items() %}<div><span>{{ label }}</span><strong>{{ value }}</strong></div>{% endfor %}
+  </div>
+</section>
+<section class="card">
+  <div class="section-head"><div><h2>Evolução diária</h2><small>Contatos concluídos por dia.</small></div></div>
+  <div class="crm-report-bars">
+    {% for day in daily_performance %}<div class="crm-report-bar-item" title="{{ day.label }}: {{ day.completed }} concluída(s), {{ day.scheduled }} agendamento(s)"><span>{{ day.completed }}</span><div><i style="height:{{ day.height }}%"></i></div><small>{{ day.label }}</small></div>{% endfor %}
+  </div>
+</section>
+</div>
+
+<section class="card crm-report-section">
+<div class="section-head"><div><h2>Desempenho da equipe</h2><small>Resultados registrados por usuário.</small></div><span class="pill">{{ team_performance|length }}</span></div>
+<div class="table-wrap"><table><thead><tr><th>Usuário</th><th>Concluídas</th><th>Agendou</th><th>Interessado</th><th>Sem resposta</th><th>Conversão</th></tr></thead><tbody>
+{% for row in team_performance %}<tr><td><strong>{{ row.user_name }}</strong></td><td>{{ row.completed }}</td><td>{{ row.scheduled }}</td><td>{{ row.interested }}</td><td>{{ row.no_response }}</td><td><strong>{{ row.conversion_rate }}%</strong></td></tr>{% else %}<tr><td colspan="6">Nenhuma tarefa concluída no período.</td></tr>{% endfor %}
+</tbody></table></div></section>
+
+<section class="card crm-report-section">
+<div class="section-head"><div><h2>Desempenho das campanhas</h2><small>Conversão das campanhas criadas no período.</small></div><span class="pill">{{ campaign_performance|length }}</span></div>
+<div class="table-wrap"><table><thead><tr><th>Campanha</th><th>Segmento</th><th>Tarefas</th><th>Concluídas</th><th>Agendou</th><th>Interessado</th><th>Sem resposta</th><th>Conversão</th></tr></thead><tbody>
+{% for row in campaign_performance %}<tr><td><strong>{{ row.name }}</strong><br><small>{{ row.created_at }}</small></td><td>{{ row.segment }}</td><td>{{ row.total_tasks }}</td><td>{{ row.completed_tasks }}</td><td>{{ row.scheduled }}</td><td>{{ row.interested }}</td><td>{{ row.no_response }}</td><td><strong>{{ row.conversion_rate }}%</strong></td></tr>{% else %}<tr><td colspan="8">Nenhuma campanha criada no período.</td></tr>{% endfor %}
+</tbody></table></div></section>
+
+<section class="card crm-report-section">
+<div class="section-head"><div><h2>Contatos recentes</h2><small>Últimos registros dentro do período selecionado.</small></div><span class="pill">{{ recent_contacts|length }}</span></div>
+<div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente/Pet</th><th>Canal</th><th>Assunto</th><th>Resultado</th><th>Usuário</th></tr></thead><tbody>
+{% for row in recent_contacts %}<tr><td>{{ row.created_at }}</td><td>{{ row.client_name or 'Sem cliente' }}{% if row.pet_name %}<br><small>{{ row.pet_name }}</small>{% endif %}</td><td>{{ row.channel }}</td><td>{{ row.subject }}{% if row.message %}<br><small>{{ row.message }}</small>{% endif %}</td><td>{{ row.result or '-' }}</td><td>{{ row.user_name or 'Sistema' }}</td></tr>{% else %}<tr><td colspan="6">Nenhum contato registrado no período.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

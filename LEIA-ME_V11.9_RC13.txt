@@ -1,0 +1,28 @@
+PET & GATÔ BUSINESS 11.9.0-RC13
+OPERAÇÃO BANHO & TOSA
+
+Melhorias:
+- Indicadores de atendimentos fora do tempo esperado (SLA por etapa).
+- Tempo médio dos atendimentos em operação.
+- Indicador de atendimentos sem profissional responsável.
+- Cronômetro por etapa do Kanban.
+- Destaque visual automático para cartões atrasados.
+- Atalhos Hoje e Limpar nos filtros.
+- Botão Avisar tutor com mensagem de WhatsApp já preenchida.
+- Mantida a integração com agenda, financeiro, estoque e comissões.
+
+Instalação:
+1. Faça backup da pasta atual.
+2. Substitua os arquivos preservando .env, instance, uploads, backups e logs.
+3. Execute:
+   py scripts\cleanup_stale_updates.py
+   py scripts\check_release.py
+   py main.py
+
+Validação realizada:
+- 69 arquivos Python compilados.
+- 48 templates analisados.
+- 141 endpoints declarados.
+- Nenhum url_for inexistente.
+
+Observação: os testes automatizados completos não foram executados neste ambiente porque o Flask não está instalado aqui. A validação estática e de sintaxe foi concluída.

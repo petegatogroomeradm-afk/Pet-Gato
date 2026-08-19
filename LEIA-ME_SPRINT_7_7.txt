@@ -1,0 +1,13 @@
+PET & GATÔ BUSINESS — SPRINT 7.7
+FOLLOW-UP INTELIGENTE DO CRM
+
+Novidades:
+- Ao concluir uma tarefa, escolha o prazo do próximo acompanhamento.
+- Modo automático: Interessado +3 dias, Sem resposta +2 dias, Respondeu +7 dias.
+- Agendou e Recusou não geram follow-up automático.
+- Opções manuais: sem follow-up, +1, +3, +7, +15 ou +30 dias.
+- Proteção contra follow-up pendente duplicado para a mesma tarefa.
+- As tarefas de acompanhamento são identificadas na Central de Tarefas.
+
+A coluna parent_task_id é criada automaticamente ao iniciar o sistema.
+Os dados existentes são preservados.

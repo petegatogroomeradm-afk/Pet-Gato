@@ -1,0 +1,16 @@
+PET & GATÔ BUSINESS 12.0.0 STABLE
+
+Esta versão é a promoção da V12 RC5 validada.
+
+Critérios de promoção informados no ambiente de teste:
+- check_release.py: aprovado
+- check_db_compat.py: estrutura compatível
+- go_live_check.py: 0 falhas
+- errors.log após bateria funcional: sem novos erros
+
+Observação de produção:
+- Configurar APP_ENV=production
+- Definir SECRET_KEY forte
+- Em ambiente Render/PostgreSQL, confirmar DATABASE_URL e rotina de backup do provedor
+
+A atualização não deve substituir .env, instance, uploads, backups ou logs.

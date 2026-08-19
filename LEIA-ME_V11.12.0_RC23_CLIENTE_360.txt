@@ -1,0 +1,9 @@
+Pet & Gatô Business 11.12.0-RC23 — Cliente 360°
+
+- Navegação fixa por seções na ficha do tutor.
+- Ações rápidas para agendamento, pet, WhatsApp e edição.
+- Próximos compromissos reunidos na ficha.
+- Fidelidade com pontos, cashback e movimentações recentes.
+- CRM com tarefas e histórico de contatos.
+- Melhor aproveitamento de tela e responsividade.
+- Preserva Agenda RC22.1, Dashboard RC21 e Fechamento RC20.

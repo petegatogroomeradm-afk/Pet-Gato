@@ -1,0 +1,11 @@
+PET & GATÔ BUSINESS 11.9.6-RC18
+
+SPRINT: INTEGRAÇÃO OPERACIONAL
+
+- Sincronização automática do status entre Banho & Tosa e Agenda.
+- Registro automático do horário de conclusão do atendimento.
+- Central do Sistema agora detecta divergências da Agenda.
+- Reprocessamento seguro corrige Agenda, Financeiro, Estoque e Comissões sem duplicar lançamentos.
+- Base Enterprise e módulos anteriores preservados.
+
+Após instalar, pressione Ctrl+F5 no navegador.

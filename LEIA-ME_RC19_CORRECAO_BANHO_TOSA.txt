@@ -1,0 +1,15 @@
+PET & GATÔ BUSINESS 11.9.7-RC19
+
+Correção principal:
+- elimina o Erro 500 em /banho-tosa causado pela ausência da coluna action em grooming_history;
+- adiciona a coluna automaticamente ao iniciar o sistema;
+- copia os históricos antigos de event para action sem apagar dados;
+- mantém leitura compatível com bancos antigos e novos;
+- novos históricos passam a gravar event e action simultaneamente.
+
+Instalação:
+1. Faça backup da pasta e do banco.
+2. Substitua os arquivos, preservando .env, instance, uploads, backups e logs.
+3. Execute py main.py.
+4. A migração ocorre automaticamente na inicialização.
+5. Pressione Ctrl+F5 no navegador.

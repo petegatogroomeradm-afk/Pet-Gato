@@ -163,12 +163,12 @@ def calculate_dre(month: str):
 
 def daily_cash_flow(month: str):
     return query_db("""
-        SELECT SUBSTR(transaction_date,1,10) day,
+        SELECT SUBSTR(transaction_date,1,10) AS "day",
                COALESCE(SUM(CASE WHEN type='Entrada' AND status='Pago' THEN amount ELSE 0 END),0) entries,
                COALESCE(SUM(CASE WHEN type='Saída' AND status='Pago' THEN amount ELSE 0 END),0) exits
         FROM financial_transactions
         WHERE SUBSTR(transaction_date,1,7)=?
           AND status <> 'Cancelado'
         GROUP BY SUBSTR(transaction_date,1,10)
-        ORDER BY day
+        ORDER BY "day"
     """, (month,))

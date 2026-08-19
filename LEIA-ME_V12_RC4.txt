@@ -1,0 +1,16 @@
+PET & GATÔ BUSINESS — V12.0.0 RC4
+Auditoria, Configurações, Backup/Restore e Saúde do Sistema
+
+Principais melhorias:
+- Auditoria com logins falhos do dia e ações mais frequentes.
+- Central do Sistema com diagnóstico, espaço em disco e tamanho do log de erros.
+- Backup manual do SQLite pela interface.
+- Download dos backups locais.
+- Restore protegido, exclusivo do Super Administrador e com backup automático de segurança antes da restauração.
+- Atalhos de /health e /readiness para diagnóstico.
+- Configurações com acesso direto à Saúde do Sistema, Backup/Restore, Auditoria e Relatórios.
+
+IMPORTANTE:
+- Restore pela interface é somente para SQLite local.
+- PostgreSQL deve usar também o backup gerenciado do provedor.
+- Preserve .env, instance, uploads, backups e logs ao atualizar.

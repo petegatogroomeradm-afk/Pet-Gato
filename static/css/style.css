@@ -1083,7 +1083,7 @@ button{
 .finance-kpis article.positive{border-color:#bbf7d0}.finance-kpis article.negative{border-color:#fecaca}
 .finance-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:18px}
 .finance-overview{grid-template-columns:minmax(0,1.7fr) minmax(300px,.8fr)}
-.finance-chart-card{min-height:410px}.finance-chart-card canvas{min-height:300px}
+.finance-chart-card{min-height:0;min-width:0}.finance-chart-card .finance-chart-wrap{position:relative;width:100%;height:320px;min-height:320px;overflow:hidden}.finance-chart-card canvas{display:block!important;width:100%!important;height:100%!important;max-width:100%!important;min-height:0!important}
 .section-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px}.section-header h2,.section-header p{margin:0}.section-header p{color:#7b7085;margin-top:4px}
 .dre-row,.summary-list p,.recurrence-list>div,.closing-list>div{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid #eee7f7}.dre-row.total{font-size:20px;color:#5b21b6}
 .goal-value{display:flex;justify-content:space-between;align-items:center}.goal-bar{height:12px;background:#eee7f7;border-radius:999px;overflow:hidden;margin:10px 0 16px}.goal-bar span{display:block;height:100%;background:linear-gradient(90deg,#7c3aed,#c026d3);border-radius:inherit}
@@ -1124,3 +1124,51 @@ button{
 @media(max-width:1100px){.enterprise-loyalty-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:760px){.enterprise-loyalty-grid{grid-template-columns:1fr}.dashboard-crm-task{grid-template-columns:8px 1fr}.dashboard-crm-task time{grid-column:2}.dashboard-bar-chart{min-height:220px}}
 .loyalty-summary-ring{position:relative}
+
+/* V10 Alpha 5 — identificação e estado do Dashboard Enterprise */
+.sidebar-version-badge{margin:14px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.1);display:grid;gap:2px;font-size:11px}
+.sidebar-version-badge span{opacity:.75}.sidebar-version-badge strong{font-size:12px}
+.dashboard-offline .live-dot{background:#ef4444!important;box-shadow:0 0 0 5px rgba(239,68,68,.15)!important}
+.dashboard-offline .enterprise-status{border-color:#fecaca;background:#fff7f7}
+
+
+/* V10 Beta 7 — Agenda + Comunicação */
+.agenda-whatsapp-menu{position:relative;display:inline-block}.agenda-whatsapp-menu summary{cursor:pointer;list-style:none;font-size:.82rem;font-weight:700}.agenda-whatsapp-menu>div{position:absolute;z-index:30;right:0;top:100%;min-width:150px;padding:8px;background:var(--card-bg,#fff);border:1px solid rgba(0,0,0,.12);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.15)}.agenda-whatsapp-menu>div a{display:block;padding:6px 8px;white-space:nowrap;border-radius:6px}.agenda-whatsapp-menu>div a:hover{background:rgba(126,67,152,.1)}
+
+/* V11.2 - Central Financeira */
+.finance-module-nav{display:flex;gap:.6rem;flex-wrap:wrap;margin:0 0 1.1rem;padding:.75rem;background:var(--card-bg,#fff);border:1px solid rgba(88,45,115,.12);border-radius:16px;box-shadow:0 8px 24px rgba(52,27,70,.06)}
+.finance-module-nav a{display:inline-flex;align-items:center;gap:.35rem;padding:.62rem .8rem;border-radius:10px;text-decoration:none;font-weight:700;font-size:.88rem;color:var(--text-color,#3c2844);background:rgba(117,72,143,.07);transition:.18s ease}
+.finance-module-nav a:hover,.finance-module-nav a.active{background:linear-gradient(135deg,#6f3f89,#9d67b8);color:#fff;transform:translateY(-1px)}
+@media(max-width:700px){.finance-module-nav{display:grid;grid-template-columns:1fr 1fr}.finance-module-nav a{justify-content:center;text-align:center}}
+
+/* V11.3 - Central do Sistema */
+.system-status-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:20px 0}.service-card{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:20px;border:1px solid var(--border,#3a3445);border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.015))}.service-card .service-icon{width:48px;height:48px;display:grid;place-items:center;border-radius:14px;background:rgba(255,255,255,.07);font-size:24px}.service-card span,.service-card small{display:block;color:var(--muted,#aaa2b8)}.service-card strong{display:block;font-size:18px;margin:3px 0}.service-card>b{font-size:11px;letter-spacing:.08em;padding:7px 9px;border-radius:999px}.service-ok>b{background:rgba(34,197,94,.16);color:#86efac}.service-warning>b{background:rgba(245,158,11,.17);color:#fcd34d}.service-error>b{background:rgba(239,68,68,.17);color:#fca5a5}.system-alert{padding:14px 16px;border-radius:12px;margin:0 0 18px}.system-alert.danger{background:rgba(239,68,68,.13);border:1px solid rgba(239,68,68,.35)}.event-timeline{display:grid;gap:0}.event-timeline article{display:grid;grid-template-columns:18px 1fr auto;gap:12px;align-items:center;padding:13px 4px;border-bottom:1px solid rgba(255,255,255,.07)}.event-dot{width:10px;height:10px;border-radius:50%;background:#22c55e}.event-dot.error{background:#ef4444}.event-timeline strong,.event-timeline small{display:block}.event-timeline small{color:var(--muted,#aaa2b8);margin-top:3px}@media(max-width:1000px){.system-status-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:650px){.system-status-grid{grid-template-columns:1fr}.service-card{grid-template-columns:auto 1fr}.service-card>b{grid-column:2;justify-self:start}}
+
+/* RC24 Pet 360 */
+.pet-quick-actions{display:flex;flex-wrap:wrap;gap:10px}.pet-hero .actions{flex-wrap:wrap}.executive-cards{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+
+/* Financeiro Executivo RC25 */
+.finance-command-center{display:grid;grid-template-columns:repeat(4,minmax(180px,1fr));gap:14px;margin:0 0 18px}
+.finance-exec-card{background:#fff;border:1px solid #eadffd;border-radius:20px;padding:18px;box-shadow:0 12px 30px rgba(76,29,149,.07);min-width:0}
+.finance-exec-card span,.finance-exec-card small{display:block;color:#776b82}.finance-exec-card strong{display:block;font-size:24px;color:#2c173c;margin:8px 0;line-height:1.15}
+.finance-exec-primary{background:linear-gradient(135deg,#5c2c73,#8c55a6);border-color:transparent}.finance-exec-primary span,.finance-exec-primary small,.finance-exec-primary strong{color:#fff}
+.finance-priority-grid{display:grid;grid-template-columns:minmax(300px,.8fr) minmax(0,1.2fr);gap:16px;margin-bottom:18px}
+.finance-priority-card.has-alert{border-color:#fecaca}.finance-priority-line{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:13px 0;border-bottom:1px solid #eee5f2;text-decoration:none;color:inherit}
+.finance-priority-line span,.finance-priority-line small{display:block}.finance-priority-line small{color:#807487;margin-top:3px}.finance-priority-line strong{white-space:nowrap}
+.finance-priority-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.finance-source-list>div{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:11px 0;border-bottom:1px solid #eee5f2}.finance-source-list span,.finance-source-list small{display:block}.finance-source-list small{color:#807487;margin-top:3px}.finance-source-list b{font-size:.92rem;white-space:nowrap}
+.finance-latest-card{margin-bottom:18px}.finance-latest-list{display:grid;gap:4px}.finance-latest-item{display:grid;grid-template-columns:38px minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid #eee5f2}.finance-latest-item:last-child{border-bottom:0}
+.finance-latest-icon{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-weight:900}.finance-latest-icon.entry{background:#dcfce7;color:#15803d}.finance-latest-icon.exit{background:#fee2e2;color:#b91c1c}
+.finance-latest-main,.finance-latest-main small{display:block;min-width:0}.finance-latest-main strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.finance-latest-main small{color:#807487;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:1250px){.finance-command-center{grid-template-columns:repeat(2,minmax(180px,1fr))}}
+@media(max-width:900px){.finance-priority-grid{grid-template-columns:1fr}.finance-latest-item{grid-template-columns:38px minmax(0,1fr) auto}.finance-latest-item>strong:last-child{grid-column:2/-1}}
+@media(max-width:560px){.finance-command-center{grid-template-columns:1fr}.finance-latest-item{grid-template-columns:34px minmax(0,1fr)}.finance-latest-item .badge,.finance-latest-item>strong:last-child{grid-column:2}.finance-priority-line{align-items:flex-start;flex-direction:column;gap:6px}}
+
+/* RC26 - contas, parcelas e recorrências */
+.inline-payment{position:relative}.inline-payment>summary{list-style:none;cursor:pointer}.inline-payment[open] .payment-form{display:grid}.payment-form{position:absolute;right:0;z-index:20;background:var(--card-bg,#fff);border:1px solid rgba(107,33,168,.18);box-shadow:0 18px 40px rgba(44,20,70,.18);padding:12px;border-radius:14px;min-width:300px;gap:8px}.payment-history-row td{background:rgba(107,33,168,.035)}.payment-history-list{display:grid;gap:7px;padding:10px 0}.payment-history-list>div{display:flex;align-items:center;gap:12px;justify-content:flex-end;flex-wrap:wrap}.payment-history-list>div span{margin-right:auto}.payment-history-list form{margin:0}@media(max-width:760px){.payment-form{position:fixed;left:12px;right:12px;bottom:12px;min-width:0;max-height:80vh;overflow:auto}}
+
+
+/* RC26.1 - correção de estabilidade do gráfico financeiro */
+.finance-overview>*{min-width:0}
+.finance-chart-card{overflow:hidden}
+@media(max-width:900px){.finance-chart-card .finance-chart-wrap{height:280px;min-height:280px}}
