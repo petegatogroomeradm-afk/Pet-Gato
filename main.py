@@ -11,6 +11,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from database import init_db, query_db, execute_db, now_iso
 from modules.clientes import clientes_bp
+from modules.sistema import sistema_bp
 from modules.crm import crm_bp
 from modules.fidelidade import fidelidade_bp
 from modules.pets import pets_bp
@@ -66,6 +67,7 @@ init_db()
 register_default_subscribers()
 
 app.register_blueprint(clientes_bp)
+app.register_blueprint(sistema_bp)
 app.register_blueprint(crm_bp)
 app.register_blueprint(fidelidade_bp)
 app.register_blueprint(pets_bp)
